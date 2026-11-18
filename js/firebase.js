@@ -14,6 +14,9 @@ import {
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { FIREBASE_CONFIG, ADMIN_EMAIL } from './config.js';
 
+// إعادة تصدير بريد الأدمن حتى تستخدمه باقي الملفات (مثل js/auth.js).
+export { ADMIN_EMAIL };
+
 export const app = initializeApp(FIREBASE_CONFIG);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
