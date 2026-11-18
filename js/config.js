@@ -20,7 +20,8 @@ export const CATEGORIES = [
   { id: 'real_estate', name: 'عقارات وتشطيبات', icon: 'building-2' },
   { id: 'mobiles', name: 'موبايلات', icon: 'smartphone' },
   { id: 'clothing', name: 'ملابس', icon: 'shirt' },
-  { id: 'makeup', name: 'ميكب ارتست', icon: 'sparkles' }
+  { id: 'makeup', name: 'ميكب ارتست', icon: 'sparkles' },
+  { id: 'cafes', name: 'كافيهات', icon: 'coffee' }
 ];
 
 export const AREAS = [
