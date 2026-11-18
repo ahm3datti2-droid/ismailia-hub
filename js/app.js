@@ -1,6 +1,6 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus } from './ui.js';
+import { renderCategories, renderSubcategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -26,6 +26,9 @@ const els = {
   servicesGrid: document.getElementById('servicesGrid'),
   resultsCount: document.getElementById('resultsCount'),
   sectionTitle: document.getElementById('sectionTitle'),
+  heroCount: document.getElementById('heroCount'),
+  heroGroups: document.getElementById('heroGroups'),
+  heroAreas: document.getElementById('heroAreas'),
   modal: document.getElementById('appModal'),
   modalContent: document.getElementById('modalContent')
 };
@@ -96,6 +99,11 @@ function bindEvents() {
     refreshUI();
   });
 
+  document.getElementById('heroSearchBtn')?.addEventListener('click', () => {
+    els.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    els.searchInput.focus();
+  });
+
   document.getElementById('btnHome').addEventListener('click', () => {
     state.activeCategory = 'all';
     state.activeSubcategory = 'all';
@@ -163,6 +171,10 @@ function refreshUI() {
   });
 
   els.resultsCount.textContent = `${filtered.length} خدمة`;
+  // إحصاءات الهيرو الحية: عدد الخدمات الكلي + عدد الأقسام والمناطق.
+  if (els.heroCount) els.heroCount.textContent = state.services.length;
+  if (els.heroGroups) els.heroGroups.textContent = GROUPS.length;
+  if (els.heroAreas) els.heroAreas.textContent = AREAS.length;
 
   renderServiceCards(els.servicesGrid, filtered, state.favorites, state.isAdmin, {
     onClearFilters: () => {
@@ -178,74 +190,195 @@ function refreshUI() {
       refreshUI();
     },
     onDetails: openServiceDetails,
-    onToggleFav: (id) => {
-      state.favorites = state.favorites.includes(id)
-        ? state.favorites.filter(f => f !== id)
-        : [...state.favorites, id];
-      localStorage.setItem('ism_favs', JSON.stringify(state.favorites));
-      refreshUI();
-    },
-    onDelete: async (id) => {
-      if (!state.isAdmin) {
-        alert('حذف الخدمات متاح من لوحة تحكم الإدارة فقط.');
-        return;
-      }
-      if (confirm('هل أنت متأكد من حذف هذه الخدمة نهائياً؟')) {
-        try {
-          await db.deleteService(id);
-          state.services = await db.getAllServices();
-          refreshUI();
-        } catch (err) {
-          alert(err.message || 'تعذر حذف الخدمة. حاول مرة أخرى.');
-        }
-      }
-    }
+    onToggleFav: toggleFavorite,
+    onDelete: handleDeleteService
   });
+}
+
+function toggleFavorite(id) {
+  state.favorites = state.favorites.includes(id)
+    ? state.favorites.filter(f => f !== id)
+    : [...state.favorites, id];
+  localStorage.setItem('ism_favs', JSON.stringify(state.favorites));
+  refreshUI();
+}
+
+async function handleDeleteService(id) {
+  if (!state.isAdmin) {
+    alert('حذف الخدمات متاح من لوحة تحكم الإدارة فقط.');
+    return;
+  }
+  if (confirm('هل أنت متأكد من حذف هذه الخدمة نهائياً؟')) {
+    try {
+      await db.deleteService(id);
+      closeModal();
+      state.services = await db.getAllServices();
+      refreshUI();
+    } catch (err) {
+      alert(err.message || 'تعذر حذف الخدمة. حاول مرة أخرى.');
+    }
+  }
 }
 
 function openServiceDetails(id) {
   const srv = state.services.find(s => s.id === id);
   if (!srv) return;
   const status = getOpenStatus(srv.openHour, srv.closeHour);
+  const cat = categoryInfo(srv.category);
+  const subName = subcategoryName(srv.category, srv.subcategory);
+  const waNumber = String(srv.whatsapp || srv.phone || '').replace(/\D/g, '');
+  const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
+  // رابط الخريطة: رابط الخدمة المسجل، أو بحث جوجل ماب بالاسم والعنوان.
+  const mapHref = srv.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${srv.name} ${srv.address} الإسماعيلية`)}`;
+  const hoursText = (srv.openHour === 0 && srv.closeHour === 24)
+    ? 'مفتوح 24 ساعة'
+    : `يومياً من ${srv.openHour}:00 إلى ${srv.closeHour}:00`;
+  const tags = String(srv.tags || '').split('،').map((t) => t.trim()).filter(Boolean);
+  const isFav = state.favorites.includes(srv.id);
 
+  els.modalContent.classList.add('detail-sheet');
   els.modalContent.innerHTML = `
-    <div class="flex justify-between items-start mb-4">
-      <div>
-        <span class="text-xs font-bold px-2.5 py-1 rounded-lg border ${status.color}">${status.text}</span>
-        <h3 class="text-xl font-extrabold text-white mt-2">${srv.name}</h3>
-        <p class="text-xs text-slate-400 mt-1">${srv.area} - ${srv.address}</p>
-      </div>
-      <button id="closeModalBtn" class="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white">
+    <div class="detail-photo">
+      ${srv.imageUrl
+        ? `<img src="${srv.imageUrl}" alt="${srv.name}" referrerpolicy="no-referrer" onerror="this.remove()">`
+        : `<div class="detail-photo__fallback"><i data-lucide="${cat.icon}"></i></div>`}
+      <button id="closeModalBtn" class="detail-close" aria-label="إغلاق">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
+      ${srv.isEmergency ? '<span class="detail-emergency"><i data-lucide="siren" class="w-3.5 h-3.5"></i> طوارئ 24/7</span>' : ''}
     </div>
 
-    ${srv.menu && srv.menu.length ? `
-      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3.5 mb-4">
-        <h4 class="text-xs font-bold text-amber-400 mb-2.5">قائمة الأسعار / الخدمات الشائعة:</h4>
-        <div class="space-y-2">
-          ${srv.menu.map(m => `
-            <div class="flex justify-between text-xs border-b border-slate-800/80 pb-1.5 last:border-0 last:pb-0">
-              <span class="text-slate-300">${m.item}</span>
-              <span class="font-bold text-amber-400">${m.price}</span>
-            </div>
-          `).join('')}
-        </div>
+    <div class="p-5 pt-4">
+      <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
+        <span class="badge border ${status.color}">${status.text}</span>
+        ${srv.verified ? '<span class="badge badge--verified"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> موثق</span>' : ''}
+        <span class="rating-pill">
+          <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+          ${srv.rating} (${srv.reviewsCount} تقييم)
+        </span>
       </div>
-    ` : ''}
 
-    <div class="grid grid-cols-2 gap-3">
-      <a href="${srv.mapUrl || '#'}" target="_blank" class="flex items-center justify-center gap-2 bg-sky-600/20 border border-sky-500/30 text-sky-400 py-3 rounded-xl text-xs font-bold">
-        <i data-lucide="navigation" class="w-4 h-4"></i>
-        الموقع على الخريطة
+      <h3 class="text-xl font-black text-white leading-snug">${srv.name}</h3>
+      <p class="text-xs text-amber-400 font-bold mt-1.5 flex items-center gap-1.5">
+        <i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>
+        ${subName ? `${cat.name} • ${subName}` : cat.name}
+      </p>
+
+      <a href="${mapHref}" target="_blank" rel="noopener" class="detail-row">
+        <span class="detail-row__icon"><i data-lucide="map-pin"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="detail-row__title">العنوان — ${srv.area}</span>
+          <span class="detail-row__sub">${srv.address}</span>
+        </span>
+        <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 shrink-0 mt-1"></i>
       </a>
-      <a href="tel:${srv.phone}" class="flex items-center justify-center gap-2 bg-amber-500 text-slate-950 py-3 rounded-xl text-xs font-bold">
-        <i data-lucide="phone-call" class="w-4 h-4"></i>
-        اتصال مباشر
-      </a>
+
+      <div class="detail-row">
+        <span class="detail-row__icon"><i data-lucide="clock"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="detail-row__title">مواعيد العمل</span>
+          <span class="detail-row__sub">${hoursText}</span>
+        </span>
+      </div>
+
+      ${srv.phone ? `
+        <a href="tel:${srv.phone}" class="detail-row">
+          <span class="detail-row__icon"><i data-lucide="phone"></i></span>
+          <span class="flex-1 min-w-0">
+            <span class="detail-row__title">الهاتف</span>
+            <span class="detail-row__sub" dir="ltr" style="text-align:right">${srv.phone}</span>
+          </span>
+          <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 shrink-0 mt-1"></i>
+        </a>
+      ` : ''}
+
+      ${tags.length ? `
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          ${tags.map((t) => `<span class="tag-chip">${t}</span>`).join('')}
+        </div>
+      ` : ''}
+
+      ${srv.menu && srv.menu.length ? `
+        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3.5 mt-4">
+          <h4 class="text-xs font-bold text-amber-400 mb-2.5 flex items-center gap-1.5">
+            <i data-lucide="list" class="w-4 h-4"></i>
+            قائمة الأسعار / الخدمات الشائعة
+          </h4>
+          <div class="space-y-2">
+            ${srv.menu.map(m => `
+              <div class="flex justify-between text-xs border-b border-slate-800/80 pb-1.5 last:border-0 last:pb-0">
+                <span class="text-slate-300">${m.item}</span>
+                <span class="font-bold text-amber-400">${m.price}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="grid grid-cols-2 gap-2.5 mt-5">
+        ${waNumber ? `
+          <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener" class="detail-action detail-action--wa">
+            <i data-lucide="message-circle"></i>
+            واتساب
+          </a>
+        ` : ''}
+        ${srv.phone ? `
+          <a href="tel:${srv.phone}" class="detail-action detail-action--call">
+            <i data-lucide="phone-call"></i>
+            اتصال مباشر
+          </a>
+        ` : ''}
+        <a href="${mapHref}" target="_blank" rel="noopener" class="detail-action detail-action--map">
+          <i data-lucide="navigation"></i>
+          الموقع على الخريطة
+        </a>
+        <button id="detailShareBtn" class="detail-action detail-action--share">
+          <i data-lucide="share-2"></i>
+          <span id="detailShareLabel">مشاركة الرابط</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 mt-2.5">
+        <button id="detailFavBtn" class="detail-action detail-action--share ${state.isAdmin ? '' : 'col-span-2'}">
+          <i data-lucide="bookmark" class="${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
+          ${isFav ? 'محفوظة ✓' : 'حفظ في المحفوظات'}
+        </button>
+        ${state.isAdmin ? `
+          <button id="detailDelBtn" class="detail-action detail-action--danger">
+            <i data-lucide="trash-2"></i>
+            حذف من الدليل
+          </button>
+        ` : ''}
+      </div>
     </div>
   `;
   showModal();
+
+  document.getElementById('detailFavBtn')?.addEventListener('click', () => {
+    toggleFavorite(srv.id);
+    closeModal();
+  });
+  document.getElementById('detailDelBtn')?.addEventListener('click', () => handleDeleteService(srv.id));
+  document.getElementById('detailShareBtn')?.addEventListener('click', async () => {
+    const url = `${location.origin}${location.pathname}#service-${srv.id}`;
+    const label = document.getElementById('detailShareLabel');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: srv.name, text: `${srv.name} — دليل خدمات الإسماعيلية`, url });
+        return;
+      }
+      throw new Error('no-share');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      try {
+        await navigator.clipboard.writeText(url);
+        if (label) label.textContent = 'تم نسخ الرابط ✓';
+        setTimeout(() => { if (label) label.textContent = 'مشاركة الرابط'; }, 2000);
+      } catch (_) {
+        window.prompt('انسخ رابط الخدمة:', url);
+      }
+    }
+  });
 }
 
 function openTransportModal() {
@@ -484,6 +617,7 @@ function showModal() {
 function closeModal() {
   els.modal.classList.add('hidden');
   els.modal.classList.remove('flex');
+  els.modalContent.classList.remove('detail-sheet');
 }
 
 initApp();

@@ -51,6 +51,41 @@
     </div>
   </header>
 
+  <!-- الهيرو: هوية الدليل + إحصاءات حية + دعوة للبحث -->
+  <section class="px-4 pt-1 pb-4" aria-label="نبذة عن الدليل">
+    <div class="max-w-6xl mx-auto">
+      <div class="hero-panel relative overflow-hidden rounded-3xl border border-slate-800/80 px-5 py-6 sm:px-8 sm:py-7">
+        <div class="hero-glow absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+        <div class="relative">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full mb-3">
+            <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
+            الدليل الرسمي لمحافظة الإسماعيلية
+          </span>
+          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug">كل خدمات الإسماعيلية<br class="sm:hidden"> في مكان واحد</h2>
+          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl leading-relaxed">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة، وصور حقيقية لكل خدمة.</p>
+          <div class="flex flex-wrap gap-2.5 mt-5">
+            <div class="hero-stat">
+              <span class="hero-stat__num" id="heroCount">0</span>
+              <span class="hero-stat__label">خدمة موثقة</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat__num" id="heroGroups">11</span>
+              <span class="hero-stat__label">قسماً رئيسياً</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat__num" id="heroAreas">8</span>
+              <span class="hero-stat__label">منطقة ومركز</span>
+            </div>
+            <button id="heroSearchBtn" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-extrabold transition active:scale-95">
+              <i data-lucide="search" class="w-4 h-4"></i>
+              ابحث عن خدمة
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- شريط البحث والفلاتر الثابت -->
   <div class="filter-bar sticky top-0 z-40 glass-header px-4 py-3">
     <div class="max-w-6xl mx-auto">

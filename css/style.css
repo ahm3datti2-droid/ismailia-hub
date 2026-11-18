@@ -229,6 +229,161 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   }
 }
 
-/* صورة الخدمة أعلى البطاقة */
-.service-photo { margin: -1rem -1rem 0.9rem; border-radius: var(--radius-card) var(--radius-card) 0 0; overflow: hidden; aspect-ratio: 16 / 9; background: #0f172a; }
-.service-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* صورة الخدمة أعلى البطاقة — لا يُقص أي جزء من الصورة أبداً:
+   contain على خلفية داكنة متدرجة مع حشوة، فتظهر الشعارات العريضة
+   (مثل Mylerz) كاملة دون قص، والصور الفوتوغرافية كاملة أيضاً. */
+.service-photo { margin: -1rem -1rem 0.9rem; border-radius: var(--radius-card) var(--radius-card) 0 0; overflow: hidden; aspect-ratio: 16 / 9; background: linear-gradient(160deg, #0b1220 0%, #131c31 55%, #0d1526 100%); display: flex; align-items: center; justify-content: center; padding: 0.6rem; cursor: pointer; }
+.service-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.service-name { font-size: 0.95rem; }
+
+/* ---------- الهيرو ---------- */
+.hero-panel {
+  background: linear-gradient(165deg, #101828 0%, #0b1120 55%, #0a0f1c 100%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.hero-glow {
+  background:
+    radial-gradient(55% 130% at 88% -10%, rgba(245, 158, 11, 0.22), transparent 60%),
+    radial-gradient(45% 120% at 0% 110%, rgba(56, 189, 248, 0.12), transparent 55%);
+}
+.hero-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.9rem;
+  padding: 0.5rem 0.8rem;
+}
+.hero-stat__num { font-size: 1.15rem; font-weight: 900; color: #fbbf24; line-height: 1; }
+.hero-stat__label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; }
+
+/* ---------- صفحة تفاصيل الخدمة (داخل النافذة المنبثقة) ---------- */
+#modalContent.detail-sheet {
+  padding: 0;
+  overflow-y: auto;
+  max-width: 34rem;
+  max-height: 92vh;
+  scrollbar-width: thin;
+}
+.detail-photo {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(160deg, #0b1220 0%, #131c31 55%, #0d1526 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.detail-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.detail-photo__fallback { color: #f59e0b; opacity: 0.55; }
+.detail-photo__fallback svg { width: 4rem; height: 4rem; }
+.detail-close {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.65);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.detail-close:hover { color: #fff; background: rgba(2, 6, 23, 0.85); }
+.detail-emergency {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.18);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.6rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1rem;
+  padding: 0.7rem 0.85rem;
+  margin-top: 0.6rem;
+}
+a.detail-row:hover { border-color: rgba(245, 158, 11, 0.35); }
+.detail-row__icon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.65rem;
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-row__icon svg { width: 1rem; height: 1rem; }
+.detail-row__title { display: block; font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
+.detail-row__sub { display: block; font-size: 0.8rem; font-weight: 700; color: #f1f5f9; line-height: 1.6; margin-top: 0.1rem; }
+.detail-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.8rem 0.5rem;
+  border-radius: 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+}
+.detail-action:active { transform: scale(0.97); }
+.detail-action svg { width: 1rem; height: 1rem; }
+.detail-action--wa { background: #059669; color: #fff; }
+.detail-action--wa:hover { background: #10b981; }
+.detail-action--call { background: #f59e0b; color: #090d16; }
+.detail-action--call:hover { background: #fbbf24; }
+.detail-action--map { background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.35); color: #38bdf8; }
+.detail-action--map:hover { background: rgba(14, 165, 233, 0.25); }
+.detail-action--share { background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.25); color: #e2e8f0; }
+.detail-action--share:hover { background: rgba(148, 163, 184, 0.18); }
+.detail-action--danger { background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); color: #fb7185; }
+.detail-action--danger:hover { background: rgba(244, 63, 94, 0.22); }
+
+/* هيكل التحميل: كتلة صورة مطابقة لمساحة الصورة في البطاقة */
+.skeleton-photo {
+  aspect-ratio: 16 / 9;
+  border-radius: 0.9rem;
+  margin-bottom: 0.9rem;
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* أيقونة حالات الفراغ والخطأ داخل إطار متناسق */
+.state-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 1rem;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.state-icon svg { width: 1.5rem; height: 1.5rem; }

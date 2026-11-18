@@ -74,6 +74,7 @@ export function renderSubcategories(container, groupId, activeSub, onSelect) {
 export function renderSkeleton(container, count = 6) {
   container.innerHTML = Array.from({ length: count }, () => `
     <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton-photo"></div>
       <div class="flex items-center gap-3 mb-3">
         <div class="skeleton-line" style="width:2.75rem;height:2.75rem;border-radius:0.9rem"></div>
         <div class="flex-1 space-y-2">
@@ -95,7 +96,7 @@ export function renderSkeleton(container, count = 6) {
 export function renderErrorState(container, onRetry) {
   container.innerHTML = `
     <div class="error-state">
-      <i data-lucide="wifi-off" class="w-10 h-10 text-rose-400 mx-auto mb-2"></i>
+      <div class="state-icon"><i data-lucide="wifi-off" class="text-rose-400"></i></div>
       <p class="text-white text-sm font-extrabold mb-1">تعذر تحميل الخدمات</p>
       <p class="text-slate-400 text-xs font-semibold mb-4">تحقق من اتصالك بالإنترنت وحاول مرة أخرى.</p>
       <button data-retry class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
@@ -111,7 +112,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
   if (!services.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <i data-lucide="search-x" class="w-10 h-10 text-slate-600 mx-auto mb-2"></i>
+        <div class="state-icon"><i data-lucide="search-x" class="text-slate-500"></i></div>
         <p class="text-white text-sm font-extrabold mb-1">لا توجد خدمات مطابقة لبحثك</p>
         <p class="text-slate-400 text-xs font-semibold mb-4">جرّب كلمة بحث مختلفة أو غيّر التصنيف والمنطقة.</p>
         <button data-clear-filters class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
@@ -134,7 +135,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
 
     return `
       <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">
-        ${srv.imageUrl ? `<div class="service-photo"><img src="${srv.imageUrl}" alt="${srv.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.service-photo').remove()"></div>` : ''}
+        ${srv.imageUrl ? `<div class="service-photo" data-open-details="${srv.id}"><img src="${srv.imageUrl}" alt="${srv.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.service-photo').remove()"></div>` : ''}
         <div class="flex items-start gap-3 mb-3">
           <div class="service-avatar" aria-hidden="true">
             <i data-lucide="${cat.icon}"></i>
@@ -145,7 +146,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
               <span class="badge border ${status.color}">${status.text}</span>
               ${srv.isEmergency ? '<span class="badge badge--emergency"><i data-lucide="siren" class="w-3 h-3"></i> طوارئ</span>' : ''}
             </div>
-            <h3 class="font-extrabold text-white leading-snug">${srv.name}</h3>
+            <h3 class="service-name font-extrabold text-white leading-snug">${srv.name}</h3>
             <p class="text-[11px] text-slate-400 font-semibold mt-0.5">${subName ? `${cat.name} • ${subName}` : cat.name}</p>
           </div>
           <button data-fav="${srv.id}" aria-label="حفظ الخدمة" class="p-2 rounded-full bg-slate-800/70 text-slate-400 hover:text-amber-400 transition shrink-0">
