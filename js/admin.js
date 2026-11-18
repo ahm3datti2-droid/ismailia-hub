@@ -18,6 +18,9 @@ const state = {
   services: [],
   remoteCount: 0,
   pendingReviews: [],
+  pendingServices: [],
+  offers: [],
+  approvingPendingId: null,
   editingId: null,
   searchQuery: '',
   categoryFilter: 'all'
@@ -45,6 +48,11 @@ const els = {
   seedNote: document.getElementById('seedNote'),
   pendingReviewsList: document.getElementById('pendingReviewsList'),
   pendingReviewsCount: document.getElementById('pendingReviewsCount'),
+  pendingServicesList: document.getElementById('pendingServicesList'),
+  pendingServicesCount: document.getElementById('pendingServicesCount'),
+  offerForm: document.getElementById('offerForm'),
+  offerServiceSelect: document.getElementById('offerServiceSelect'),
+  offersList: document.getElementById('offersList'),
   serviceForm: document.getElementById('serviceForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitServiceBtn')
@@ -128,10 +136,156 @@ async function loadServices() {
     state.remoteCount = 0;
   }
   await loadPendingReviews();
+  await loadPendingServices();
+  await loadOffers();
   renderStats();
   renderList();
   renderReviewsQueue();
+  renderPendingServicesQueue();
+  renderOffersList();
+  fillOfferServiceSelect();
   updateSeedButton();
+}
+
+// طلبات إضافة خدمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
+// Firestore لم تُحدَّث بعد) تُعرض القائمة فارغة بدلاً من كسر اللوحة.
+async function loadPendingServices() {
+  try {
+    state.pendingServices = await db.getPendingServices();
+  } catch (_) {
+    state.pendingServices = [];
+  }
+}
+
+async function loadOffers() {
+  try {
+    state.offers = await db.getAllOffers();
+  } catch (_) {
+    state.offers = [];
+  }
+}
+
+// قائمة طلبات الإضافة: "مراجعة ونشر" يملأ نموذج الخدمة ببيانات الطلب
+// (والأدمن يضيف صورة موثقة قبل الحفظ)، و"رفض" يحذف الطلب.
+function renderPendingServicesQueue() {
+  const list = state.pendingServices;
+  if (!els.pendingServicesList) return;
+  els.pendingServicesCount.textContent = String(list.length);
+  if (!list.length) {
+    els.pendingServicesList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">لا توجد طلبات إضافة بانتظار المراجعة</p>
+      </div>`;
+    return;
+  }
+  els.pendingServicesList.innerHTML = list.map((p) => `
+    <article class="bg-slate-900/90 border border-sky-500/20 rounded-2xl p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div>
+          <p class="font-extrabold text-white text-sm">${esc(p.name)}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">${esc(categoryName(p.category))}${subcategoryName(p.category, p.subcategory) ? ' • ' + esc(subcategoryName(p.category, p.subcategory)) : ''} • ${esc(p.area || '')}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">من: ${esc(p.submitterName || 'مستخدم')} • ${esc(p.submitterPhone || '')}</p>
+        </div>
+        <div class="flex gap-1.5 shrink-0">
+          <button data-approve-service="${esc(p.id)}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">مراجعة ونشر</button>
+          <button data-reject-service="${esc(p.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">رفض</button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">${esc(p.address || 'بدون عنوان')}${p.phone ? ` • <span dir="ltr">${esc(p.phone)}</span>` : ''}</p>
+      ${p.imageUrl ? `<p class="text-[11px] text-sky-400 mt-1.5 truncate" dir="ltr">صورة مرفقة: ${esc(p.imageUrl)}</p>` : `<p class="text-[11px] text-amber-400 mt-1.5">بدون صورة مرفقة — أضف صورة موثقة من صفحة المحل قبل النشر.</p>`}
+    </article>`).join('');
+
+  els.pendingServicesList.querySelectorAll('[data-approve-service]').forEach((btn) => {
+    btn.addEventListener('click', () => startApprovePending(btn.dataset.approveService));
+  });
+  els.pendingServicesList.querySelectorAll('[data-reject-service]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('هل أنت متأكد من رفض هذا الطلب وحذفه نهائياً؟')) return;
+      try {
+        await db.deletePendingService(btn.dataset.rejectService);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر رفض الطلب.');
+      }
+    });
+  });
+}
+
+function startApprovePending(id) {
+  const p = state.pendingServices.find((x) => x.id === id);
+  if (!p) return;
+  state.approvingPendingId = id;
+  state.editingId = null;
+  fillForm({
+    ...p,
+    verified: true,
+    rating: 5,
+    tags: p.tags || '',
+    menu: []
+  });
+  els.formTitle.textContent = 'مراجعة طلب: ' + p.name;
+  els.submitBtn.textContent = 'نشر الخدمة (موافقة)';
+  els.serviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// قائمة العروض في لوحة التحكم (إضافة / إيقاف / حذف).
+function renderOffersList() {
+  if (!els.offersList) return;
+  const list = state.offers;
+  if (!list.length) {
+    els.offersList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد عروض بعد — أضف أول عرض من النموذج أعلاه.</p>`;
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  els.offersList.innerHTML = list.map((o) => {
+    const srv = state.services.find((s) => s.id === o.serviceId);
+    const expired = o.validUntil && String(o.validUntil) < today;
+    return `
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+        <div class="min-w-0">
+          <p class="text-xs font-extrabold text-white truncate">${esc(o.title)} ${o.discount ? `<span class="text-amber-400">(${esc(o.discount)})</span>` : ''}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">${esc(srv ? srv.name : 'خدمة محذوفة')}${o.validUntil ? ` • حتى ${esc(o.validUntil)}` : ''} • ${o.active && !expired ? '<span class="text-emerald-400 font-bold">ساري</span>' : '<span class="text-slate-500 font-bold">متوقف / منتهي</span>'}</p>
+        </div>
+        <div class="flex gap-1.5 shrink-0">
+          <button data-toggle-offer="${esc(o.id)}" data-active="${o.active ? '0' : '1'}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">${o.active ? 'إيقاف' : 'تفعيل'}</button>
+          <button data-delete-offer="${esc(o.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  els.offersList.querySelectorAll('[data-toggle-offer]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setOfferActive(btn.dataset.toggleOffer, btn.dataset.active === '1');
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر تغيير حالة العرض.');
+      }
+    });
+  });
+  els.offersList.querySelectorAll('[data-delete-offer]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('هل أنت متأكد من حذف هذا العرض نهائياً؟')) return;
+      try {
+        await db.deleteOffer(btn.dataset.deleteOffer);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف العرض.');
+      }
+    });
+  });
+}
+
+function fillOfferServiceSelect() {
+  const sel = els.offerServiceSelect;
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— اختر الخدمة —</option>' + state.services
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+    .map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`)
+    .join('');
+  if (current) sel.value = current;
 }
 
 // التقييمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
@@ -216,13 +370,17 @@ function renderStats() {
   const avgRating = total
     ? (state.services.reduce((sum, s) => sum + Number(s.rating || 0), 0) / total).toFixed(1)
     : '—';
+  const today = new Date().toISOString().slice(0, 10);
+  const activeOffers = state.offers.filter((o) => o.active && (!o.validUntil || String(o.validUntil) >= today)).length;
 
   els.statsGrid.innerHTML = [
     { label: 'إجمالي الخدمات', value: total, icon: 'layout-grid', color: 'text-amber-400' },
     { label: 'خدمات طوارئ', value: emergency, icon: 'siren', color: 'text-rose-400' },
     { label: 'خدمات موثقة', value: verified, icon: 'badge-check', color: 'text-sky-400' },
     { label: 'متوسط التقييم', value: avgRating, icon: 'star', color: 'text-emerald-400' },
-    { label: 'تقييمات بانتظار المراجعة', value: state.pendingReviews.length, icon: 'messages-square', color: 'text-violet-400' }
+    { label: 'تقييمات بانتظار المراجعة', value: state.pendingReviews.length, icon: 'messages-square', color: 'text-violet-400' },
+    { label: 'طلبات إضافة بانتظار المراجعة', value: state.pendingServices.length, icon: 'inbox', color: 'text-sky-400' },
+    { label: 'عروض سارية', value: activeOffers, icon: 'badge-percent', color: 'text-amber-400' }
   ].map((s) => `
     <div class="admin-stat bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
       <div class="flex items-center gap-2 mb-1">
@@ -374,6 +532,7 @@ function startEdit(id) {
 
 function resetForm() {
   state.editingId = null;
+  state.approvingPendingId = null;
   els.serviceForm.reset();
   els.formTitle.textContent = 'إضافة خدمة جديدة';
   els.submitBtn.textContent = 'حفظ الخدمة';
@@ -459,12 +618,38 @@ function bindEvents() {
         alert('تم حفظ التعديلات بنجاح.');
       } else {
         await db.addService(data);
-        alert('تمت إضافة الخدمة ونشرها بنجاح.');
+        if (state.approvingPendingId) {
+          await db.deletePendingService(state.approvingPendingId);
+          state.approvingPendingId = null;
+          alert('تم نشر الخدمة وحذف الطلب من قائمة المراجعة.');
+        } else {
+          alert('تمت إضافة الخدمة ونشرها بنجاح.');
+        }
       }
       resetForm();
       await loadServices();
     } catch (err) {
       alert(err.message || 'تعذر حفظ الخدمة.');
+    }
+  });
+
+  els.offerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await db.addOffer({
+        serviceId: fd.get('serviceId'),
+        title: fd.get('title'),
+        discount: fd.get('discount'),
+        validUntil: fd.get('validUntil'),
+        details: fd.get('details'),
+        active: true
+      });
+      els.offerForm.reset();
+      await loadServices();
+      alert('تمت إضافة العرض بنجاح.');
+    } catch (err) {
+      alert(err.message || 'تعذر إضافة العرض.');
     }
   });
 }

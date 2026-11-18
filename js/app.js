@@ -1,4 +1,5 @@
-import { AREAS, GROUPS, TRANSPORT_ROUTES } from './config.js';
+import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
+import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
 import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
@@ -6,6 +7,7 @@ import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
 const state = {
   services: [],
+  offers: [],
   activeCategory: 'all',
   activeSubcategory: 'all',
   selectedArea: 'all',
@@ -58,6 +60,20 @@ async function initApp() {
     state.currentUser = user;
     state.profile = user ? await getProfile(user.uid) : null;
     updateAccountButton();
+    // مزامنة المحفوظات مع الحساب: دمج المحلي مع البعيد عند تسجيل الدخول،
+    // ورفع أي محفوظات محلية لم تُزامَن بعد.
+    if (user) {
+      try {
+        const remote = await db.getRemoteFavorites();
+        const merged = Array.from(new Set([...state.favorites, ...remote]));
+        const toUpload = merged.filter((id) => !remote.includes(id));
+        if (merged.length !== state.favorites.length) {
+          state.favorites = merged;
+          localStorage.setItem('ism_favs', JSON.stringify(state.favorites));
+        }
+        toUpload.forEach((id) => db.setFavoriteRemote(id, true));
+      } catch (_) { /* المزامنة تحسين إضافي — فشلها لا يكسر الصفحة */ }
+    }
     if (wasAdmin !== state.isAdmin) refreshUI();
   });
 
@@ -98,6 +114,7 @@ function resetToHome() {
 async function loadServices() {
   try {
     state.services = await db.getAllServices();
+    try { state.offers = await db.getActiveOffers(); } catch (_) { state.offers = []; }
     refreshUI();
     openDeepLinkedService();
   } catch (err) {
@@ -162,11 +179,11 @@ function bindEvents() {
     els.groupsSection.scrollIntoView({ behavior: 'smooth' });
   });
 
-  document.getElementById('btnEmergency').addEventListener('click', () => {
-    state.onlyEmergency = true;
-    state.onlyFavorites = false;
-    refreshUI();
-  });
+  document.getElementById('btnEmergency').addEventListener('click', openEmergencyModal);
+
+  document.getElementById('btnMap').addEventListener('click', openMapView);
+
+  document.getElementById('btnCloseMap')?.addEventListener('click', closeMapView);
 
   document.getElementById('btnTransport').addEventListener('click', openTransportModal);
 
@@ -220,6 +237,7 @@ function refreshUI() {
     state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites;
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
+  renderOffersSection(isHome);
   updateSectionTitle();
   if (isHome) {
     const counts = {};
@@ -256,11 +274,35 @@ function refreshUI() {
   });
 }
 
+// قسم العروض في الصفحة الرئيسية — يظهر فقط على الرئيسية وعند وجود عروض سارية.
+function renderOffersSection(isHome) {
+  const section = document.getElementById('offersSection');
+  const row = document.getElementById('offersRow');
+  if (!section || !row) return;
+  section.classList.toggle('hidden', !isHome || !state.offers.length);
+  if (!isHome || !state.offers.length) return;
+  row.innerHTML = state.offers.map((o) => {
+    const srv = state.services.find((s) => s.id === o.serviceId);
+    return `
+      <button data-offer-service="${o.serviceId}" class="offer-card">
+        ${o.discount ? `<span class="offer-card__discount">${escHtml(o.discount)}</span>` : ''}
+        <span class="offer-card__title">${escHtml(o.title)}</span>
+        <span class="offer-card__service">${escHtml(srv ? srv.name : '')}</span>
+        ${o.validUntil ? `<span class="offer-card__until">ساري حتى ${escHtml(o.validUntil)}</span>` : ''}
+      </button>`;
+  }).join('');
+  row.querySelectorAll('[data-offer-service]').forEach((b) => {
+    b.addEventListener('click', () => openServiceDetails(b.dataset.offerService));
+  });
+}
+
 function toggleFavorite(id) {
   state.favorites = state.favorites.includes(id)
     ? state.favorites.filter(f => f !== id)
     : [...state.favorites, id];
   localStorage.setItem('ism_favs', JSON.stringify(state.favorites));
+  // مزامنة مع الحساب إن كان مسجلاً (دون انتظار — الحفظ المحلي فوري).
+  if (state.currentUser) db.setFavoriteRemote(id, state.favorites.includes(id));
   refreshUI();
 }
 
@@ -411,6 +453,22 @@ function openServiceDetails(id) {
         </button>
       ` : ''}
 
+      <div id="serviceOffersBox"></div>
+
+      <div class="mt-5 pt-4 border-t border-slate-800">
+        <h4 class="text-sm font-extrabold text-white mb-2 flex items-center gap-1.5">
+          <i data-lucide="qr-code" class="w-4 h-4 text-amber-400"></i>
+          كود QR الخاص بهذه الخدمة
+        </h4>
+        <div class="flex items-center gap-4">
+          <div id="qrBox" class="qr-box"></div>
+          <div class="min-w-0">
+            <p class="text-xs text-slate-300 leading-relaxed font-semibold">امسح الكود بأي موبايل لفتح صفحة الخدمة مباشرة — اطبعه والزقه على باب المحل.</p>
+            <button id="qrDownloadBtn" class="mt-2.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition">تحميل الكود (PNG)</button>
+          </div>
+        </div>
+      </div>
+
       <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-800">
         <p class="text-xs text-slate-400 font-bold">جاري تحميل التقييمات…</p>
       </div>
@@ -423,6 +481,8 @@ function openServiceDetails(id) {
     closeModal();
   });
   document.getElementById('detailDelBtn')?.addEventListener('click', () => handleDeleteService(srv.id));
+  renderServiceQr(srv);
+  renderServiceOffers(srv.id);
   loadDetailReviews(srv.id);
   document.getElementById('detailShareBtn')?.addEventListener('click', async () => {
     // الرابط الخاص بالخدمة: صفحة ثابتة فيها صورة واسم الخدمة (معاينة شيك في واتساب وفيسبوك)
@@ -446,6 +506,50 @@ function openServiceDetails(id) {
       }
     }
   });
+}
+
+// ===== كود QR وعروض الخدمة في صفحة التفاصيل =====
+function renderServiceQr(srv) {
+  const box = document.getElementById('qrBox');
+  if (!box || !window.QRCode) return;
+  const url = `${location.origin}/services/${srv.id}.html`;
+  box.innerHTML = '';
+  try {
+    new QRCode(box, { text: url, width: 140, height: 140, colorDark: '#0A2463', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  } catch (_) { return; }
+  document.getElementById('qrDownloadBtn')?.addEventListener('click', () => {
+    const canvas = box.querySelector('canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `qr-${srv.id}.png`;
+    a.click();
+  });
+}
+
+function renderServiceOffers(serviceId) {
+  const box = document.getElementById('serviceOffersBox');
+  if (!box) return;
+  const offers = state.offers.filter((o) => o.serviceId === serviceId);
+  if (!offers.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div class="mt-5 pt-4 border-t border-slate-800">
+      <h4 class="text-sm font-extrabold text-white mb-2 flex items-center gap-1.5">
+        <i data-lucide="badge-percent" class="w-4 h-4 text-amber-400"></i>
+        عروض هذه الخدمة
+      </h4>
+      <div class="space-y-2">
+        ${offers.map((o) => `
+          <div class="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-3">
+            <p class="text-xs font-extrabold text-white flex flex-wrap items-center gap-2">
+              ${o.discount ? `<span class="offer-card__discount">${escHtml(o.discount)}</span>` : ''} ${escHtml(o.title)}
+            </p>
+            ${o.details ? `<p class="text-xs text-slate-300 mt-1 leading-relaxed">${escHtml(o.details)}</p>` : ''}
+            ${o.validUntil ? `<p class="text-[11px] text-amber-400 font-bold mt-1.5">ساري حتى ${escHtml(o.validUntil)}</p>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  lucide.createIcons();
 }
 
 // ===== التقييمات الحقيقية في صفحة التفاصيل =====
@@ -587,6 +691,110 @@ function renderReviewForm(serviceId, mine) {
   });
 }
 
+// ===== صفحة الطوارئ: أرقام الطوارئ العامة + خدمات الطوارئ من الدليل =====
+function openEmergencyModal() {
+  const emergencyServices = state.services.filter((s) => s.isEmergency);
+  els.modalContent.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-extrabold text-rose-400 flex items-center gap-2">
+        <i data-lucide="siren" class="w-5 h-5"></i> طوارئ الإسماعيلية
+      </h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <p class="text-xs text-slate-400 font-semibold mb-3">أرقام الطوارئ العامة — دوس على الرقم للاتصال مباشرة:</p>
+    <div class="grid grid-cols-2 gap-2.5 mb-5">
+      ${EMERGENCY_NUMBERS.map((n) => `
+        <a href="tel:${n.number}" class="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-3.5 flex items-center gap-3">
+          <span class="w-9 h-9 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0"><i data-lucide="${n.icon}" class="w-5 h-5"></i></span>
+          <span class="min-w-0">
+            <span class="block text-xs font-bold text-slate-300">${n.name}</span>
+            <span class="block text-lg font-black text-white" dir="ltr">${n.number}</span>
+          </span>
+        </a>`).join('')}
+    </div>
+    <div class="flex justify-between items-center mb-2">
+      <h4 class="text-sm font-extrabold text-white">خدمات طوارئ و 24 ساعة في الدليل</h4>
+      <span class="text-xs font-bold text-slate-400">${emergencyServices.length} خدمة</span>
+    </div>
+    ${emergencyServices.length ? `
+      <div class="space-y-2 max-h-64 overflow-y-auto no-scrollbar">
+        ${emergencyServices.slice(0, 30).map((s) => `
+          <button data-emg-service="${s.id}" class="w-full text-right bg-slate-950/70 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+            <span class="min-w-0">
+              <span class="block text-xs font-extrabold text-white truncate">${escHtml(s.name)}</span>
+              <span class="block text-[11px] text-slate-400 mt-0.5 truncate">${escHtml(s.area)}${s.address ? ' • ' + escHtml(s.address) : ''}</span>
+            </span>
+            ${s.phone ? `<span class="text-xs font-black text-emerald-400 shrink-0" dir="ltr">${escHtml(s.phone)}</span>` : ''}
+          </button>`).join('')}
+      </div>
+      <button id="btnAllEmergency" class="w-full mt-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">عرض كل خدمات الطوارئ في القائمة</button>
+    ` : `<p class="text-xs text-slate-400 font-semibold">لا توجد خدمات طوارئ مسجلة حالياً.</p>`}
+  `;
+  showModal();
+  els.modalContent.querySelectorAll('[data-emg-service]').forEach((b) => {
+    b.addEventListener('click', () => { closeModal(); openServiceDetails(b.dataset.emgService); });
+  });
+  document.getElementById('btnAllEmergency')?.addEventListener('click', () => {
+    closeModal();
+    state.onlyEmergency = true;
+    state.onlyFavorites = false;
+    refreshUI();
+    els.servicesSection.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+// ===== الخريطة: عرض الخدمات على خريطة OpenStreetMap (Leaflet) =====
+let mapInstance = null;
+
+function openMapView() {
+  const section = document.getElementById('mapSection');
+  if (!section) return;
+  els.groupsSection.classList.add('hidden');
+  els.servicesSection.classList.add('hidden');
+  document.getElementById('offersSection')?.classList.add('hidden');
+  section.classList.remove('hidden');
+  section.scrollIntoView({ behavior: 'smooth' });
+  updateMapNote();
+  setTimeout(initMap, 80);
+}
+
+function closeMapView() {
+  document.getElementById('mapSection')?.classList.add('hidden');
+  resetToHome();
+}
+
+function updateMapNote() {
+  const note = document.getElementById('mapNote');
+  if (!note) return;
+  const plotted = state.services.filter((s) => SERVICE_LOCATIONS[s.id]).length;
+  note.textContent = `${plotted} خدمة على الخريطة من أصل ${state.services.length} — المواقع تقريبية للتوجيه العام، ودوس على أي علامة لعرض تفاصيل الخدمة.`;
+}
+
+function initMap() {
+  if (mapInstance || !window.L) return;
+  const el = document.getElementById('map');
+  if (!el) return;
+  mapInstance = L.map('map').setView([30.5965, 32.2715], 12);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(mapInstance);
+  const bounds = [];
+  state.services.forEach((srv) => {
+    const loc = SERVICE_LOCATIONS[srv.id];
+    if (!loc) return;
+    const marker = L.marker([loc.lat, loc.lng]).addTo(mapInstance);
+    marker.bindPopup(`<div style="text-align:right;direction:rtl;min-width:140px"><b>${escHtml(srv.name)}</b><br><span style="font-size:11px;color:#475569">${escHtml(srv.area || '')}</span><br><button data-map-service="${srv.id}" style="margin-top:6px;background:#2563EB;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer">عرض التفاصيل</button></div>`);
+    bounds.push([loc.lat, loc.lng]);
+  });
+  if (bounds.length) mapInstance.fitBounds(bounds, { padding: [24, 24] });
+  mapInstance.on('popupopen', (e) => {
+    const btn = e.popup.getElement()?.querySelector('[data-map-service]');
+    btn?.addEventListener('click', () => { closeMapView(); openServiceDetails(btn.dataset.mapService); });
+  });
+  mapInstance.invalidateSize();
+}
+
 function openTransportModal() {
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
@@ -682,6 +890,7 @@ function openAddServiceModal() {
       <h3 class="text-lg font-extrabold text-amber-400">إضافة خدمة جديدة للدليل</h3>
       <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
+    ${state.isAdmin ? '' : `<p class="text-xs text-slate-300 font-semibold bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 mb-3 leading-relaxed">طلبك يصل لإدارة الدليل ويراجَع قبل النشر — والصورة يضيفها الأدمن من صفحة محلك، أو ارفق رابط صورة مباشر بالأسفل.</p>`}
     <form id="addServiceForm" class="space-y-3 text-xs">
       <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <div class="grid grid-cols-2 gap-2">
@@ -695,16 +904,17 @@ function openAddServiceModal() {
           ${AREAS.map(a => `<option value="${a}">${a}</option>`).join('')}
         </select>
       </div>
-      <input type="text" name="address" required placeholder="العنوان التفصيلي" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="text" name="address" placeholder="العنوان التفصيلي (اختياري إن لم يكن مؤكداً)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <div class="grid grid-cols-2 gap-2">
         <input type="tel" name="phone" required placeholder="رقم الهاتف" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-        <input type="tel" name="whatsapp" required placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+        <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       </div>
+      <input type="url" name="imageUrl" placeholder="رابط صورة المحل (اختياري — رابط مباشر للصورة)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
       <input type="text" name="tags" placeholder="كلمات مفتاحية (مثال: دليفري، كشف، صيانة)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <label class="flex items-center gap-2 text-slate-300 py-1">
         <input type="checkbox" name="isEmergency" class="accent-amber-500"> متاح طوارئ / 24 ساعة
       </label>
-      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">حفظ ونشر الخدمة فوراً</button>
+      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">${state.isAdmin ? 'حفظ ونشر الخدمة فوراً' : 'إرسال الطلب للمراجعة'}</button>
     </form>
   `;
   showModal();
@@ -729,6 +939,7 @@ function openAddServiceModal() {
       address: fd.get('address'),
       phone: fd.get('phone'),
       whatsapp: fd.get('whatsapp'),
+      imageUrl: fd.get('imageUrl') || '',
       tags: fd.get('tags') || 'خدمات عامة',
       isEmergency: fd.get('isEmergency') === 'on',
       openHour: fd.get('isEmergency') === 'on' ? 0 : 9,
@@ -736,9 +947,6 @@ function openAddServiceModal() {
     };
 
     // الأدمن المسجل ينشر مباشرة في Firestore.
-    // الزائر غير المسجل: يُحفظ طلبه محلياً فقط ويُعرض له
-    // رسالة واضحة بأنه بانتظار مراجعة الإدارة، ولا ينكسر الموقع
-    // إذا كان Firebase غير متصل.
     if (auth.currentUser && isAdmin(auth.currentUser)) {
       try {
         await db.addService(payload);
@@ -746,18 +954,33 @@ function openAddServiceModal() {
         alert(err.message || 'تعذر نشر الخدمة. حاول مرة أخرى.');
         return;
       }
-    } else {
-      db.saveServiceLocally(payload);
-      closeModal();
       state.services = await db.getAllServices();
+      closeModal();
       refreshUI();
-      alert('تم حفظ طلبك محلياً وسيتم مراجعته من الإدارة قبل النشر العام. للتواصل المباشر مع الإدارة استخدم صفحة لوحة التحكم.');
       return;
     }
 
-    state.services = await db.getAllServices();
+    // مستخدم مسجل (غير أدمن): طلبه يذهب لقائمة مراجعة الأدمن ولا يُنشر مباشرة.
+    if (auth.currentUser) {
+      try {
+        await db.submitService({
+          ...payload,
+          submitterName: (state.profile && state.profile.name) || '',
+          submitterPhone: (state.profile && state.profile.phone) || ''
+        });
+      } catch (err) {
+        alert(err.message || 'تعذر إرسال الطلب. حاول مرة أخرى.');
+        return;
+      }
+      closeModal();
+      alert('تم إرسال طلبك لإدارة الدليل ✓ — سيراجعه الأدمن قبل النشر، وسيضيف صورة محلك من صفحتك. شكراً لمشاركتك!');
+      return;
+    }
+
+    // زائر غير مسجل: يسجل دخول أولاً (الحساب مجاني) ثم يرسل طلبه.
     closeModal();
-    refreshUI();
+    alert('سجّل دخولك أولاً لإرسال طلب إضافة خدمة — الحساب مجاني ويأخذ أقل من دقيقة.');
+    openAuthModal('signup');
   });
 }
 

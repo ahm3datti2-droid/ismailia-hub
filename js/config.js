@@ -149,3 +149,13 @@ export const TRANSPORT_ROUTES = [
   { from: "موقف الفردوس", to: "فايد", fare: "15 جنيه", line: "ميكروباص خط فايد", time: "30 دقيقة" },
   { from: "موقف الممر", to: "القنطرة غرب", fare: "16 جنيه", line: "ميكروباص القنطرة", time: "35 دقيقة" }
 ];
+
+// أرقام الطوارئ العامة في مصر — تظهر في صفحة الطوارئ (اتصال مباشر).
+export const EMERGENCY_NUMBERS = [
+  { name: "الإسعاف", number: "123", icon: "ambulance" },
+  { name: "الشرطة / النجدة", number: "122", icon: "shield-alert" },
+  { name: "المطافئ", number: "180", icon: "flame" },
+  { name: "طوارئ الكهرباء", number: "121", icon: "zap" },
+  { name: "طوارئ المياه", number: "125", icon: "droplets" },
+  { name: "طوارئ الغاز", number: "129", icon: "fuel" }
+];

@@ -6,8 +6,11 @@
 //   تتطلب مستخدماً مسجلاً في Firebase Auth، وتتحقق قواعد Firestore
 //   من ذلك أيضاً من جهة الخادم. أي كتابة من غير تسجيل دخول ترفض
 //   برسالة عربية واضحة.
-// - طلبات الزوار من الموقع العام تُحفظ محلياً فقط (بانتظار مراجعة الأدمن)
-//   عبر saveServiceLocally()، ولا تُنشر في Firestore إلا بعد موافقة الأدمن.
+// - طلبات الزوار من الموقع العام تُرسل إلى مجموعة "pendingServices"
+//   في Firestore (بانتظار مراجعة الأدمن) عبر submitService()،
+//   ولا تُنشر في مجموعة services إلا بعد موافقة الأدمن.
+//   (النسخة المحلية القديمة saveServiceLocally ما زالت موجودة
+//   كبديل عند تعذر الاتصال، وتظهر لصاحب الجهاز فقط.)
 import {
   collection,
   doc,
@@ -27,6 +30,8 @@ import { ADMIN_EMAIL } from './config.js';
 
 export const SERVICES_COLLECTION = 'services';
 export const REVIEWS_COLLECTION = 'reviews';
+export const PENDING_SERVICES_COLLECTION = 'pendingServices';
+export const OFFERS_COLLECTION = 'offers';
 const PENDING_KEY = 'ismailia_pending_services_v1';
 
 export const INITIAL_SERVICES = [];
@@ -309,6 +314,155 @@ class DatabaseService {
       ...patch,
       updatedAt: serverTimestamp()
     });
+  }
+
+  // ===== طلبات إضافة خدمات من أصحاب المحلات (مجموعة pendingServices) =====
+  // - أي مستخدم مسجل يرسل طلبه؛ الطلب لا يظهر للعامة أبداً.
+  // - الأدمن يراجع الطلبات من لوحة التحكم: يوافق (ينشر الخدمة في
+  //   مجموعة services بعد إضافة صورة موثقة) أو يرفض (يحذف الطلب).
+  // - الصورة ليست جزءاً من الطلب: صاحب المحل قد يرفق رابط صورة
+  //   (imageUrl) اختيارياً، والأدمن يتحقق منها قبل النشر — قاعدة
+  //   "لا نشر بدون صورة" تظل سارية عند الموافقة.
+  async submitService(payload) {
+    const user = requireSignedIn();
+    const name = String(payload?.name || '').trim();
+    const phone = String(payload?.phone || '').trim();
+    if (name.length < 2) throw new Error('اكتب اسم النشاط التجاري.');
+    if (!phone) throw new Error('اكتب رقم الهاتف للتواصل.');
+    const ref = await addDoc(collection(firestoreDb, PENDING_SERVICES_COLLECTION), {
+      name,
+      category: String(payload.category || 'maintenance'),
+      subcategory: String(payload.subcategory || ''),
+      area: String(payload.area || ''),
+      address: String(payload.address || '').trim(),
+      phone,
+      whatsapp: String(payload.whatsapp || '').trim(),
+      tags: String(payload.tags || '').trim(),
+      imageUrl: String(payload.imageUrl || '').trim(),
+      isEmergency: Boolean(payload.isEmergency),
+      openHour: Number(payload.openHour ?? 9),
+      closeHour: Number(payload.closeHour ?? 23),
+      submittedBy: user.uid,
+      submitterName: String(payload.submitterName || ''),
+      submitterPhone: String(payload.submitterPhone || ''),
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  // طلبات الإضافة بانتظار المراجعة — للأدمن فقط.
+  async getPendingServices() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, PENDING_SERVICES_COLLECTION),
+      where('status', '==', 'pending')
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  // الموافقة على طلب: نشر الخدمة ثم حذف الطلب.
+  async approvePendingService(pendingId, serviceData) {
+    requireAdminUser();
+    const created = await this.addService(serviceData);
+    await deleteDoc(doc(firestoreDb, PENDING_SERVICES_COLLECTION, pendingId));
+    return created;
+  }
+
+  async deletePendingService(pendingId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, PENDING_SERVICES_COLLECTION, pendingId));
+  }
+
+  // ===== العروض والخصومات (مجموعة offers) =====
+  // - العرض ينشئه الأدمن من لوحة التحكم (خدمة + عنوان + خصم + تاريخ انتهاء).
+  // - العرض الظاهر للعامة هو فقط active=true ولم ينتهِ تاريخه بعد.
+  async getActiveOffers() {
+    const snap = await getDocs(query(
+      collection(firestoreDb, OFFERS_COLLECTION),
+      where('active', '==', true)
+    ));
+    const today = new Date().toISOString().slice(0, 10);
+    const list = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((o) => !o.validUntil || String(o.validUntil) >= today);
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getAllOffers() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, OFFERS_COLLECTION));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async addOffer(data) {
+    requireAdminUser();
+    if (!data.serviceId) throw new Error('اختر الخدمة صاحبة العرض.');
+    if (!String(data.title || '').trim()) throw new Error('اكتب عنوان العرض.');
+    const ref = await addDoc(collection(firestoreDb, OFFERS_COLLECTION), {
+      serviceId: String(data.serviceId),
+      title: String(data.title).trim().slice(0, 120),
+      details: String(data.details || '').trim().slice(0, 300),
+      discount: String(data.discount || '').trim().slice(0, 40),
+      validUntil: String(data.validUntil || ''),
+      active: data.active !== false,
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async deleteOffer(offerId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, OFFERS_COLLECTION, offerId));
+  }
+
+  async setOfferActive(offerId, active) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, OFFERS_COLLECTION, offerId), { active: Boolean(active) });
+  }
+
+  // ===== مزامنة المحفوظات مع حساب المستخدم =====
+  // المحفوظات تُحفظ محلياً دائماً (حتى للضيوف)، وإن كان المستخدم
+  // مسجلاً تُزامَن أيضاً مع مجموعة users/{uid}/favorites في Firestore
+  // حتى تظهر على أي جهاز يسجل دخوله منه.
+  async getRemoteFavorites() {
+    const user = auth.currentUser;
+    if (!user) return [];
+    try {
+      const snap = await getDocs(collection(firestoreDb, 'users', user.uid, 'favorites'));
+      return snap.docs.map((d) => d.id);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  async setFavoriteRemote(serviceId, on) {
+    const user = auth.currentUser;
+    if (!user || !serviceId) return;
+    try {
+      const ref = doc(firestoreDb, 'users', user.uid, 'favorites', serviceId);
+      if (on) await setDoc(ref, { serviceId, createdAt: serverTimestamp() });
+      else await deleteDoc(ref);
+    } catch (_) {
+      // المزامنة تحسين إضافي — فشلها لا يمنع الحفظ المحلي.
+    }
   }
 }
 
