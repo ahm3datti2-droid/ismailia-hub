@@ -291,7 +291,7 @@ export function renderBannerSlider(container, banners, onOpenService) {
     <div class="banner-slider">
       ${banners.map((b, n) => {
         const hasLink = b.linkType === 'service' || b.linkType === 'url';
-        const cta = b.linkType === 'service' ? 'عرض الخدمة' : (b.linkType === 'url' ? 'اعرف المزيد' : '');
+        const cta = b.linkType === 'service' ? 'عرض الخدمة' : (b.linkType === 'url' ? 'تواصل الآن' : '');
         return `
         <div class="banner-slide${n === 0 ? ' banner-slide--active' : ''}${hasLink ? ' banner-slide--linked' : ''}" data-banner-i="${n}">
           <img src="${escAttr(b.imageUrl)}" alt="${escAttr(b.title)}" referrerpolicy="no-referrer" onerror="this.remove()">

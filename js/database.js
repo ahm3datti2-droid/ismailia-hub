@@ -482,7 +482,10 @@ class DatabaseService {
       collection(firestoreDb, BANNERS_COLLECTION),
       where('active', '==', true)
     ));
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const today = new Date().toISOString().slice(0, 10);
+    const list = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((b) => !b.validUntil || String(b.validUntil) >= today);
     list.sort((a, b) => (Number(a.order || 0) - Number(b.order || 0))
       || ((b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0)));
     return list;
@@ -509,6 +512,7 @@ class DatabaseService {
       serviceId: String(data.serviceId || ''),
       url: String(data.url || '').trim(),
       order: Number(data.order || 0),
+      validUntil: String(data.validUntil || ''),
       active: data.active !== false,
       createdAt: serverTimestamp()
     });
@@ -527,6 +531,7 @@ class DatabaseService {
       serviceId: String(data.serviceId || ''),
       url: String(data.url || '').trim(),
       order: Number(data.order || 0),
+      validUntil: String(data.validUntil || ''),
       active: data.active !== false
     });
   }

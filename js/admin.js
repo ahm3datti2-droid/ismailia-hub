@@ -371,13 +371,16 @@ function renderBannersList() {
     els.bannersList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد إعلانات بعد — أضف أول إعلان من النموذج أعلاه وسيظهر في شاشة العرض أول الموقع.</p>`;
     return;
   }
-  els.bannersList.innerHTML = list.map((b) => `
+  const today = new Date().toISOString().slice(0, 10);
+  els.bannersList.innerHTML = list.map((b) => {
+    const expired = b.validUntil && String(b.validUntil) < today;
+    return `
     <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
       <div class="flex items-center gap-3 min-w-0">
         <img src="${esc(b.imageUrl)}" alt="" referrerpolicy="no-referrer" class="w-16 h-10 object-cover rounded-lg bg-white shrink-0" onerror="this.remove()">
         <div class="min-w-0">
           <p class="text-xs font-extrabold text-white truncate">${esc(b.title)} <span class="text-amber-400 font-bold">#${Number(b.order || 0)}</span></p>
-          <p class="text-[11px] text-slate-400 mt-0.5 truncate">${esc(bannerLinkLabel(b))} • ${b.active ? '<span class="text-emerald-400 font-bold">مفعّل</span>' : '<span class="text-slate-500 font-bold">متوقف</span>'}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5 truncate">${esc(bannerLinkLabel(b))}${b.validUntil ? ` • حتى ${esc(b.validUntil)}` : ''} • ${expired ? '<span class="text-rose-400 font-bold">منتهي</span>' : (b.active ? '<span class="text-emerald-400 font-bold">مفعّل</span>' : '<span class="text-slate-500 font-bold">متوقف</span>')}</p>
         </div>
       </div>
       <div class="flex gap-1.5 shrink-0">
@@ -443,6 +446,7 @@ function startEditBanner(id) {
   f.serviceId.value = b.serviceId || '';
   f.url.value = b.url || '';
   f.order.value = b.order ?? 0;
+  f.validUntil.value = b.validUntil || '';
   f.active.checked = b.active !== false;
   updateBannerLinkFields();
   if (els.bannerSubmitBtn) els.bannerSubmitBtn.textContent = 'حفظ التعديلات';
@@ -836,6 +840,7 @@ function bindEvents() {
       serviceId: fd.get('serviceId'),
       url: fd.get('url'),
       order: fd.get('order'),
+      validUntil: fd.get('validUntil'),
       active: fd.get('active') === 'on'
     };
     try {
