@@ -10,6 +10,7 @@ const state = {
   activeSubcategory: 'all',
   selectedArea: 'all',
   searchQuery: '',
+  showAll: false, // "كل الخدمات": عرض كل الأنشطة في قائمة واحدة (يختلف عن الرئيسية/بلاطات الأقسام)
   onlyEmergency: false,
   onlyFavorites: false,
   isAdmin: false,
@@ -69,8 +70,10 @@ async function initApp() {
 }
 
 // اختيار قسم من بلاطات الصفحة الرئيسية: يعرض خدماته فقط.
+// بلاطة "كل الخدمات" تعرض كل الأنشطة في قائمة واحدة.
 function selectGroupTile(groupId) {
   state.activeCategory = groupId;
+  state.showAll = groupId === 'all';
   state.activeSubcategory = 'all';
   state.onlyEmergency = false;
   state.onlyFavorites = false;
@@ -84,6 +87,7 @@ function resetToHome() {
   state.activeSubcategory = 'all';
   state.selectedArea = 'all';
   state.searchQuery = '';
+  state.showAll = false;
   state.onlyEmergency = false;
   state.onlyFavorites = false;
   els.searchInput.value = '';
@@ -198,6 +202,7 @@ function updateSectionTitle() {
 function refreshUI() {
   renderCategories(els.categories, state.activeCategory, (catId) => {
     state.activeCategory = catId;
+    state.showAll = catId === 'all';
     state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
@@ -212,7 +217,7 @@ function refreshUI() {
   // الصفحة الرئيسية: بلا أي فلتر أو بحث تعرض بلاطات الأقسام فقط،
   // وأي اختيار أو بحث أو فلتر يعرض قائمة الخدمات بدلها.
   const isHome = state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
-    state.selectedArea === 'all' && !state.searchQuery && !state.onlyEmergency && !state.onlyFavorites;
+    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites;
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   updateSectionTitle();
