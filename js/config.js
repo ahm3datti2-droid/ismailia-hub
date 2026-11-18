@@ -26,6 +26,9 @@ export const GROUPS = [
     { id: 'dairy', name: 'ألبان ومنتجاتها' },
     { id: 'juices', name: 'عصائر ومثلجات' }
   ]},
+  { id: 'delivery', name: 'دليفري', icon: 'bike', subs: [
+    { id: 'delivery', name: 'توصيل طلبات' }
+  ]},
   { id: 'fashion', name: 'الملابس والأزياء', icon: 'shirt', subs: [
     { id: 'clothing', name: 'ملابس' },
     { id: 'mens', name: 'ملابس رجالي' },
