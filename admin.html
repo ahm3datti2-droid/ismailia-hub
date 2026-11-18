@@ -13,6 +13,16 @@
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // هوية الإسماعيلية (أصفر × أزرق): كل درجات amber تصبح الأصفر الرسمي #FFC400،
+    // مع لوحة brand الزرقاء للاستخدام المباشر.
+    tailwind.config = {
+      theme: { extend: { colors: {
+        amber: { 300: '#FFE45C', 400: '#FFC400', 500: '#FFC400', 600: '#E0A800' },
+        brand: { yellow: '#FFC400', blue: '#2563EB', deep: '#0A2463', light: '#60A5FA' }
+      } } }
+    };
+  </script>
   <script defer src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -21,9 +31,7 @@
   <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
-          IS
-        </div>
+        <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 rounded-2xl shadow-lg shadow-blue-900/40">
         <div>
           <h1 class="text-lg font-black text-white leading-tight">لوحة تحكم الإدارة</h1>
           <p class="text-[11px] text-amber-400 font-semibold">خدمات الإسماعيلية — Firebase + Firestore</p>

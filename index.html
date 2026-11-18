@@ -22,6 +22,16 @@
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // هوية الإسماعيلية (أصفر × أزرق): كل درجات amber تصبح الأصفر الرسمي #FFC400،
+    // مع لوحة brand الزرقاء للاستخدام المباشر.
+    tailwind.config = {
+      theme: { extend: { colors: {
+        amber: { 300: '#FFE45C', 400: '#FFC400', 500: '#FFC400', 600: '#E0A800' },
+        brand: { yellow: '#FFC400', blue: '#2563EB', deep: '#0A2463', light: '#60A5FA' }
+      } } }
+    };
+  </script>
   <script defer src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>

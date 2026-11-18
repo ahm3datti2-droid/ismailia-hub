@@ -5,12 +5,15 @@
   --bg-dark: #090d16;
   --bg-card: #111827;
   --bg-card-hover: #16213a;
-  --accent-gold: #f59e0b;
-  --accent-gold-soft: rgba(245, 158, 11, 0.12);
+  --accent-gold: #FFC400; /* أصفر الإسماعيلية الرسمي */
+  --accent-gold-soft: rgba(255, 196, 0, 0.12);
+  --accent-blue: #2563EB; /* أزرق الإسماعيلية الرسمي */
+  --accent-blue-light: #60A5FA;
+  --accent-blue-deep: #0A2463;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --radius-card: 1.25rem;
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
-  --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(245, 158, 11, 0.25);
+  --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 196, 0, 0.25);
 }
 
 * { box-sizing: border-box; }
@@ -19,7 +22,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background-color: var(--bg-dark);
+  background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.16), transparent 60%), var(--bg-dark);
   color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
@@ -62,7 +65,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .filter-bar { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
 
 .story-ring {
-  background: linear-gradient(45deg, #f59e0b, #ef4444, #eab308);
+  background: linear-gradient(45deg, #FFC400, #2563EB, #0A2463);
   padding: 2.5px;
 }
 
@@ -92,7 +95,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 }
 
 .service-card:hover {
-  border-color: rgba(245, 158, 11, 0.4);
+  border-color: rgba(255, 196, 0, 0.4);
   box-shadow: var(--shadow-card-hover);
   transform: translateY(-2px);
 }
@@ -120,7 +123,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   padding: 0.45rem; cursor: pointer; overflow: hidden;
 }
 .service-thumb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
-.service-thumb--fallback { color: #b45309; background: linear-gradient(160deg, #fef3c7, #fde68a); }
+.service-thumb--fallback { color: #0A2463; background: linear-gradient(160deg, #DBEAFE, #BFDBFE); }
 .service-thumb--fallback svg { width: 2rem; height: 2rem; }
 .service-thumb__emg {
   position: absolute; top: 0.35rem; inset-inline-start: 0.35rem; z-index: 1;
@@ -136,27 +139,27 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   text-wrap: balance; /* يوزع السطور بالتساوي فلا تبقى كلمة يتيمة وحدها */
   min-height: 2.76rem; /* سطران ثابتان فيحاذي كل البطاقات */
 }
-.service-name:hover { color: #fbbf24; }
-.service-verified { display: inline-block; width: 0.95rem; height: 0.95rem; color: #38bdf8; vertical-align: -0.15rem; }
+.service-name:hover { color: #FFC400; }
+.service-verified { display: inline-block; width: 0.95rem; height: 0.95rem; color: #60A5FA; vertical-align: -0.15rem; }
 .service-fav { flex-shrink: 0; padding: 0.4rem; border-radius: 999px; color: #94a3b8; transition: color 0.15s ease, background 0.15s ease; }
-.service-fav:hover { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
-.service-fav--on { color: #fbbf24; }
-.service-cat { font-size: 0.7rem; font-weight: 700; color: #fbbf24; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.service-fav:hover { color: #FFC400; background: rgba(255, 196, 0, 0.1); }
+.service-fav--on { color: #FFC400; }
+.service-cat { font-size: 0.7rem; font-weight: 700; color: #FFC400; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .service-addr { display: flex; align-items: flex-start; gap: 0.3rem; font-size: 0.72rem; color: #cbd5e1; line-height: 1.55; margin-top: 0.3rem; min-height: 2.24rem; }
-.service-addr svg { color: rgba(245, 158, 11, 0.8); margin-top: 0.1rem; }
+.service-addr svg { color: rgba(255, 196, 0, 0.8); margin-top: 0.1rem; }
 .service-addr span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .service-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; font-size: 0.7rem; font-weight: 700; color: #94a3b8; margin-top: 0.35rem; }
-.service-meta__rating { display: inline-flex; align-items: center; gap: 0.2rem; color: #fbbf24; }
+.service-meta__rating { display: inline-flex; align-items: center; gap: 0.2rem; color: #FFC400; }
 .service-meta__dot { color: #475569; }
 .service-actions { display: flex; gap: 0.5rem; margin-top: auto; padding-top: 0.8rem; } /* تثبيت الأزرار أسفل كل بطاقة مهما اختلف طول المحتوى */
 .service-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem 0.25rem; border-radius: 0.8rem; font-size: 0.75rem; font-weight: 800; transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease; white-space: nowrap; }
 .service-btn:active { transform: scale(0.97); }
 .service-btn--wa { background: #059669; color: #fff; }
 .service-btn--wa:hover { background: #10b981; }
-.service-btn--call { background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.08); }
-.service-btn--call:hover { background: #334155; }
-.service-btn--details { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
-.service-btn--details:hover { background: #f59e0b; color: #090d16; }
+.service-btn--call { background: #2563EB; color: #fff; border: 1px solid transparent; }
+.service-btn--call:hover { background: #1D4ED8; }
+.service-btn--details { background: rgba(255, 196, 0, 0.1); border: 1px solid rgba(255, 196, 0, 0.3); color: #FFC400; }
+.service-btn--details:hover { background: #FFC400; color: #090d16; }
 /* حذف الأدمن: رابط نصي صغير أسفل الأزرار بدل شريط أحمر عريض */
 .service-del { display: flex; align-items: center; justify-content: center; gap: 0.3rem; width: 100%; margin-top: 0.55rem; padding: 0.3rem; font-size: 0.68rem; font-weight: 700; color: rgba(251, 113, 133, 0.65); background: none; border: none; cursor: pointer; transition: color 0.15s ease; }
 .service-del:hover { color: #fb7185; }
@@ -171,17 +174,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.group-tile:hover { border-color: rgba(245, 158, 11, 0.4); transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+.group-tile:hover { border-color: rgba(255, 196, 0, 0.4); transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
 .group-tile:active { transform: scale(0.97); }
 .group-tile__icon {
   width: 3.25rem; height: 3.25rem; border-radius: 1rem;
-  background: rgba(245, 158, 11, 0.12); color: #fbbf24;
+  background: rgba(255, 196, 0, 0.12); color: #FFC400;
   display: flex; align-items: center; justify-content: center;
 }
 .group-tile__icon svg { width: 1.5rem; height: 1.5rem; }
 .group-tile--all .group-tile__icon {
-  background: linear-gradient(135deg, #fbbf24, #d97706); color: #090d16;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+  background: linear-gradient(135deg, #2563EB, #0A2463); color: #FFC400;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 .group-tile__name { font-size: 0.8rem; font-weight: 800; color: #f1f5f9; text-align: center; line-height: 1.4; }
 .group-tile__count { font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
@@ -205,7 +208,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   white-space: nowrap;
 }
 .badge--area { background: #1e293b; color: var(--accent-gold); }
-.badge--verified { color: #38bdf8; }
+.badge--verified { color: #60A5FA; }
 .badge--emergency { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
 
 /* وسوم الخدمة كـ chips صغيرة */
@@ -229,7 +232,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   font-weight: 800;
   color: var(--accent-gold);
   background: var(--accent-gold-soft);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255, 196, 0, 0.2);
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
   font-size: 0.7rem;
@@ -241,7 +244,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .cat-btn[aria-pressed="true"] {
   background: var(--accent-gold);
   color: #090d16;
-  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 6px 18px rgba(255, 196, 0, 0.3);
 }
 
 /* أزرار التنقل السفلي — منطقة لمس أكبر */
@@ -288,7 +291,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 }
 .admin-stat:hover {
   transform: translateY(-2px);
-  border-color: rgba(245, 158, 11, 0.35);
+  border-color: rgba(255, 196, 0, 0.35);
   box-shadow: var(--shadow-card-hover);
 }
 
@@ -306,13 +309,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* ---------- الهيرو ---------- */
 .hero-panel {
-  background: linear-gradient(165deg, #101828 0%, #0b1120 55%, #0a0f1c 100%);
+  background: linear-gradient(165deg, #10275C 0%, #0b1120 55%, #0a0f1c 100%);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 .hero-glow {
   background:
-    radial-gradient(55% 130% at 88% -10%, rgba(245, 158, 11, 0.22), transparent 60%),
-    radial-gradient(45% 120% at 0% 110%, rgba(56, 189, 248, 0.12), transparent 55%);
+    radial-gradient(55% 130% at 88% -10%, rgba(255, 196, 0, 0.22), transparent 60%),
+    radial-gradient(45% 120% at 0% 110%, rgba(37, 99, 235, 0.28), transparent 55%);
 }
 .hero-stat {
   display: flex;
@@ -323,7 +326,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   border-radius: 0.9rem;
   padding: 0.5rem 0.8rem;
 }
-.hero-stat__num { font-size: 1.15rem; font-weight: 900; color: #fbbf24; line-height: 1; }
+.hero-stat__num { font-size: 1.15rem; font-weight: 900; color: #FFC400; line-height: 1; }
 .hero-stat__label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; }
 
 /* ---------- صفحة تفاصيل الخدمة (داخل النافذة المنبثقة) ---------- */
@@ -345,7 +348,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   border-bottom: 1px solid var(--border-subtle);
 }
 .detail-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.detail-photo__fallback { color: #f59e0b; opacity: 0.55; }
+.detail-photo__fallback { color: #2563EB; opacity: 0.55; }
 .detail-photo__fallback svg { width: 4rem; height: 4rem; }
 .detail-close {
   position: absolute;
@@ -393,14 +396,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   padding: 0.7rem 0.85rem;
   margin-top: 0.6rem;
 }
-a.detail-row:hover { border-color: rgba(245, 158, 11, 0.35); }
+a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
 .detail-row__icon {
   width: 2rem;
   height: 2rem;
   flex-shrink: 0;
   border-radius: 0.65rem;
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
+  background: rgba(255, 196, 0, 0.12);
+  color: #FFC400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -423,10 +426,10 @@ a.detail-row:hover { border-color: rgba(245, 158, 11, 0.35); }
 .detail-action svg { width: 1rem; height: 1rem; }
 .detail-action--wa { background: #059669; color: #fff; }
 .detail-action--wa:hover { background: #10b981; }
-.detail-action--call { background: #f59e0b; color: #090d16; }
-.detail-action--call:hover { background: #fbbf24; }
-.detail-action--map { background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.35); color: #38bdf8; }
-.detail-action--map:hover { background: rgba(14, 165, 233, 0.25); }
+.detail-action--call { background: #2563EB; color: #fff; }
+.detail-action--call:hover { background: #1D4ED8; }
+.detail-action--map { background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); color: #60A5FA; }
+.detail-action--map:hover { background: rgba(37, 99, 235, 0.25); }
 .detail-action--share { background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.25); color: #e2e8f0; }
 .detail-action--share:hover { background: rgba(148, 163, 184, 0.18); }
 .detail-action--danger { background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); color: #fb7185; }
