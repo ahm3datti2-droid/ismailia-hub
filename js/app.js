@@ -1,7 +1,8 @@
 import { AREAS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
 import { renderCategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus } from './ui.js';
-import { auth, onAuthStateChanged, isAdmin } from './firebase.js';
+import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
+import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
 const state = {
   services: [],
@@ -11,6 +12,8 @@ const state = {
   onlyEmergency: false,
   onlyFavorites: false,
   isAdmin: false,
+  currentUser: null,
+  profile: null,
   favorites: JSON.parse(localStorage.getItem('ism_favs')) || []
 };
 
@@ -40,9 +43,12 @@ async function initApp() {
   // وضع الإدارة في الموقع العام يظهر فقط إذا كان المستخدم الحالي
   // مسجلاً في Firebase Auth وبريده هو بريد الأدمن. لا يوجد أي
   // رقم سري أو وضع إدارة محلي في هذا الملف.
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     const wasAdmin = state.isAdmin;
     state.isAdmin = isAdmin(user);
+    state.currentUser = user;
+    state.profile = user ? await getProfile(user.uid) : null;
+    updateAccountButton();
     if (wasAdmin !== state.isAdmin) refreshUI();
   });
 
@@ -113,6 +119,10 @@ function bindEvents() {
   });
 
   document.getElementById('btnAddService').addEventListener('click', openAddServiceModal);
+  document.getElementById('btnAccount').addEventListener('click', () => {
+    if (state.currentUser) openProfileModal();
+    else openAuthModal('login');
+  });
   // زر الإدارة يفتح لوحة التحكم — الدخول فيها عبر Firebase Auth فقط.
   document.getElementById('btnAdminToggle').addEventListener('click', () => {
     window.location.href = 'admin.html';
@@ -265,6 +275,8 @@ function openAddServiceModal() {
           <option value="maintenance">صيانة وحرفيين</option>
           <option value="cars">خدمات سيارات</option>
           <option value="real_estate">عقارات</option>
+          <option value="mobiles">موبايلات</option>
+          <option value="clothing">ملابس</option>
         </select>
         <select name="area" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
           ${AREAS.map(a => `<option value="${a}">${a}</option>`).join('')}
@@ -321,6 +333,124 @@ function openAddServiceModal() {
     }
 
     state.services = await db.getAllServices();
+    closeModal();
+    refreshUI();
+  });
+}
+
+function updateAccountButton() {
+  const label = document.getElementById('accountLabel');
+  if (!label) return;
+  if (state.currentUser) {
+    const name = (state.profile && state.profile.name) || (state.isAdmin ? 'الأدمن' : 'حسابي');
+    label.textContent = String(name).split(' ')[0];
+  } else {
+    label.textContent = 'حسابي';
+  }
+}
+
+// نافذة حساب المستخدم: تبويبا تسجيل الدخول وإنشاء حساب جديد.
+// الحقول المطلوبة: الاسم، رقم الموبايل، كلمة السر وتأكيدها، والبريد اختياري.
+function openAuthModal(mode = 'login') {
+  els.modalContent.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-extrabold text-amber-400">حسابك في دليل الإسماعيلية</h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <button id="tabLogin" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'login' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">تسجيل الدخول</button>
+      <button id="tabSignup" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'signup' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">إنشاء حساب</button>
+    </div>
+    <p id="authError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
+
+    <form id="loginForm" class="space-y-3 text-xs ${mode === 'signup' ? 'hidden' : ''}">
+      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+      <input type="password" name="password" required placeholder="كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">دخول</button>
+    </form>
+
+    <form id="signupForm" class="space-y-3 text-xs ${mode === 'login' ? 'hidden' : ''}">
+      <input type="text" name="name" required placeholder="الاسم بالكامل" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+      <input type="email" name="email" placeholder="البريد الإلكتروني (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="password" name="password" required minlength="6" placeholder="كلمة السر (6 أحرف على الأقل)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="password" name="confirmPassword" required minlength="6" placeholder="تأكيد كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إنشاء الحساب</button>
+    </form>
+  `;
+  showModal();
+
+  const showError = (msg) => {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  };
+  const setLoading = (form, loading) => {
+    form.querySelector('button[type="submit"]').disabled = loading;
+    form.querySelector('button[type="submit"]').style.opacity = loading ? '0.6' : '1';
+  };
+
+  document.getElementById('tabLogin').addEventListener('click', () => openAuthModal('login'));
+  document.getElementById('tabSignup').addEventListener('click', () => openAuthModal('signup'));
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    setLoading(e.target, true);
+    try {
+      const { profile } = await signIn({ phone: fd.get('phone'), password: fd.get('password') });
+      closeModal();
+      alert(`أهلاً بيك${profile && profile.name ? '، ' + profile.name : ''}! تم تسجيل دخولك.`);
+    } catch (err) {
+      showError(translateAuthError(err));
+    } finally {
+      setLoading(e.target, false);
+    }
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    if (fd.get('password') !== fd.get('confirmPassword')) {
+      showError('كلمتا السر غير متطابقتين. تأكد من تأكيد كلمة السر.');
+      return;
+    }
+    setLoading(e.target, true);
+    try {
+      const { profile } = await signUp({
+        name: fd.get('name'),
+        phone: fd.get('phone'),
+        email: fd.get('email'),
+        password: fd.get('password')
+      });
+      closeModal();
+      alert(`تم إنشاء حسابك بنجاح. أهلاً بيك، ${profile.name}!`);
+    } catch (err) {
+      showError(translateAuthError(err));
+    } finally {
+      setLoading(e.target, false);
+    }
+  });
+}
+
+function openProfileModal() {
+  const p = state.profile;
+  els.modalContent.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-extrabold text-amber-400">حسابي</h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 mb-4 space-y-2 text-xs">
+      <p class="text-white font-extrabold text-sm">${p ? p.name : (state.isAdmin ? 'الأدمن' : 'مستخدم')}</p>
+      ${p && p.phone ? `<p class="text-slate-300">📱 ${p.phone}</p>` : ''}
+      ${p && p.email ? `<p class="text-slate-300">✉️ ${p.email}</p>` : ''}
+      ${state.isAdmin ? '<p class="text-amber-400 font-bold">حساب إدارة الدليل</p>' : ''}
+    </div>
+    <button id="btnLogout" class="w-full bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">تسجيل الخروج</button>
+  `;
+  showModal();
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await signOut(auth);
     closeModal();
     refreshUI();
   });

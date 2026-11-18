@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ismailia-hub-v4';
+const CACHE_NAME = 'ismailia-hub-v5';
 const ASSETS = [
   '/',
   '/index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   '/css/style.css',
   '/js/config.js',
   '/js/firebase.js',
+  '/js/auth.js',
   '/js/database.js',
   '/js/ui.js',
   '/js/app.js',
