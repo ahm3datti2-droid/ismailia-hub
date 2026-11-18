@@ -469,6 +469,11 @@ function initAdmin() {
     opt.textContent = c.name;
     els.categoryFilter.appendChild(opt);
   });
+  // قائمة الأقسام في نموذج الخدمة — من GROUPS حتى تظهر أي أقسام جديدة تلقائياً.
+  const groupSelect = document.getElementById('adminGroupSelect');
+  if (groupSelect) {
+    groupSelect.innerHTML = GROUPS.map((g) => `<option value="${g.id}">${g.name}</option>`).join('');
+  }
   // قائمة المناطق في نموذج الخدمة.
   const areaSelect = document.querySelector('select[name="area"]');
   AREAS.forEach((a) => {
