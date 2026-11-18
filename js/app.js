@@ -1,7 +1,7 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
 import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -306,12 +306,12 @@ function toggleFavorite(id) {
   refreshUI();
 }
 
-async function handleDeleteService(id) {
+async function handleDeleteService(id, btn) {
   if (!state.isAdmin) {
     alert('حذف الخدمات متاح من لوحة تحكم الإدارة فقط.');
     return;
   }
-  if (confirm('هل أنت متأكد من حذف هذه الخدمة نهائياً؟')) {
+  armDeleteConfirm(btn, async () => {
     try {
       await db.deleteService(id);
       closeModal();
@@ -320,7 +320,7 @@ async function handleDeleteService(id) {
     } catch (err) {
       alert(err.message || 'تعذر حذف الخدمة. حاول مرة أخرى.');
     }
-  }
+  });
 }
 
 function openServiceDetails(id) {
@@ -480,7 +480,7 @@ function openServiceDetails(id) {
     toggleFavorite(srv.id);
     closeModal();
   });
-  document.getElementById('detailDelBtn')?.addEventListener('click', () => handleDeleteService(srv.id));
+  document.getElementById('detailDelBtn')?.addEventListener('click', (e) => handleDeleteService(srv.id, e.currentTarget));
   renderServiceQr(srv);
   renderServiceOffers(srv.id);
   loadDetailReviews(srv.id);

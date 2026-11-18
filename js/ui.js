@@ -1,5 +1,29 @@
 import { CATEGORIES, GROUPS, subcategoryInfo } from './config.js';
 
+// تأكيد حذف بخطوتين داخل الزر نفسه: الضغطة الأولى تحوّل الزر
+// إلى "تأكيد الحذف؟" لمدة 4 ثوانٍ، والثانية تنفّذ الحذف.
+// (نوافذ confirm() الأصلية لا تظهر موثوقاً في بعض المتصفحات
+// المدمجة داخل التطبيقات، فتتوقف أزرار الحذف عن العمل بصمت.)
+export function armDeleteConfirm(btn, action) {
+  if (!btn) return;
+  if (btn.dataset.armed === '1') {
+    delete btn.dataset.armed;
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    action();
+    return;
+  }
+  btn.dataset.armed = '1';
+  btn.dataset.origText = btn.textContent;
+  btn.textContent = 'تأكيد الحذف؟';
+  setTimeout(() => {
+    if (btn.dataset.armed === '1') {
+      delete btn.dataset.armed;
+      btn.textContent = btn.dataset.origText || 'حذف';
+    }
+  }, 4000);
+}
+
 export function getOpenStatus(openHour, closeHour) {
   if (openHour === 0 && closeHour === 24) {
     return { isOpen: true, text: 'مفتوح 24 ساعة', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
@@ -225,7 +249,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     el.addEventListener('click', () => handlers.onToggleFav(el.dataset.fav));
   });
   container.querySelectorAll('[data-del]').forEach(el => {
-    el.addEventListener('click', () => handlers.onDelete(el.dataset.del));
+    el.addEventListener('click', () => handlers.onDelete(el.dataset.del, el));
   });
 
   lucide.createIcons();

@@ -12,7 +12,7 @@ import {
   signOut,
   isAdmin
 } from './firebase.js';
-import { getOpenStatus } from './ui.js';
+import { getOpenStatus, armDeleteConfirm } from './ui.js';
 
 const state = {
   services: [],
@@ -199,15 +199,14 @@ function renderPendingServicesQueue() {
     btn.addEventListener('click', () => startApprovePending(btn.dataset.approveService));
   });
   els.pendingServicesList.querySelectorAll('[data-reject-service]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('هل أنت متأكد من رفض هذا الطلب وحذفه نهائياً؟')) return;
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
       try {
         await db.deletePendingService(btn.dataset.rejectService);
         await loadServices();
       } catch (err) {
         alert(err.message || 'تعذر رفض الطلب.');
       }
-    });
+    }));
   });
 }
 
@@ -264,15 +263,14 @@ function renderOffersList() {
     });
   });
   els.offersList.querySelectorAll('[data-delete-offer]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('هل أنت متأكد من حذف هذا العرض نهائياً؟')) return;
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
       try {
         await db.deleteOffer(btn.dataset.deleteOffer);
         await loadServices();
       } catch (err) {
         alert(err.message || 'تعذر حذف العرض.');
       }
-    });
+    }));
   });
 }
 
@@ -340,15 +338,14 @@ function renderReviewsQueue() {
     });
   });
   els.pendingReviewsList.querySelectorAll('[data-delete-review]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('هل أنت متأكد من حذف هذا التقييم نهائياً؟')) return;
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
       try {
         await db.deleteReview(btn.dataset.deleteReview);
         await loadServices();
       } catch (err) {
         alert(err.message || 'تعذر حذف التقييم.');
       }
-    });
+    }));
   });
   refreshIcons();
 }
@@ -465,7 +462,7 @@ function renderList() {
     btn.addEventListener('click', () => startEdit(btn.dataset.edit));
   });
   els.servicesList.querySelectorAll('[data-del]').forEach((btn) => {
-    btn.addEventListener('click', () => deleteService(btn.dataset.del));
+    btn.addEventListener('click', () => deleteService(btn.dataset.del, btn));
   });
   refreshIcons();
 }
@@ -538,15 +535,15 @@ function resetForm() {
   els.submitBtn.textContent = 'حفظ الخدمة';
 }
 
-async function deleteService(id) {
-  const srv = state.services.find((s) => s.id === id);
-  if (!confirm(`هل أنت متأكد من حذف "${srv ? srv.name : id}" نهائياً؟`)) return;
-  try {
-    await db.deleteService(id);
-    await loadServices();
-  } catch (err) {
-    alert(err.message || 'تعذر حذف الخدمة.');
-  }
+async function deleteService(id, btn) {
+  armDeleteConfirm(btn, async () => {
+    try {
+      await db.deleteService(id);
+      await loadServices();
+    } catch (err) {
+      alert(err.message || 'تعذر حذف الخدمة.');
+    }
+  });
 }
 
 function bindEvents() {
