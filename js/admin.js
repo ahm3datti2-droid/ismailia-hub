@@ -238,6 +238,7 @@ function readForm() {
     phone: String(fd.get('phone') || '').trim(),
     whatsapp: String(fd.get('whatsapp') || '').trim(),
     mapUrl: String(fd.get('mapUrl') || '').trim(),
+    imageUrl: String(fd.get('imageUrl') || '').trim(),
     openHour: Number(fd.get('openHour') ?? 9),
     closeHour: Number(fd.get('closeHour') ?? 23),
     isEmergency: fd.get('isEmergency') === 'on',
@@ -257,6 +258,7 @@ function fillForm(srv) {
   f.phone.value = srv.phone || '';
   f.whatsapp.value = srv.whatsapp || '';
   f.mapUrl.value = srv.mapUrl || '';
+  f.imageUrl.value = srv.imageUrl || '';
   f.openHour.value = srv.openHour ?? 9;
   f.closeHour.value = srv.closeHour ?? 23;
   f.isEmergency.checked = Boolean(srv.isEmergency);

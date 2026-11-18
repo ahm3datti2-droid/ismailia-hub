@@ -101,6 +101,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
 
     return `
       <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">
+        ${srv.imageUrl ? `<div class="service-photo"><img src="${srv.imageUrl}" alt="${srv.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.service-photo').remove()"></div>` : ''}
         <div class="flex items-start gap-3 mb-3">
           <div class="service-avatar" aria-hidden="true">
             <i data-lucide="${cat.icon}"></i>

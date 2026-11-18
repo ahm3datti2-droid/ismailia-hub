@@ -228,3 +228,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
     scroll-behavior: auto !important;
   }
 }
+
+/* صورة الخدمة أعلى البطاقة */
+.service-photo { margin: -1rem -1rem 0.9rem; border-radius: var(--radius-card) var(--radius-card) 0 0; overflow: hidden; aspect-ratio: 16 / 9; background: #0f172a; }
+.service-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }

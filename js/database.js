@@ -67,6 +67,7 @@ function normaliseService(id, data) {
     phone: data.phone || '',
     whatsapp: data.whatsapp || '',
     mapUrl: data.mapUrl || '',
+    imageUrl: data.imageUrl || '',
     openHour: Number(data.openHour ?? 9),
     closeHour: Number(data.closeHour ?? 23),
     isEmergency: Boolean(data.isEmergency),
