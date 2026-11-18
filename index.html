@@ -93,8 +93,8 @@
             <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
             الدليل الرسمي لمحافظة الإسماعيلية
           </span>
-          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug">كل خدمات الإسماعيلية في مكان واحد</h2>
-          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl mx-auto leading-relaxed">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
+          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
+          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
           <div class="flex flex-wrap justify-center gap-2.5 mt-5">
             <div class="hero-stat">
               <span class="hero-stat__num" id="heroCount">0</span>
@@ -132,14 +132,15 @@
       <!-- التصنيفات الفرعية (تظهر عند اختيار قسم رئيسي) -->
       <div id="subcategoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-2"></div>
       <!-- فلتر المناطق -->
-      <div class="flex items-center gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
+      <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
         <div class="flex items-center gap-2 text-xs shrink-0">
           <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
           <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
         </div>
-        <select id="areaFilter" class="flex-1 min-w-0 bg-transparent text-xs font-bold text-white focus:outline-none" aria-label="فلتر المنطقة">
+        <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none" aria-label="فلتر المنطقة">
           <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
         </select>
+        <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">0 خدمة</span>
       </div>
     </div>
   </div>
@@ -149,13 +150,18 @@
     <!-- شريط العنوان -->
     <div class="flex justify-between items-center mb-3">
       <h2 id="sectionTitle" class="text-base font-extrabold text-slate-100">أبرز الخدمات في الإسماعيلية</h2>
-      <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full whitespace-nowrap">0 خدمة</span>
     </div>
 
     <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الشاشات الواسعة -->
     <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
   </main>
 
+
+  <!-- تذييل بسيط -->
+  <footer class="max-w-6xl mx-auto px-4 pt-8 pb-2 text-center">
+    <p class="text-[11px] text-slate-500 font-semibold">دليل خدمات الإسماعيلية — أرقام وعناوين موثقة من مصادرها</p>
+    <p class="text-[11px] text-slate-600 mt-1">© 2026 خدمات الإسماعيلية</p>
+  </footer>
 
   <!-- النافذة المنبثقة (Bottom Sheet Modal) -->
   <div id="appModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center">

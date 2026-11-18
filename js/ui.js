@@ -136,6 +136,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
           ${srv.imageUrl ? `
             <div class="service-thumb" data-open-details="${srv.id}">
               <img src="${srv.imageUrl}" alt="${srv.name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.service-thumb').remove()">
+              ${srv.isEmergency ? '<span class="service-thumb__emg">طوارئ</span>' : ''}
             </div>
           ` : `
             <div class="service-thumb service-thumb--fallback" data-open-details="${srv.id}">
@@ -149,21 +150,24 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
                 <i data-lucide="bookmark" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
               </button>
             </div>
-            <p class="service-cat">${subName ? `${cat.name} • ${subName}` : cat.name}</p>
-            <p class="service-addr">
-              <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0"></i>
-              <span>${srv.address}</span>
-            </p>
+            <p class="service-cat">${subName || cat.name}</p>
+            ${srv.address ? `
+              <p class="service-addr">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 shrink-0"></i>
+                <span>${srv.address}</span>
+              </p>
+            ` : ''}
             <p class="service-meta">
-              <span class="service-meta__rating">
-                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
-                ${srv.rating} (${srv.reviewsCount})
-              </span>
+              ${(srv.reviewsCount > 1 || srv.rating !== 5) ? `
+                <span class="service-meta__rating">
+                  <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                  ${srv.rating} (${srv.reviewsCount})
+                </span>
+              ` : '<span>جديد</span>'}
               <span class="service-meta__dot" aria-hidden="true">•</span>
               <span class="${status.isOpen ? 'text-emerald-400' : 'text-rose-400'}">${status.text}</span>
               <span class="service-meta__dot" aria-hidden="true">•</span>
               <span>${srv.area}</span>
-              ${srv.isEmergency ? `<span class="service-meta__dot" aria-hidden="true">•</span><span class="text-rose-400 font-extrabold">طوارئ</span>` : ''}
             </p>
           </div>
         </div>

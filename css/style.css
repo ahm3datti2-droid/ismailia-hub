@@ -110,6 +110,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
    فلا يضيع شعار داكن على خلفية داكنة، ولا يطفو شعار صغير في فراغ. */
 .service-top { display: flex; align-items: flex-start; gap: 0.75rem; }
 .service-thumb {
+  position: relative;
   width: 6rem; height: 6rem; flex-shrink: 0;
   border-radius: 0.9rem;
   background: linear-gradient(160deg, #ffffff 0%, #e8edf3 100%);
@@ -121,12 +122,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .service-thumb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
 .service-thumb--fallback { color: #b45309; background: linear-gradient(160deg, #fef3c7, #fde68a); }
 .service-thumb--fallback svg { width: 2rem; height: 2rem; }
+.service-thumb__emg {
+  position: absolute; top: 0.35rem; inset-inline-start: 0.35rem; z-index: 1;
+  font-size: 0.55rem; font-weight: 800; color: #fff;
+  background: #e11d48; border-radius: 0.4rem; padding: 0.1rem 0.35rem; line-height: 1.5;
+}
 .service-main { flex: 1; min-width: 0; }
 .service-head { display: flex; align-items: flex-start; gap: 0.5rem; }
 .service-name {
   flex: 1; min-width: 0; cursor: pointer;
   font-size: 0.95rem; font-weight: 800; color: #fff; line-height: 1.45;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  text-wrap: balance; /* يوزع السطور بالتساوي فلا تبقى كلمة يتيمة وحدها */
   min-height: 2.76rem; /* سطران ثابتان فيحاذي كل البطاقات */
 }
 .service-name:hover { color: #fbbf24; }
@@ -141,7 +148,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .service-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; font-size: 0.7rem; font-weight: 700; color: #94a3b8; margin-top: 0.35rem; }
 .service-meta__rating { display: inline-flex; align-items: center; gap: 0.2rem; color: #fbbf24; }
 .service-meta__dot { color: #475569; }
-.service-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.service-actions { display: flex; gap: 0.5rem; margin-top: auto; padding-top: 0.8rem; } /* تثبيت الأزرار أسفل كل بطاقة مهما اختلف طول المحتوى */
 .service-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem 0.25rem; border-radius: 0.8rem; font-size: 0.75rem; font-weight: 800; transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease; white-space: nowrap; }
 .service-btn:active { transform: scale(0.97); }
 .service-btn--wa { background: #059669; color: #fff; }
@@ -156,8 +163,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* تلاشٍ عند حافة صف التصنيفات القابل للتمرير (يُخفي القطع المفاجئ) */
 .chips-fade {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px);
-  mask-image: linear-gradient(to right, transparent 0, #000 28px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px);
+  mask-image: linear-gradient(to right, transparent 0, #000 48px);
 }
 
 /* شارات أوضح: موثق / طوارئ / مفتوح */
