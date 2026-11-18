@@ -339,6 +339,14 @@ function fillForm(srv) {
   f.name.value = srv.name || '';
   f.category.value = srv.category || 'maintenance';
   fillSubSelect(srv.category || 'maintenance', srv.subcategory || '');
+  // إن كانت المنطقة المحفوظة ليست من خيارات القائمة (مثل "الإسماعيلية")، أضفها مؤقتاً حتى لا تضيع عند الحفظ.
+  const areaSel = f.area;
+  if (srv.area && !Array.from(areaSel.options).some((o) => o.value === srv.area)) {
+    const opt = document.createElement('option');
+    opt.value = srv.area;
+    opt.textContent = srv.area;
+    areaSel.appendChild(opt);
+  }
   f.area.value = srv.area || '';
   f.address.value = srv.address || '';
   f.phone.value = srv.phone || '';
