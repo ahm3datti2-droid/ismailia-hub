@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ismailia-hub-v3';
+const CACHE_NAME = 'ismailia-hub-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -32,6 +32,19 @@ self.addEventListener('fetch', (e) => {
   // نتعامل فقط مع طلبات GET لنفس النطاق (ملفات التطبيق الثابتة).
   // طلبات Firestore وFirebase وCDN تمرّ مباشرة للشبكة ولا تُخزَّن هنا.
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== self.location.origin) {
+    return;
+  }
+  // الشبكة أولاً لملفات HTML و JS حتى لا تظهر نسخة قديمة بعد أي تحديث،
+  // والكاش بديل فقط عند انقطاع الشبكة.
+  const isHtmlOrJs = e.request.destination === 'document' || e.request.destination === 'script' || e.request.url.endsWith('.js') || e.request.url.endsWith('.html') || e.request.url.endsWith('/');
+  if (isHtmlOrJs) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
     return;
   }
   e.respondWith(
