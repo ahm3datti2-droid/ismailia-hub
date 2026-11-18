@@ -9,7 +9,7 @@
   <meta property="og:site_name" content="دليل خدمات الإسماعيلية">
   <meta property="og:title" content="دليل خدمات الإسماعيلية | Ismailia Super App">
   <meta property="og:description" content="كل خدمات الإسماعيلية في مكان واحد — عيادات، مطاعم، صيانة، سيارات، عقارات، حضانات وأكثر.">
-  <meta property="og:url" content="https://ismailia-hub-tau.vercel.app/">
+  <meta property="og:url" content="https://ismailiahub.com/">
   <meta name="twitter:card" content="summary">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg?v=2" type="image/svg+xml">
@@ -40,9 +40,9 @@
 </head>
 <body class="pb-24 md:pb-8 select-none">
 
-  <!-- الهيدر (يمرّر مع الصفحة؛ شريط البحث والفلاتر ثابت) -->
-  <header class="px-4 pt-4 pb-3">
-    <div class="max-w-6xl mx-auto">
+  <!-- الهيدر الثابت: الشعار + حسابي + أضف خدمتك — يبقى ظاهراً أثناء التمرير -->
+  <header class="site-header sticky top-0 z-50 px-4">
+    <div class="max-w-6xl mx-auto w-full">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-10 h-10 rounded-2xl shadow-lg shadow-blue-900/40">
@@ -67,6 +67,16 @@
       </div>
     </div>
   </header>
+
+  <!-- شريط "جديد في الدليل": آخر الخدمات المضافة — يمرّر تلقائياً، يظهر على الرئيسية فقط -->
+  <div id="tickerBar" class="ticker hidden" aria-label="جديد في الدليل">
+    <div class="max-w-6xl mx-auto flex items-center gap-2 px-4">
+      <span class="ticker-label">جديد في الدليل</span>
+      <div class="ticker-viewport">
+        <div id="tickerTrack" class="ticker-track" dir="ltr"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- شريط التنقل: ثابت أسفل الشاشة على الموبايل، وشريط علوي عادي على الديسكتوب -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5 md:static md:z-auto md:bg-transparent md:border-0 md:backdrop-blur-none md:px-4 md:py-1">
@@ -105,19 +115,25 @@
     </div>
   </section>
 
-  <!-- الهيرو: هوية الدليل + إحصاءات حية + دعوة للبحث -->
-  <section class="px-4 pt-1 pb-4" aria-label="نبذة عن الدليل">
+  <!-- الهيرو المدمج: هوية الدليل + بحث + إحصاءات حية -->
+  <section class="px-4 pt-2 pb-3" aria-label="نبذة عن الدليل">
     <div class="max-w-6xl mx-auto">
-      <div class="hero-panel relative overflow-hidden rounded-3xl border border-slate-800/80 px-5 py-6 sm:px-8 sm:py-7">
+      <div class="hero-panel relative overflow-hidden rounded-3xl border border-slate-800/80 px-5 py-4 sm:px-8 sm:py-5">
         <div class="hero-glow absolute inset-0 pointer-events-none" aria-hidden="true"></div>
         <div class="relative text-center">
-          <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full mb-3">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full mb-2.5">
             <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
             الدليل الرسمي لمحافظة الإسماعيلية
           </span>
-          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
-          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
-          <div class="flex flex-wrap justify-center gap-2.5 mt-5">
+          <h2 class="text-xl sm:text-[1.7rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
+          <p class="text-sm text-slate-400 font-semibold mt-1.5 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
+          <!-- البحث داخل الهيرو -->
+          <div class="relative max-w-xl mx-auto mt-4">
+            <input type="search" id="heroSearchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)" autocomplete="off"
+              class="hero-search w-full bg-slate-950/70 border border-slate-700 rounded-2xl py-3 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
+            <i data-lucide="search" class="w-4 h-4 text-amber-400 absolute right-4 top-3.5 pointer-events-none"></i>
+          </div>
+          <div class="flex flex-wrap justify-center gap-2.5 mt-4">
             <div class="hero-stat">
               <span class="hero-stat__num" id="heroCount">0</span>
               <span class="hero-stat__label">خدمة موثقة</span>
@@ -130,18 +146,14 @@
               <span class="hero-stat__num" id="heroAreas">8</span>
               <span class="hero-stat__label">منطقة ومركز</span>
             </div>
-            <button id="heroSearchBtn" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-extrabold transition active:scale-95">
-              <i data-lucide="search" class="w-4 h-4"></i>
-              ابحث عن خدمة
-            </button>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- شريط البحث والفلاتر الثابت -->
-  <div class="filter-bar sticky top-0 z-40 glass-header px-4 py-3">
+  <!-- شريط البحث والفلاتر: ثابت تحت الهيدر أثناء التمرير -->
+  <div class="filter-bar sticky top-[4.25rem] z-40 glass-header px-4 py-3">
     <div class="max-w-6xl mx-auto">
       <!-- البحث الذكي -->
       <div class="relative">
@@ -220,13 +232,64 @@
       <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الشاشات الواسعة -->
       <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
     </section>
+
+    <!-- الأعلى تقييماً: يظهر على الرئيسية فقط -->
+    <section id="topRatedSection" class="hidden mt-5">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
+          <i data-lucide="star" class="w-5 h-5 text-amber-400"></i>
+          الأعلى تقييماً
+        </h2>
+        <span class="text-xs font-bold text-slate-400">اختيارات أهل الإسماعيلية</span>
+      </div>
+      <div id="topRatedRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
+    </section>
   </main>
 
 
-  <!-- تذييل بسيط -->
-  <footer class="max-w-6xl mx-auto px-4 pt-8 pb-2 text-center">
-    <p class="text-[11px] text-slate-500 font-semibold">دليل خدمات الإسماعيلية — أرقام وعناوين موثقة من مصادرها</p>
-    <p class="text-[11px] text-slate-600 mt-1">© 2026 خدمات الإسماعيلية</p>
+  <!-- تذييل احترافي: عن الدليل + أقسام سريعة + تواصل -->
+  <footer class="max-w-6xl mx-auto px-4 pt-10 pb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-slate-800/80 pt-6 text-start">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 rounded-2xl shadow-lg shadow-blue-900/40">
+          <div>
+            <p class="font-black text-white leading-tight">خدمات الإسماعيلية</p>
+            <p class="text-[11px] text-amber-400 font-semibold">الدليل الشامل لأهالي المحافظة</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 font-semibold leading-relaxed mt-3">أرقام وعناوين موثقة وصور حقيقية لأكثر من 218 خدمة في الإسماعيلية ومراكزها — مطاعم، عيادات، صيانة، دليفري وأكثر.</p>
+        <div class="flex gap-2 mt-3">
+          <a href="https://www.facebook.com/share/1HtWFUyNba/" target="_blank" rel="noopener" aria-label="فيسبوك" class="footer-social">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/nexoraa_egypt" target="_blank" rel="noopener" aria-label="إنستجرام" class="footer-social">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer-title">أقسام سريعة</h3>
+        <div class="grid grid-cols-2 gap-1">
+          <button data-footer-group="food" class="footer-link">الأغذية والمشروبات</button>
+          <button data-footer-group="health" class="footer-link">الصحة والطب</button>
+          <button data-footer-group="delivery" class="footer-link">دليفري</button>
+          <button data-footer-group="fashion" class="footer-link">الملابس والأزياء</button>
+          <button data-footer-group="automotive" class="footer-link">السيارات والنقل</button>
+          <button data-footer-group="education" class="footer-link">التعليم والمدارس</button>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer-title">تواصل معنا</h3>
+        <p class="footer-line">مسؤول الموقع: Ahmed Attia — الشركة المؤسسة Nexora</p>
+        <a href="tel:01121341717" class="footer-line hover:text-amber-400 transition">01121341717</a>
+        <a href="https://wa.me/201117543009" target="_blank" rel="noopener" class="footer-line hover:text-amber-400 transition">واتساب: 01117543009</a>
+        <button id="footerAddService" class="mt-1 bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">أضف خدمتك مجاناً</button>
+      </div>
+    </div>
+    <div class="border-t border-slate-800/80 mt-6 pt-4 text-center">
+      <p class="text-[11px] text-slate-500 font-semibold">© 2026 دليل خدمات الإسماعيلية — جميع الأرقام والعناوين موثقة من مصادرها</p>
+    </div>
   </footer>
 
   <!-- النافذة المنبثقة (Bottom Sheet Modal) -->

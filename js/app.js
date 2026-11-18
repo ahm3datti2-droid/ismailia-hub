@@ -1,7 +1,7 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
 import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider, toWhatsAppNumber } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider, toWhatsAppNumber, renderTopRated, renderTicker, createdAtMs } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -111,6 +111,8 @@ function resetToHome() {
   state.onlyEmergency = false;
   state.onlyFavorites = false;
   els.searchInput.value = '';
+  const heroSearch = document.getElementById('heroSearchInput');
+  if (heroSearch) heroSearch.value = '';
   els.areaSelect.value = 'all';
   refreshUI();
 }
@@ -172,9 +174,11 @@ function bindEvents() {
     refreshUI();
   });
 
-  document.getElementById('heroSearchBtn')?.addEventListener('click', () => {
-    els.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    els.searchInput.focus();
+  // بحث الهيرو يعكس كتابته في بحث شريط الفلاتر (والعكس عبر resetToHome)
+  // فيكفي مستمع واحد — مستمع شريط الفلاتر — لتنفيذ البحث.
+  document.getElementById('heroSearchInput')?.addEventListener('input', (e) => {
+    els.searchInput.value = e.target.value;
+    els.searchInput.dispatchEvent(new Event('input'));
   });
 
   document.getElementById('btnHome').addEventListener('click', resetToHome);
@@ -201,6 +205,11 @@ function bindEvents() {
   });
 
   document.getElementById('btnAddService').addEventListener('click', openAddServiceModal);
+  document.getElementById('footerAddService')?.addEventListener('click', openAddServiceModal);
+  // روابط الأقسام السريعة في التذييل.
+  document.querySelectorAll('[data-footer-group]').forEach((btn) => {
+    btn.addEventListener('click', () => selectGroupTile(btn.dataset.footerGroup));
+  });
   document.getElementById('btnAccount').addEventListener('click', () => {
     if (state.currentUser) openProfileModal();
     else openAuthModal('login');
@@ -245,6 +254,8 @@ function refreshUI() {
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
   renderBannersSection(isHome);
+  renderTopRatedSection(isHome);
+  renderTickerSection(isHome);
   updateSectionTitle();
   if (isHome) {
     const counts = {};
@@ -295,6 +306,46 @@ function renderBannersSection(isHome) {
   section.classList.toggle('hidden', !isHome || !state.banners.length);
   if (!isHome || !state.banners.length) { stopBannerSlider(); return; }
   renderBannerSlider(slider, state.banners, (serviceId) => openServiceDetails(serviceId));
+}
+
+// الأعلى تقييماً — يظهر على الرئيسية فقط، ويُعاد رسمه فقط عند تغيّر قائمة الأوائل.
+let renderedTopRatedSig = '';
+function renderTopRatedSection(isHome) {
+  const section = document.getElementById('topRatedSection');
+  const row = document.getElementById('topRatedRow');
+  if (!section || !row) return;
+  const top = state.services
+    .filter((s) => s.reviewsCount > 1 || s.rating !== 5)
+    .slice()
+    .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviewsCount || 0) - Number(a.reviewsCount || 0)))
+    .slice(0, 8);
+  const sig = (isHome ? 'home:' : 'away:') + top.map((s) => s.id).join('|');
+  if (sig === renderedTopRatedSig) {
+    section.classList.toggle('hidden', !isHome || !top.length);
+    return;
+  }
+  renderedTopRatedSig = sig;
+  section.classList.toggle('hidden', !isHome || !top.length);
+  if (!isHome || !top.length) return;
+  renderTopRated(row, state.services, (id) => openServiceDetails(id));
+}
+
+// شريط "جديد في الدليل" — يظهر على الرئيسية فقط، ويُعاد رسمه فقط عند تغيّر الأحدث.
+let renderedTickerSig = '';
+function renderTickerSection(isHome) {
+  const bar = document.getElementById('tickerBar');
+  const track = document.getElementById('tickerTrack');
+  if (!bar || !track) return;
+  const latest = state.services.slice().sort((a, b) => createdAtMs(b) - createdAtMs(a)).slice(0, 6);
+  const sig = (isHome ? 'home:' : 'away:') + latest.map((s) => s.id).join('|');
+  if (sig === renderedTickerSig) {
+    bar.classList.toggle('hidden', !isHome || !latest.length);
+    return;
+  }
+  renderedTickerSig = sig;
+  bar.classList.toggle('hidden', !isHome || !latest.length);
+  if (!isHome || !latest.length) return;
+  renderTicker(track, state.services, (id) => openServiceDetails(id));
 }
 
 // قسم العروض في الصفحة الرئيسية — يظهر فقط على الرئيسية وعند وجود عروض سارية.

@@ -217,9 +217,9 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
                 </span>
               ` : '<span>جديد</span>'}
               <span class="service-meta__dot" aria-hidden="true">•</span>
-              <span class="${status.isOpen ? 'text-emerald-400' : 'text-rose-400'}">${status.text}</span>
+              <span class="inline-flex items-center gap-1.5 ${status.isOpen ? 'text-emerald-400' : 'text-rose-400'}"><span class="open-dot ${status.isOpen ? 'open-dot--open' : 'open-dot--closed'}"></span>${status.text}</span>
               <span class="service-meta__dot" aria-hidden="true">•</span>
-              <span>${srv.area}</span>
+              <span class="service-meta__area"><i data-lucide="map-pin" class="w-3 h-3"></i>${srv.area}</span>
             </p>
           </div>
         </div>
@@ -343,4 +343,71 @@ export function renderBannerSlider(container, banners, onOpenService) {
     startAuto();
   }, { passive: true });
   startAuto();
+}
+
+// تاريخ الإضافة بالمللي ثانية — يقبل Firestore Timestamp أو رقماً أو نصاً.
+export function createdAtMs(s) {
+  const c = s?.createdAt;
+  if (!c) return 0;
+  if (typeof c.toMillis === 'function') return c.toMillis();
+  if (typeof c.seconds === 'number') return c.seconds * 1000;
+  const t = Date.parse(c);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+// الأعلى تقييماً: أفضل 8 خدمات بتقييمات حقيقية (التقييم ثم عدد المراجعات).
+export function renderTopRated(container, services, onOpenService) {
+  if (!container) return;
+  const top = services
+    .filter((s) => s.reviewsCount > 1 || s.rating !== 5)
+    .slice()
+    .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviewsCount || 0) - Number(a.reviewsCount || 0)))
+    .slice(0, 8);
+  container.innerHTML = top.map((srv) => {
+    const cat = categoryInfo(srv.category);
+    return `
+    <article class="top-rated-card" data-open-details="${srv.id}">
+      ${srv.imageUrl ? `
+        <div class="service-thumb">
+          <img src="${escAttr(srv.imageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.service-thumb').remove()">
+        </div>
+      ` : `
+        <div class="service-thumb service-thumb--fallback">
+          <i data-lucide="${cat.icon}"></i>
+        </div>
+      `}
+      <div class="min-w-0">
+        <h3 class="top-rated-card__name">${srv.name}</h3>
+        <p class="top-rated-card__meta">
+          <span class="top-rated-card__rating">
+            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+            ${srv.rating} (${srv.reviewsCount})
+          </span>
+          <span aria-hidden="true">•</span>
+          <span>${srv.area}</span>
+        </p>
+        <p class="top-rated-card__meta">${subcategoryName(srv.category, srv.subcategory) || cat.name}</p>
+      </div>
+    </article>`;
+  }).join('');
+  container.querySelectorAll('[data-open-details]').forEach((el) => {
+    el.addEventListener('click', () => onOpenService(el.dataset.openDetails));
+  });
+  if (window.lucide) window.lucide.createIcons();
+}
+
+// شريط "جديد في الدليل": آخر 6 خدمات مضافة — المحتوى مكرر مرتين
+// ليدور التمرير التلقائي بلا انقطاع، والضغطة تفتح تفاصيل الخدمة.
+export function renderTicker(track, services, onOpenService) {
+  if (!track) return;
+  const latest = services.slice().sort((a, b) => createdAtMs(b) - createdAtMs(a)).slice(0, 6);
+  if (!latest.length) { track.innerHTML = ''; return; }
+  const half = latest.map((srv) => `
+    <button class="ticker-item" data-ticker-id="${srv.id}">
+      <span>${srv.name}</span><span class="ticker-item__dot" aria-hidden="true">•</span>
+    </button>`).join('');
+  track.innerHTML = half + half;
+  track.querySelectorAll('[data-ticker-id]').forEach((el) => {
+    el.addEventListener('click', () => onOpenService(el.dataset.tickerId));
+  });
 }
