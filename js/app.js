@@ -67,6 +67,7 @@ async function loadServices() {
   try {
     state.services = await db.getAllServices();
     refreshUI();
+    openDeepLinkedService();
   } catch (err) {
     console.error('تعذر تحميل الخدمات:', err);
     renderErrorState(els.servicesGrid, () => {
@@ -74,6 +75,18 @@ async function loadServices() {
       loadServices();
     });
   }
+}
+
+// رابط خاص لكل خدمة: #service-<id> أو ?service=<id> يفتح تفاصيل الخدمة مباشرة عند فتح الرابط.
+function deepLinkedServiceId() {
+  const hash = (location.hash || '').match(/^#service-(.+)$/);
+  if (hash) return hash[1];
+  return new URLSearchParams(location.search).get('service');
+}
+
+function openDeepLinkedService() {
+  const id = deepLinkedServiceId();
+  if (id && state.services.some(s => s.id === id)) openServiceDetails(id);
 }
 
 function bindEvents() {
@@ -225,6 +238,9 @@ async function handleDeleteService(id) {
 function openServiceDetails(id) {
   const srv = state.services.find(s => s.id === id);
   if (!srv) return;
+  // الرابط في شريط العنوان يصبح رابط الخدمة الخاص القابل للمشاركة.
+  document.title = `${srv.name} | دليل خدمات الإسماعيلية`;
+  history.replaceState(null, '', `#service-${srv.id}`);
   const status = getOpenStatus(srv.openHour, srv.closeHour);
   const cat = categoryInfo(srv.category);
   const subName = subcategoryName(srv.category, srv.subcategory);
@@ -362,7 +378,9 @@ function openServiceDetails(id) {
   });
   document.getElementById('detailDelBtn')?.addEventListener('click', () => handleDeleteService(srv.id));
   document.getElementById('detailShareBtn')?.addEventListener('click', async () => {
-    const url = `${location.origin}${location.pathname}#service-${srv.id}`;
+    // الرابط الخاص بالخدمة: صفحة ثابتة فيها صورة واسم الخدمة (معاينة شيك في واتساب وفيسبوك)
+    // وتحول تلقائياً لفتح الخدمة داخل التطبيق.
+    const url = `${location.origin}/services/${srv.id}.html`;
     const label = document.getElementById('detailShareLabel');
     try {
       if (navigator.share) {
@@ -686,6 +704,8 @@ function closeModal() {
   els.modal.classList.add('hidden');
   els.modal.classList.remove('flex');
   els.modalContent.classList.remove('detail-sheet');
+  document.title = 'دليل خدمات الإسماعيلية | Ismailia Super App';
+  if (location.hash.startsWith('#service-')) history.replaceState(null, '', location.pathname + location.search);
 }
 
 initApp();
