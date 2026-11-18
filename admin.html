@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم الإدارة | خدمات الإسماعيلية</title>
+  <meta name="theme-color" content="#090d16">
+  <meta name="robots" content="noindex, nofollow">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pb-12 select-none">
+
+  <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+          IS
+        </div>
+        <div>
+          <h1 class="text-lg font-black text-white leading-tight">لوحة تحكم الإدارة</h1>
+          <p class="text-[11px] text-amber-400 font-semibold">خدمات الإسماعيلية — Firebase + Firestore</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnBackHome" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
+          <i data-lucide="home" class="w-4 h-4"></i>
+          الموقع
+        </button>
+        <button id="btnLogout" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 text-xs font-bold flex items-center gap-1">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          خروج
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-6">
+
+    <!-- تسجيل الدخول -->
+    <section id="loginSection" class="max-w-md mx-auto">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6">
+        <div class="text-center mb-5">
+          <i data-lucide="shield-check" class="w-10 h-10 text-amber-400 mx-auto mb-2"></i>
+          <h2 class="text-lg font-extrabold text-white">تسجيل دخول الأدمن</h2>
+          <p class="text-xs text-slate-400 mt-1">الدخول عبر Firebase Auth فقط — لا يوجد رقم سري في الموقع.</p>
+        </div>
+        <form id="loginForm" class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">البريد الإلكتروني</label>
+            <input type="email" id="loginEmail" required dir="ltr" placeholder="admin@example.com"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-left">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">كلمة المرور</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          </div>
+          <p id="loginError" class="hidden text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20 rounded-xl p-3"></p>
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">
+            تسجيل الدخول
+          </button>
+        </form>
+        <p class="text-[11px] text-slate-500 text-center mt-4">
+          حساب الأدمن يُنشأ من Firebase Console ← Authentication ← Users.
+        </p>
+      </div>
+    </section>
+
+    <!-- رفض الصلاحية -->
+    <section id="deniedSection" class="hidden max-w-md mx-auto">
+      <div class="bg-slate-900/90 border border-rose-500/30 rounded-3xl p-6 text-center">
+        <i data-lucide="shield-alert" class="w-10 h-10 text-rose-400 mx-auto mb-2"></i>
+        <h2 class="text-lg font-extrabold text-white">لا تملك صلاحية الإدارة</h2>
+        <p class="text-xs text-slate-400 mt-2">
+          الحساب <span id="deniedEmailText" class="text-white font-bold" dir="ltr"></span>
+          مسجل دخول لكنه ليس حساب الأدمن. تم تسجيل خروجك.
+        </p>
+        <button id="btnDeniedLogout" class="mt-5 w-full bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3 rounded-xl text-xs">
+          تسجيل دخول بحساب آخر
+        </button>
+      </div>
+    </section>
+
+    <!-- لوحة التحكم -->
+    <section id="dashboardSection" class="hidden space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-xs text-slate-400">
+          مسجل دخول كأدمن: <span id="adminEmailLabel" class="text-amber-400 font-bold" dir="ltr"></span>
+        </p>
+        <div class="flex gap-2">
+          <button id="btnSeed" class="bg-sky-600/20 border border-sky-500/30 text-sky-400 px-3 py-2 rounded-xl text-xs font-bold hover:bg-sky-600 hover:text-white transition">
+            نشر الخدمات الافتراضية
+          </button>
+          <button id="btnNewService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            إضافة خدمة
+          </button>
+        </div>
+      </div>
+      <p id="seedNote" class="text-[11px] text-slate-500"></p>
+
+      <!-- الإحصائيات -->
+      <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">الخدمات حسب التصنيف</h3>
+        <div id="categoryStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+      </div>
+
+      <!-- نموذج الإضافة / التعديل -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 id="formTitle" class="text-base font-extrabold text-amber-400 mb-4">إضافة خدمة جديدة</h3>
+        <form id="serviceForm" class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة *" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <select name="category" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="medical">عيادات وصيدليات</option>
+              <option value="food">مطاعم وكافيهات</option>
+              <option value="maintenance">صيانة وحرفيين</option>
+              <option value="cars">خدمات سيارات</option>
+              <option value="real_estate">عقارات وتشطيبات</option>
+            </select>
+            <select name="area" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
+            <input type="text" name="address" required placeholder="العنوان التفصيلي *" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="tel" name="phone" required placeholder="رقم الهاتف *" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <input type="url" name="mapUrl" placeholder="رابط الموقع على الخريطة" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2" dir="ltr">
+            <div class="grid grid-cols-3 gap-2 sm:col-span-2">
+              <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">
+                ساعة الفتح
+                <input type="number" name="openHour" min="0" max="24" value="9" class="w-full bg-transparent text-white font-bold focus:outline-none">
+              </label>
+              <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">
+                ساعة الإغلاق
+                <input type="number" name="closeHour" min="0" max="24" value="23" class="w-full bg-transparent text-white font-bold focus:outline-none">
+              </label>
+              <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">
+                التقييم (0–5)
+                <input type="number" name="rating" min="0" max="5" step="0.1" value="5" class="w-full bg-transparent text-white font-bold focus:outline-none">
+              </label>
+            </div>
+            <input type="text" name="tags" placeholder="كلمات مفتاحية (مثال: دليفري، كشف، صيانة)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2">
+            <textarea name="menuText" rows="3" placeholder="قائمة الأسعار — سطر لكل بند، بالصيغة: اسم البند - السعر (مثال: كشف استشاري - 300 ج.م)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2"></textarea>
+          </div>
+          <div class="flex flex-wrap gap-4 text-slate-300 py-1">
+            <label class="flex items-center gap-2"><input type="checkbox" name="isEmergency" class="accent-amber-500"> متاح طوارئ / 24 ساعة</label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="verified" checked class="accent-amber-500"> موثق</label>
+          </div>
+          <div class="flex gap-2">
+            <button type="submit" id="submitServiceBtn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">حفظ الخدمة</button>
+            <button type="button" id="btnCancelEdit" class="px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- البحث والفلترة -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input type="text" id="adminSearch" placeholder="ابحث بالاسم أو المنطقة أو الكلمات المفتاحية..."
+          class="flex-1 bg-slate-900/90 border border-slate-800 rounded-2xl py-3 px-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400">
+        <select id="adminCategoryFilter" class="bg-slate-900 border border-slate-800 rounded-2xl px-3 py-3 text-xs font-bold text-white focus:outline-none">
+          <option value="all">كل التصنيفات</option>
+        </select>
+      </div>
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-extrabold text-slate-200">قائمة الخدمات</h3>
+        <span id="adminResultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0 خدمة</span>
+      </div>
+      <div id="adminServicesList" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

@@ -1,13 +1,15 @@
 export const FIREBASE_CONFIG = {
-  apiKey: "", 
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyAvjpTWRt4dqG1h3gTojBM9d0t6Hw4-CB8",
+  authDomain: "ismailia-hub.firebaseapp.com",
+  projectId: "ismailia-hub",
+  storageBucket: "ismailia-hub.firebasestorage.app",
+  messagingSenderId: "1004166596158",
+  appId: "1:1004166596158:web:bd92cb412498ee090f336f"
 };
 
-export const ADMIN_PIN = "2026";
+// البريد الوحيد المسموح له بالدخول إلى لوحة الإدارة.
+// الدخول يتم عبر Firebase Auth فقط — لا يوجد أي رقم سري في الكود.
+export const ADMIN_EMAIL = "ahm3d.atti2@gmail.com";
 
 export const CATEGORIES = [
   { id: 'all', name: 'الكل', icon: 'layout-grid' },

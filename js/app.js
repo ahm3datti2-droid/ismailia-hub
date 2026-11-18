@@ -1,6 +1,7 @@
-import { AREAS, TRANSPORT_ROUTES, ADMIN_PIN } from './config.js';
+import { AREAS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
 import { renderCategories, renderServiceCards, getOpenStatus } from './ui.js';
+import { auth, onAuthStateChanged, isAdmin } from './firebase.js';
 
 const state = {
   services: [],
@@ -34,6 +35,15 @@ async function initApp() {
     opt.value = area;
     opt.textContent = area;
     els.areaSelect.appendChild(opt);
+  });
+
+  // وضع الإدارة في الموقع العام يظهر فقط إذا كان المستخدم الحالي
+  // مسجلاً في Firebase Auth وبريده هو بريد الأدمن. لا يوجد أي
+  // رقم سري أو وضع إدارة محلي في هذا الملف.
+  onAuthStateChanged(auth, (user) => {
+    const wasAdmin = state.isAdmin;
+    state.isAdmin = isAdmin(user);
+    if (wasAdmin !== state.isAdmin) refreshUI();
   });
 
   state.services = await db.getAllServices();
@@ -84,7 +94,10 @@ function bindEvents() {
   });
 
   document.getElementById('btnAddService').addEventListener('click', openAddServiceModal);
-  document.getElementById('btnAdminToggle').addEventListener('click', toggleAdminMode);
+  // زر الإدارة يفتح لوحة التحكم — الدخول فيها عبر Firebase Auth فقط.
+  document.getElementById('btnAdminToggle').addEventListener('click', () => {
+    window.location.href = 'admin.html';
+  });
   document.getElementById('closeModalBackdrop').addEventListener('click', closeModal);
 }
 
@@ -122,10 +135,18 @@ function refreshUI() {
       refreshUI();
     },
     onDelete: async (id) => {
+      if (!state.isAdmin) {
+        alert('حذف الخدمات متاح من لوحة تحكم الإدارة فقط.');
+        return;
+      }
       if (confirm('هل أنت متأكد من حذف هذه الخدمة نهائياً؟')) {
-        await db.deleteService(id);
-        state.services = await db.getAllServices();
-        refreshUI();
+        try {
+          await db.deleteService(id);
+          state.services = await db.getAllServices();
+          refreshUI();
+        } catch (err) {
+          alert(err.message || 'تعذر حذف الخدمة. حاول مرة أخرى.');
+        }
       }
     }
   });
@@ -236,7 +257,7 @@ function openAddServiceModal() {
   document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    await db.addService({
+    const payload = {
       name: fd.get('name'),
       category: fd.get('category'),
       area: fd.get('area'),
@@ -247,28 +268,32 @@ function openAddServiceModal() {
       isEmergency: fd.get('isEmergency') === 'on',
       openHour: fd.get('isEmergency') === 'on' ? 0 : 9,
       closeHour: fd.get('isEmergency') === 'on' ? 24 : 23
-    });
+    };
+
+    // الأدمن المسجل ينشر مباشرة في Firestore.
+    // الزائر غير المسجل: يُحفظ طلبه محلياً فقط ويُعرض له
+    // رسالة واضحة بأنه بانتظار مراجعة الإدارة، ولا ينكسر الموقع
+    // إذا كان Firebase غير متصل.
+    if (auth.currentUser && isAdmin(auth.currentUser)) {
+      try {
+        await db.addService(payload);
+      } catch (err) {
+        alert(err.message || 'تعذر نشر الخدمة. حاول مرة أخرى.');
+        return;
+      }
+    } else {
+      db.saveServiceLocally(payload);
+      closeModal();
+      state.services = await db.getAllServices();
+      refreshUI();
+      alert('تم حفظ طلبك محلياً وسيتم مراجعته من الإدارة قبل النشر العام. للتواصل المباشر مع الإدارة استخدم صفحة لوحة التحكم.');
+      return;
+    }
+
     state.services = await db.getAllServices();
     closeModal();
     refreshUI();
   });
-}
-
-function toggleAdminMode() {
-  if (state.isAdmin) {
-    state.isAdmin = false;
-    alert('تم الخروج من وضع الإدارة');
-    refreshUI();
-    return;
-  }
-  const pin = prompt('أدخل الرقم السري للإدارة (2026):');
-  if (pin === ADMIN_PIN) {
-    state.isAdmin = true;
-    alert('تم تفعيل وضع الإدارة: يمكنك الآن حذف أو إضافة الخدمات مباشرة');
-    refreshUI();
-  } else if (pin !== null) {
-    alert('الرقم السري غير صحيح');
-  }
 }
 
 function showModal() {
