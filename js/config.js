@@ -21,7 +21,9 @@ export const CATEGORIES = [
   { id: 'mobiles', name: 'موبايلات', icon: 'smartphone' },
   { id: 'clothing', name: 'ملابس', icon: 'shirt' },
   { id: 'makeup', name: 'ميكب ارتست', icon: 'sparkles' },
-  { id: 'cafes', name: 'كافيهات', icon: 'coffee' }
+  { id: 'cafes', name: 'كافيهات', icon: 'coffee' },
+  { id: 'toys', name: 'لعب أطفال', icon: 'puzzle' },
+  { id: 'bookstores', name: 'مكتبات', icon: 'book-open' }
 ];
 
 export const AREAS = [
