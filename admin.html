@@ -122,6 +122,23 @@
         <div id="categoryStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
       </div>
 
+      <!-- زيارات اليوم -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+          <h3 class="text-base font-extrabold text-amber-400 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            زيارات اليوم
+          </h3>
+          <span id="todayVisitsDate" class="text-[11px] font-bold text-slate-400"></span>
+        </div>
+        <p class="text-xs text-slate-400 font-semibold mb-4">عدد الأجهزة التي زارت الموقع اليوم، وأكثر الأقسام دخولاً — تُحسب الزيارة مرة واحدة لكل جهاز في اليوم.</p>
+        <div class="flex items-end gap-3 mb-4">
+          <p class="text-4xl font-black text-white leading-none" id="todayVisitsTotal">0</p>
+          <p class="text-xs font-bold text-slate-400 pb-0.5">زائر اليوم</p>
+        </div>
+        <div id="todayGroupsList" class="space-y-2"></div>
+      </div>
+
       <!-- التقييمات بانتظار المراجعة -->
       <div>
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">التقييمات بانتظار المراجعة <span id="pendingReviewsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>

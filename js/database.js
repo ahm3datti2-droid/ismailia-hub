@@ -23,7 +23,8 @@ import {
   query,
   orderBy,
   where,
-  serverTimestamp
+  serverTimestamp,
+  increment
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { auth, db as firestoreDb, isAdmin } from './firebase.js';
 import { ADMIN_EMAIL } from './config.js';
@@ -32,6 +33,13 @@ export const SERVICES_COLLECTION = 'services';
 export const REVIEWS_COLLECTION = 'reviews';
 export const PENDING_SERVICES_COLLECTION = 'pendingServices';
 export const OFFERS_COLLECTION = 'offers';
+export const DAILY_STATS_COLLECTION = 'dailyStats';
+
+// تاريخ اليوم المحلي بصيغة YYYY-MM-DD — مفتاح مستند إحصائيات اليوم.
+export function todayKey(d = new Date()) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 const PENDING_KEY = 'ismailia_pending_services_v1';
 
 export const INITIAL_SERVICES = [];
@@ -436,6 +444,45 @@ class DatabaseService {
   async setOfferActive(offerId, active) {
     requireAdminUser();
     await updateDoc(doc(firestoreDb, OFFERS_COLLECTION, offerId), { active: Boolean(active) });
+  }
+
+  // ===== إحصائيات الزيارات اليومية (مجموعة dailyStats) =====
+  // - مستند واحد لكل يوم (المفتاح = YYYY-MM-DD): visits + groups{groupId: n}.
+  // - العدّ مرة واحدة لكل جهاز في اليوم (مفتاح في localStorage) حتى لا
+  //   تضخّم إعادة التحميل الأرقام؛ والكتابة لا تُظهر أي خطأ للمستخدم أبداً.
+  // - تُقرأ من لوحة التحكم فقط (قراءة واحدة لمستند اليوم).
+  async logVisit() {
+    try {
+      const key = todayKey();
+      if (localStorage.getItem(`ism_stat_visit_${key}`)) return;
+      localStorage.setItem(`ism_stat_visit_${key}`, '1');
+      await setDoc(doc(firestoreDb, DAILY_STATS_COLLECTION, key), {
+        visits: increment(1),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (_) { /* الإحصائيات تحسين إضافي — فشلها لا يؤثر على الموقع */ }
+  }
+
+  async logGroupView(groupId) {
+    try {
+      if (!groupId) return;
+      const key = todayKey();
+      const flag = `ism_stat_group_${groupId}_${key}`;
+      if (localStorage.getItem(flag)) return;
+      localStorage.setItem(flag, '1');
+      await setDoc(doc(firestoreDb, DAILY_STATS_COLLECTION, key), {
+        groups: { [groupId]: increment(1) },
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (_) { /* الإحصائيات تحسين إضافي — فشلها لا يؤثر على الموقع */ }
+  }
+
+  async getDailyStats(dateKey) {
+    requireAdminUser();
+    const snap = await getDoc(doc(firestoreDb, DAILY_STATS_COLLECTION, dateKey || todayKey()));
+    if (!snap.exists()) return { visits: 0, groups: {} };
+    const data = snap.data() || {};
+    return { visits: Number(data.visits || 0), groups: data.groups || {} };
   }
 
   // ===== مزامنة المحفوظات مع حساب المستخدم =====

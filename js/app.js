@@ -78,6 +78,8 @@ async function initApp() {
   });
 
   bindEvents();
+  // تسجيل زيارة اليوم (مرة واحدة لكل جهاز في اليوم) — لا يوقف التحميل.
+  db.logVisit();
   // بلاطات الأقسام تظهر فوراً (بعدّادات صفر مؤقتاً) حتى تحميل Firestore.
   renderGroupTiles(els.groupsGrid, GROUPS, {}, 0, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
@@ -93,6 +95,7 @@ function selectGroupTile(groupId) {
   state.activeSubcategory = 'all';
   state.onlyEmergency = false;
   state.onlyFavorites = false;
+  db.logGroupView(groupId);
   refreshUI();
   els.servicesSection.scrollIntoView({ behavior: 'smooth' });
 }
@@ -223,6 +226,7 @@ function refreshUI() {
     state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
+    db.logGroupView(catId);
     refreshUI();
   });
 

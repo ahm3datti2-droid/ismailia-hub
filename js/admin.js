@@ -4,7 +4,7 @@
 // يظهر له "لا تملك صلاحية" ويُسجَّل خروجه فوراً.
 // كل عمليات الكتابة تمر عبر js/database.js (Firestore).
 import { CATEGORIES, GROUPS, AREAS, ADMIN_EMAIL } from './config.js';
-import { db, INITIAL_SERVICES } from './database.js';
+import { db, INITIAL_SERVICES, todayKey } from './database.js';
 import {
   auth,
   onAuthStateChanged,
@@ -20,6 +20,7 @@ const state = {
   pendingReviews: [],
   pendingServices: [],
   offers: [],
+  dailyStats: { visits: 0, groups: {} },
   approvingPendingId: null,
   editingId: null,
   searchQuery: '',
@@ -53,6 +54,9 @@ const els = {
   offerForm: document.getElementById('offerForm'),
   offerServiceSelect: document.getElementById('offerServiceSelect'),
   offersList: document.getElementById('offersList'),
+  todayVisitsTotal: document.getElementById('todayVisitsTotal'),
+  todayVisitsDate: document.getElementById('todayVisitsDate'),
+  todayGroupsList: document.getElementById('todayGroupsList'),
   serviceForm: document.getElementById('serviceForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitServiceBtn')
@@ -138,13 +142,56 @@ async function loadServices() {
   await loadPendingReviews();
   await loadPendingServices();
   await loadOffers();
+  await loadDailyStats();
   renderStats();
   renderList();
   renderReviewsQueue();
   renderPendingServicesQueue();
   renderOffersList();
+  renderDailyStats();
   fillOfferServiceSelect();
   updateSeedButton();
+}
+
+// زيارات اليوم — إذا فشل التحميل (مثلاً قواعد Firestore لم
+// تُحدَّث بعد) تُعرض القيم صفراً بدلاً من كسر اللوحة.
+async function loadDailyStats() {
+  try {
+    state.dailyStats = await db.getDailyStats();
+  } catch (_) {
+    state.dailyStats = { visits: 0, groups: {} };
+  }
+}
+
+function renderDailyStats() {
+  if (!els.todayVisitsTotal) return;
+  const stats = state.dailyStats || { visits: 0, groups: {} };
+  els.todayVisitsTotal.textContent = String(stats.visits || 0);
+  try {
+    els.todayVisitsDate.textContent = new Date().toLocaleDateString('ar-EG', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  } catch (_) {
+    els.todayVisitsDate.textContent = todayKey();
+  }
+  const rows = Object.entries(stats.groups || {})
+    .map(([id, n]) => ({ id, name: id === 'all' ? 'كل الخدمات' : categoryName(id), count: Number(n || 0) }))
+    .filter((r) => r.count > 0)
+    .sort((a, b) => b.count - a.count);
+  if (!rows.length) {
+    els.todayGroupsList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد زيارات مسجلة اليوم بعد — تظهر الأقسام هنا فور دخول أول زائر.</p>`;
+    return;
+  }
+  const max = rows[0].count;
+  els.todayGroupsList.innerHTML = rows.map((r) => `
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-bold text-slate-300 w-40 shrink-0 truncate">${esc(r.name)}</span>
+      <div class="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-amber-400 rounded-full" style="width:${Math.max(4, Math.round((r.count / max) * 100))}%"></div>
+      </div>
+      <span class="text-xs font-black text-white w-8 text-left shrink-0">${r.count}</span>
+    </div>`).join('');
+  refreshIcons();
 }
 
 // طلبات إضافة خدمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
