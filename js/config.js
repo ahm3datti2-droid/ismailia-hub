@@ -18,7 +18,8 @@ export const CATEGORIES = [
   { id: 'maintenance', name: 'صيانة وحرفيين', icon: 'wrench' },
   { id: 'cars', name: 'خدمات سيارات', icon: 'car' },
   { id: 'real_estate', name: 'عقارات وتشطيبات', icon: 'building-2' },
-  { id: 'mobiles', name: 'موبايلات', icon: 'smartphone' }
+  { id: 'mobiles', name: 'موبايلات', icon: 'smartphone' },
+  { id: 'clothing', name: 'ملابس', icon: 'shirt' }
 ];
 
 export const AREAS = [
