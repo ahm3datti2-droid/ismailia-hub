@@ -449,8 +449,8 @@ function bindEvents() {
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = readForm();
-    if (!data.name || !data.address || !data.phone) {
-      alert('الاسم والعنوان ورقم الهاتف حقول إلزامية.');
+    if (!data.name || !data.phone) {
+      alert('الاسم ورقم الهاتف حقول إلزامية.');
       return;
     }
     try {
