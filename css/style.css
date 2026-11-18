@@ -428,7 +428,7 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
 .detail-action--wa:hover { background: #10b981; }
 .detail-action--call { background: #2563EB; color: #fff; }
 .detail-action--call:hover { background: #1D4ED8; }
-.detail-action--map { background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); color: #60A5FA; }
+.detail-action--map { background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.35); color: #93C5FD; }
 .detail-action--map:hover { background: rgba(37, 99, 235, 0.25); }
 .detail-action--share { background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.25); color: #e2e8f0; }
 .detail-action--share:hover { background: rgba(148, 163, 184, 0.18); }
