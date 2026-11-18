@@ -894,7 +894,7 @@ function openAddServiceModal() {
       <h3 class="text-lg font-extrabold text-amber-400">إضافة خدمة جديدة للدليل</h3>
       <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    ${state.isAdmin ? '' : `<p class="text-xs text-slate-300 font-semibold bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 mb-3 leading-relaxed">طلبك يصل لإدارة الدليل ويراجَع قبل النشر — والصورة يضيفها الأدمن من صفحة محلك، أو ارفق رابط صورة مباشر بالأسفل.</p>`}
+    ${state.isAdmin ? '' : `<p class="text-xs text-slate-300 font-semibold bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 mb-3 leading-relaxed">طلبك يصل لإدارة الدليل ويراجَع قبل النشر — ارفع صورة محلك من جهازك بالأسفل، أو الصق رابط صورة مباشر.</p>`}
     <form id="addServiceForm" class="space-y-3 text-xs">
       <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <div class="grid grid-cols-2 gap-2">
@@ -913,7 +913,16 @@ function openAddServiceModal() {
         <input type="tel" name="phone" required placeholder="رقم الهاتف" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
         <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       </div>
-      <input type="url" name="imageUrl" placeholder="رابط صورة المحل (اختياري — رابط مباشر للصورة)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+        <p class="font-bold text-slate-200 mb-2">صورة المحل</p>
+        <label for="addPhotoInput" class="flex items-center justify-center gap-2 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl cursor-pointer transition">
+          <i data-lucide="image-plus" class="w-4 h-4"></i> اختر صورة من جهازك
+        </label>
+        <input type="file" id="addPhotoInput" accept="image/*" class="hidden">
+        <img id="addPhotoPreview" class="hidden w-full max-h-44 object-contain bg-white rounded-xl mt-2" alt="معاينة صورة المحل">
+        <button type="button" id="addPhotoRemove" class="hidden mt-2 text-red-400 font-bold">إزالة الصورة</button>
+        <input type="url" name="imageUrl" placeholder="أو الصق رابط صورة مباشر (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white mt-2" dir="ltr">
+      </div>
       <input type="text" name="tags" placeholder="كلمات مفتاحية (مثال: دليفري، كشف، صيانة)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <label class="flex items-center gap-2 text-slate-300 py-1">
         <input type="checkbox" name="isEmergency" class="accent-amber-500"> متاح طوارئ / 24 ساعة
@@ -932,9 +941,49 @@ function openAddServiceModal() {
   document.getElementById('addGroupSelect').addEventListener('change', fillAddSubs);
   fillAddSubs();
 
+  // اختيار صورة من الجهاز: معاينة فورية + تحقق من النوع والحجم (5MB).
+  let addPhotoFile = null;
+  const photoInput = document.getElementById('addPhotoInput');
+  const photoPreview = document.getElementById('addPhotoPreview');
+  const photoRemove = document.getElementById('addPhotoRemove');
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('اختر ملف صورة (JPG أو PNG أو WebP).'); photoInput.value = ''; return; }
+    if (file.size > 5 * 1024 * 1024) { alert('حجم الصورة كبير — الحد الأقصى 5 ميجا.'); photoInput.value = ''; return; }
+    addPhotoFile = file;
+    photoPreview.src = URL.createObjectURL(file);
+    photoPreview.classList.remove('hidden');
+    photoRemove.classList.remove('hidden');
+  });
+  photoRemove.addEventListener('click', () => {
+    addPhotoFile = null;
+    photoInput.value = '';
+    photoPreview.src = '';
+    photoPreview.classList.add('hidden');
+    photoRemove.classList.add('hidden');
+  });
+
   document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    // رفع الصورة المختارة أولاً (إن وجدت) — رابطها يصبح صورة الطلب.
+    let uploadedImageUrl = '';
+    if (addPhotoFile) {
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'جارٍ رفع الصورة…';
+      try {
+        uploadedImageUrl = await db.uploadPendingImage(addPhotoFile);
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = state.isAdmin ? 'حفظ ونشر الخدمة فوراً' : 'إرسال الطلب للمراجعة';
+        alert(err.message || 'تعذر رفع الصورة. حاول مرة أخرى.');
+        return;
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = state.isAdmin ? 'حفظ ونشر الخدمة فوراً' : 'إرسال الطلب للمراجعة';
+    }
     const payload = {
       name: fd.get('name'),
       category: fd.get('category'),
@@ -943,7 +992,7 @@ function openAddServiceModal() {
       address: fd.get('address'),
       phone: fd.get('phone'),
       whatsapp: fd.get('whatsapp'),
-      imageUrl: fd.get('imageUrl') || '',
+      imageUrl: uploadedImageUrl || fd.get('imageUrl') || '',
       tags: fd.get('tags') || 'خدمات عامة',
       isEmergency: fd.get('isEmergency') === 'on',
       openHour: fd.get('isEmergency') === 'on' ? 0 : 9,
@@ -977,7 +1026,7 @@ function openAddServiceModal() {
         return;
       }
       closeModal();
-      alert('تم إرسال طلبك لإدارة الدليل ✓ — سيراجعه الأدمن قبل النشر، وسيضيف صورة محلك من صفحتك. شكراً لمشاركتك!');
+      alert('تم إرسال طلبك لإدارة الدليل ✓ — سيراجعه الأدمن قبل النشر. شكراً لمشاركتك!');
       return;
     }
 

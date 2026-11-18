@@ -239,7 +239,7 @@ function renderPendingServicesQueue() {
         </div>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">${esc(p.address || 'بدون عنوان')}${p.phone ? ` • <span dir="ltr">${esc(p.phone)}</span>` : ''}</p>
-      ${p.imageUrl ? `<p class="text-[11px] text-sky-400 mt-1.5 truncate" dir="ltr">صورة مرفقة: ${esc(p.imageUrl)}</p>` : `<p class="text-[11px] text-amber-400 mt-1.5">بدون صورة مرفقة — أضف صورة موثقة من صفحة المحل قبل النشر.</p>`}
+      ${p.imageUrl ? `<a href="${esc(p.imageUrl)}" target="_blank" rel="noopener"><img src="${esc(p.imageUrl)}" alt="صورة مرفقة" referrerpolicy="no-referrer" class="w-full max-h-40 object-contain bg-white rounded-xl mt-2" onerror="this.remove()"></a>` : `<p class="text-[11px] text-amber-400 mt-1.5">بدون صورة مرفقة — أضف صورة موثقة من صفحة المحل قبل النشر.</p>`}
     </article>`).join('');
 
   els.pendingServicesList.querySelectorAll('[data-approve-service]').forEach((btn) => {
