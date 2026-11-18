@@ -122,6 +122,8 @@ function bindEvents() {
 
   document.getElementById('btnTransport').addEventListener('click', openTransportModal);
 
+  document.getElementById('btnContact').addEventListener('click', openContactModal);
+
   document.getElementById('btnSaved').addEventListener('click', () => {
     state.onlyFavorites = !state.onlyFavorites;
     state.onlyEmergency = false;
@@ -399,6 +401,72 @@ function openTransportModal() {
           <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-extrabold">${r.fare}</span>
         </div>
       `).join('')}
+    </div>
+  `;
+  showModal();
+}
+
+// نافذة "تواصل معنا": بيانات مسؤول الموقع والشركة المؤسسة للدليل.
+function openContactModal() {
+  els.modalContent.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-extrabold text-amber-400 flex items-center gap-2">
+        <i data-lucide="messages-square" class="w-5 h-5"></i> تواصل معنا
+      </h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <p class="text-xs text-slate-400 font-semibold mb-4 leading-relaxed">لإضافة خدمتك للدليل، أو تصحيح بيانات خدمة موجودة، أو الاستفسار عن الإعلانات — تواصل مع إدارة الدليل:</p>
+    <div class="space-y-2.5">
+      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0"><i data-lucide="user-round" class="w-5 h-5"></i></div>
+        <div>
+          <p class="text-[11px] text-slate-400 font-bold">مسؤول الموقع</p>
+          <p class="text-sm text-white font-extrabold">Ahmed Attia</p>
+        </div>
+      </div>
+      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0"><i data-lucide="building-2" class="w-5 h-5"></i></div>
+        <div>
+          <p class="text-[11px] text-slate-400 font-bold">الشركة المؤسسة</p>
+          <p class="text-sm text-white font-extrabold">Nexora</p>
+        </div>
+      </div>
+      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
+          <div>
+            <p class="text-[11px] text-slate-400 font-bold">رقم مسؤول الموقع</p>
+            <p class="text-sm text-white font-extrabold" dir="ltr">01121341717</p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <a href="https://wa.me/201121341717" target="_blank" rel="noopener" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
+          <a href="tel:01121341717" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
+        </div>
+      </div>
+      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
+          <div>
+            <p class="text-[11px] text-slate-400 font-bold">رقم إضافي للتواصل</p>
+            <p class="text-sm text-white font-extrabold" dir="ltr">01117543009</p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <a href="https://wa.me/201117543009" target="_blank" rel="noopener" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
+          <a href="tel:01117543009" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <a href="https://www.facebook.com/share/1HtWFUyNba/" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-sky-600/20 border border-sky-500/30 text-sky-400 py-3 rounded-xl text-xs font-bold">
+          <i data-lucide="facebook" class="w-4 h-4"></i>
+          فيسبوك
+        </a>
+        <a href="https://www.instagram.com/nexoraa_egypt" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-pink-600/20 border border-pink-500/30 text-pink-400 py-3 rounded-xl text-xs font-bold">
+          <i data-lucide="instagram" class="w-4 h-4"></i>
+          إنستجرام
+        </a>
+      </div>
     </div>
   `;
   showModal();
