@@ -161,6 +161,31 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .service-del { display: flex; align-items: center; justify-content: center; gap: 0.3rem; width: 100%; margin-top: 0.55rem; padding: 0.3rem; font-size: 0.68rem; font-weight: 700; color: rgba(251, 113, 133, 0.65); background: none; border: none; cursor: pointer; transition: color 0.15s ease; }
 .service-del:hover { color: #fb7185; }
 
+/* بلاطات الأقسام في الصفحة الرئيسية: أيقونة كبيرة + اسم + عدد الخدمات */
+.group-tile {
+  background: linear-gradient(180deg, #131c2e 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.1rem;
+  padding: 1rem 0.5rem 0.85rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.group-tile:hover { border-color: rgba(245, 158, 11, 0.4); transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+.group-tile:active { transform: scale(0.97); }
+.group-tile__icon {
+  width: 3.25rem; height: 3.25rem; border-radius: 1rem;
+  background: rgba(245, 158, 11, 0.12); color: #fbbf24;
+  display: flex; align-items: center; justify-content: center;
+}
+.group-tile__icon svg { width: 1.5rem; height: 1.5rem; }
+.group-tile--all .group-tile__icon {
+  background: linear-gradient(135deg, #fbbf24, #d97706); color: #090d16;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+.group-tile__name { font-size: 0.8rem; font-weight: 800; color: #f1f5f9; text-align: center; line-height: 1.4; }
+.group-tile__count { font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
+
 /* تلاشٍ عند حافة صف التصنيفات القابل للتمرير (يُخفي القطع المفاجئ) */
 .chips-fade {
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px);

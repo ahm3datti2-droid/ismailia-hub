@@ -1,6 +1,6 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -24,6 +24,9 @@ const els = {
   areaSelect: document.getElementById('areaFilter'),
   searchInput: document.getElementById('searchInput'),
   servicesGrid: document.getElementById('servicesGrid'),
+  groupsSection: document.getElementById('groupsSection'),
+  groupsGrid: document.getElementById('groupsGrid'),
+  servicesSection: document.getElementById('servicesSection'),
   resultsCount: document.getElementById('resultsCount'),
   sectionTitle: document.getElementById('sectionTitle'),
   heroCount: document.getElementById('heroCount'),
@@ -58,9 +61,34 @@ async function initApp() {
   });
 
   bindEvents();
+  // بلاطات الأقسام تظهر فوراً (بعدّادات صفر مؤقتاً) حتى تحميل Firestore.
+  renderGroupTiles(els.groupsGrid, GROUPS, {}, 0, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
   renderSkeleton(els.servicesGrid);
   await loadServices();
+}
+
+// اختيار قسم من بلاطات الصفحة الرئيسية: يعرض خدماته فقط.
+function selectGroupTile(groupId) {
+  state.activeCategory = groupId;
+  state.activeSubcategory = 'all';
+  state.onlyEmergency = false;
+  state.onlyFavorites = false;
+  refreshUI();
+  els.servicesSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// إعادة كل الفلاتر للوضع الافتراضي: الصفحة الرئيسية (بلاطات الأقسام).
+function resetToHome() {
+  state.activeCategory = 'all';
+  state.activeSubcategory = 'all';
+  state.selectedArea = 'all';
+  state.searchQuery = '';
+  state.onlyEmergency = false;
+  state.onlyFavorites = false;
+  els.searchInput.value = '';
+  els.areaSelect.value = 'all';
+  refreshUI();
 }
 
 async function loadServices() {
@@ -86,7 +114,13 @@ function deepLinkedServiceId() {
 
 function openDeepLinkedService() {
   const id = deepLinkedServiceId();
-  if (id && state.services.some(s => s.id === id)) openServiceDetails(id);
+  const srv = id && state.services.find(s => s.id === id);
+  if (!srv) return;
+  // خلفية التفاصيل تعرض قسم الخدمة نفسها بدل كل الأنشطة.
+  state.activeCategory = srv.category;
+  state.activeSubcategory = 'all';
+  refreshUI();
+  openServiceDetails(id);
 }
 
 function bindEvents() {
@@ -117,19 +151,16 @@ function bindEvents() {
     els.searchInput.focus();
   });
 
-  document.getElementById('btnHome').addEventListener('click', () => {
-    state.activeCategory = 'all';
-    state.activeSubcategory = 'all';
-    state.onlyEmergency = false;
-    state.onlyFavorites = false;
-    els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
-    refreshUI();
+  document.getElementById('btnHome').addEventListener('click', resetToHome);
+
+  document.getElementById('btnBackToGroups').addEventListener('click', () => {
+    resetToHome();
+    els.groupsSection.scrollIntoView({ behavior: 'smooth' });
   });
 
   document.getElementById('btnEmergency').addEventListener('click', () => {
     state.onlyEmergency = true;
     state.onlyFavorites = false;
-    els.sectionTitle.textContent = 'خدمات الطوارئ و 24 ساعة';
     refreshUI();
   });
 
@@ -140,7 +171,6 @@ function bindEvents() {
   document.getElementById('btnSaved').addEventListener('click', () => {
     state.onlyFavorites = !state.onlyFavorites;
     state.onlyEmergency = false;
-    els.sectionTitle.textContent = state.onlyFavorites ? 'الخدمات المحفوظة' : 'أبرز الخدمات في الإسماعيلية';
     refreshUI();
   });
 
@@ -156,6 +186,15 @@ function bindEvents() {
   document.getElementById('closeModalBackdrop').addEventListener('click', closeModal);
 }
 
+// عنوان قسم الخدمات حسب الحالة الحالية (قسم مختار / طوارئ / محفوظات / بحث).
+function updateSectionTitle() {
+  if (state.onlyEmergency) els.sectionTitle.textContent = 'خدمات الطوارئ و 24 ساعة';
+  else if (state.onlyFavorites) els.sectionTitle.textContent = 'الخدمات المحفوظة';
+  else if (state.searchQuery) els.sectionTitle.textContent = 'نتائج البحث';
+  else if (state.activeCategory !== 'all') els.sectionTitle.textContent = categoryInfo(state.activeCategory).name;
+  else els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
+}
+
 function refreshUI() {
   renderCategories(els.categories, state.activeCategory, (catId) => {
     state.activeCategory = catId;
@@ -169,6 +208,19 @@ function refreshUI() {
     state.activeSubcategory = subId;
     refreshUI();
   });
+
+  // الصفحة الرئيسية: بلا أي فلتر أو بحث تعرض بلاطات الأقسام فقط،
+  // وأي اختيار أو بحث أو فلتر يعرض قائمة الخدمات بدلها.
+  const isHome = state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
+    state.selectedArea === 'all' && !state.searchQuery && !state.onlyEmergency && !state.onlyFavorites;
+  els.groupsSection.classList.toggle('hidden', !isHome);
+  els.servicesSection.classList.toggle('hidden', isHome);
+  updateSectionTitle();
+  if (isHome) {
+    const counts = {};
+    state.services.forEach(s => { counts[s.category] = (counts[s.category] || 0) + 1; });
+    renderGroupTiles(els.groupsGrid, GROUPS, counts, state.services.length, selectGroupTile);
+  }
 
   const filtered = state.services.filter(srv => {
     const matchCat = state.activeCategory === 'all' || srv.category === state.activeCategory;
@@ -192,18 +244,7 @@ function refreshUI() {
   if (els.heroAreas) els.heroAreas.textContent = AREAS.length;
 
   renderServiceCards(els.servicesGrid, filtered, state.favorites, state.isAdmin, {
-    onClearFilters: () => {
-      state.activeCategory = 'all';
-      state.activeSubcategory = 'all';
-      state.selectedArea = 'all';
-      state.searchQuery = '';
-      state.onlyEmergency = false;
-      state.onlyFavorites = false;
-      els.searchInput.value = '';
-      els.areaSelect.value = 'all';
-      els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
-      refreshUI();
-    },
+    onClearFilters: resetToHome,
     onDetails: openServiceDetails,
     onToggleFav: toggleFavorite,
     onDelete: handleDeleteService

@@ -70,6 +70,26 @@ export function renderSubcategories(container, groupId, activeSub, onSelect) {
   });
 }
 
+/* بلاطات الأقسام في الصفحة الرئيسية: الأقسام الـ 11 + بلاطة "كل الخدمات".
+   كل بلاطة تعرض أيقونة القسم واسمه وعدد خدماته، والضغط عليها يفتح خدماته. */
+export function renderGroupTiles(container, groups, counts, total, onSelect) {
+  const tiles = [
+    ...groups.map(g => ({ id: g.id, name: g.name, icon: g.icon, count: counts[g.id] || 0 })),
+    { id: 'all', name: 'كل الخدمات', icon: 'layout-grid', count: total }
+  ];
+  container.innerHTML = tiles.map(t => `
+    <button data-group="${t.id}" class="group-tile ${t.id === 'all' ? 'group-tile--all' : ''}">
+      <span class="group-tile__icon"><i data-lucide="${t.icon}"></i></span>
+      <span class="group-tile__name">${t.name}</span>
+      <span class="group-tile__count">${t.count} خدمة</span>
+    </button>
+  `).join('');
+  container.querySelectorAll('[data-group]').forEach(el => {
+    el.addEventListener('click', () => onSelect(el.dataset.group));
+  });
+  lucide.createIcons();
+}
+
 /* بطاقات هيكلية أثناء تحميل Firestore — نفس بنية البطاقة الأفقية */
 export function renderSkeleton(container, count = 6) {
   container.innerHTML = Array.from({ length: count }, () => `
