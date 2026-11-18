@@ -1,0 +1,17 @@
+{
+  "name": "دليل خدمات الإسماعيلية | Ismailia Super App",
+  "short_name": "خدمات الإسماعيلية",
+  "description": "الدليل الشامل لخدمات ومواصلات وطوارئ محافظة الإسماعيلية ومراكزها",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

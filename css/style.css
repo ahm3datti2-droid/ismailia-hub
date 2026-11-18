@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg-dark: #090d16;
+  --card-dark: #111827;
+  --accent-gold: #f59e0b;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: var(--bg-dark);
+  color: #f8fafc;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.glass-nav {
+  background: rgba(9, 13, 22, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.glass-header {
+  background: rgba(9, 13, 22, 0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.story-ring {
+  background: linear-gradient(45deg, #f59e0b, #ef4444, #eab308);
+  padding: 2.5px;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bottom-sheet-enter {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>دليل خدمات الإسماعيلية | Ismailia Super App</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090d16">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pb-24 select-none">
+
+  <!-- الهيدر -->
+  <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
+    <div class="max-w-lg mx-auto">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+            IS
+          </div>
+          <div>
+            <h1 class="text-lg font-black text-white leading-tight">خدمات الإسماعيلية</h1>
+            <p class="text-[11px] text-amber-400 font-semibold">المنصة الشاملة لأهالي المحافظة</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnAdminToggle" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="وضع الإدارة">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </button>
+          <button id="btnAddService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            أضف خدمتك
+          </button>
+        </div>
+      </div>
+
+      <!-- البحث الذكي -->
+      <div class="relative">
+        <input type="text" id="searchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)"
+          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3 pr-11 pl-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- المحتوى -->
+  <main class="max-w-lg mx-auto px-4 pt-4">
+    <!-- التصنيفات -->
+    <div id="categoriesContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3"></div>
+
+    <!-- فلتر المناطق -->
+    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mb-4">
+      <div class="flex items-center gap-2 text-xs">
+        <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
+        <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
+      </div>
+      <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none">
+        <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
+      </select>
+    </div>
+
+    <!-- شريط العنوان -->
+    <div class="flex justify-between items-center mb-3">
+      <h2 id="sectionTitle" class="text-sm font-extrabold text-slate-200">أبرز الخدمات في الإسماعيلية</h2>
+      <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0 خدمة</span>
+    </div>
+
+    <!-- شبكة البطاقات -->
+    <div id="servicesGrid" class="space-y-3.5"></div>
+  </main>
+
+  <!-- شريط التنقل السفلي -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5">
+    <div class="max-w-lg mx-auto flex justify-between items-center">
+      <button id="btnHome" class="flex flex-col items-center gap-1 text-amber-400">
+        <i data-lucide="compass" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold">الرئيسية</span>
+      </button>
+      <button id="btnEmergency" class="flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 transition">
+        <i data-lucide="siren" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">طوارئ 24/7</span>
+      </button>
+      <button id="btnTransport" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+        <i data-lucide="bus" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">المواصلات</span>
+      </button>
+      <button id="btnSaved" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+        <i data-lucide="bookmark" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">المحفوظات</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- النافذة المنبثقة (Bottom Sheet Modal) -->
+  <div id="appModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center">
+    <div id="closeModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div id="modalContent" class="relative z-10 bg-slate-900 border border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 bottom-sheet-enter"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
