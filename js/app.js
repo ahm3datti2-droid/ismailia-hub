@@ -270,7 +270,7 @@ function openServiceDetails(id) {
       <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
         <span class="badge border ${status.color}">${status.text}</span>
         ${srv.verified ? '<span class="badge badge--verified"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> موثق</span>' : ''}
-        <span class="rating-pill">
+        <span class="rating-pill" id="detailRatingPill">
           <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
           ${srv.rating} (${srv.reviewsCount} تقييم)
         </span>
@@ -288,7 +288,6 @@ function openServiceDetails(id) {
           <span class="detail-row__title">العنوان — ${srv.area}</span>
           <span class="detail-row__sub">${srv.address}</span>
         </span>
-        <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 shrink-0 mt-1"></i>
       </a>
 
       <div class="detail-row">
@@ -306,7 +305,6 @@ function openServiceDetails(id) {
             <span class="detail-row__title">الهاتف</span>
             <span class="detail-row__sub" dir="ltr" style="text-align:right">${srv.phone}</span>
           </span>
-          <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 shrink-0 mt-1"></i>
         </a>
       ` : ''}
 
@@ -356,18 +354,16 @@ function openServiceDetails(id) {
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-2.5 mt-2.5">
-        <button id="detailFavBtn" class="detail-action detail-action--share ${state.isAdmin ? '' : 'col-span-2'}">
-          <i data-lucide="bookmark" class="${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
-          ${isFav ? 'محفوظة ✓' : 'حفظ في المحفوظات'}
+      <button id="detailFavBtn" class="detail-action detail-action--share w-full mt-2.5">
+        <i data-lucide="bookmark" class="${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
+        ${isFav ? 'محفوظة ✓' : 'حفظ في المحفوظات'}
+      </button>
+      ${state.isAdmin ? `
+        <button id="detailDelBtn" class="service-del">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          حذف من الدليل
         </button>
-        ${state.isAdmin ? `
-          <button id="detailDelBtn" class="detail-action detail-action--danger">
-            <i data-lucide="trash-2"></i>
-            حذف من الدليل
-          </button>
-        ` : ''}
-      </div>
+      ` : ''}
 
       <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-800">
         <p class="text-xs text-slate-400 font-bold">جاري تحميل التقييمات…</p>
@@ -445,6 +441,17 @@ async function loadDetailReviews(serviceId) {
   const avg = reviews.length
     ? (reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length).toFixed(1)
     : null;
+  // صحّح شارة التقييم أعلى التفاصيل: المتوسط الحقيقي إن وُجد،
+  // وإلا نص صريح "لا توجد تقييمات بعد" بدل الرقم الافتراضي 5 (1).
+  const pill = document.getElementById('detailRatingPill');
+  if (pill) {
+    if (reviews.length) {
+      pill.innerHTML = `<i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i> ${avg} (${reviews.length} تقييم)`;
+    } else {
+      pill.textContent = 'لا توجد تقييمات بعد';
+      pill.className = 'text-[11px] font-bold text-slate-400';
+    }
+  }
   box.innerHTML = `
     <h4 class="text-sm font-extrabold text-white mb-1 flex items-center gap-1.5">
       <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
@@ -494,7 +501,7 @@ function renderReviewForm(serviceId, mine) {
   let selected = 5;
   box.innerHTML = `
     <p class="text-xs font-extrabold text-white mb-2">قيّم هذه الخدمة</p>
-    <div id="reviewStars" class="flex gap-1 mb-2.5" dir="ltr">
+    <div id="reviewStars" class="flex gap-1 mb-2.5" dir="rtl">
       ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="text-2xl leading-none ${n <= selected ? 'text-amber-400' : 'text-slate-600'} transition active:scale-110" aria-label="${n} نجوم">★</button>`).join('')}
     </div>
     <textarea id="reviewText" rows="2" maxlength="500" placeholder="اكتب رأيك في الخدمة (اختياري لكنه يساعد غيرك)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs mb-2.5"></textarea>

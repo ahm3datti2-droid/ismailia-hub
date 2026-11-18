@@ -25,7 +25,7 @@
   <script defer src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="pb-24 select-none">
+<body class="pb-24 md:pb-8 select-none">
 
   <!-- الهيدر (يمرّر مع الصفحة؛ شريط البحث والفلاتر ثابت) -->
   <header class="px-4 pt-4 pb-3">
@@ -57,19 +57,45 @@
     </div>
   </header>
 
+  <!-- شريط التنقل: ثابت أسفل الشاشة على الموبايل، وشريط علوي عادي على الديسكتوب -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5 md:static md:z-auto md:bg-transparent md:border-0 md:backdrop-blur-none md:px-4 md:py-1">
+    <div class="max-w-6xl mx-auto flex justify-between md:justify-center md:gap-8 items-center">
+      <button id="btnHome" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-amber-400">
+        <i data-lucide="compass" class="w-5 h-5"></i>
+        <span class="text-[10px] md:text-xs font-bold">الرئيسية</span>
+      </button>
+      <button id="btnEmergency" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-rose-400 transition">
+        <i data-lucide="siren" class="w-5 h-5"></i>
+        <span class="text-[10px] md:text-xs font-semibold">طوارئ 24/7</span>
+      </button>
+      <button id="btnTransport" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
+        <i data-lucide="bus" class="w-5 h-5"></i>
+        <span class="text-[10px] md:text-xs font-semibold">المواصلات</span>
+      </button>
+      <button id="btnSaved" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
+        <i data-lucide="bookmark" class="w-5 h-5"></i>
+        <span class="text-[10px] md:text-xs font-semibold">المحفوظات</span>
+      </button>
+      <button id="btnContact" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-amber-400 transition">
+        <i data-lucide="messages-square" class="w-5 h-5"></i>
+        <span class="text-[10px] md:text-xs font-semibold">تواصل معنا</span>
+      </button>
+    </div>
+  </nav>
+
   <!-- الهيرو: هوية الدليل + إحصاءات حية + دعوة للبحث -->
   <section class="px-4 pt-1 pb-4" aria-label="نبذة عن الدليل">
     <div class="max-w-6xl mx-auto">
       <div class="hero-panel relative overflow-hidden rounded-3xl border border-slate-800/80 px-5 py-6 sm:px-8 sm:py-7">
         <div class="hero-glow absolute inset-0 pointer-events-none" aria-hidden="true"></div>
-        <div class="relative">
+        <div class="relative text-center">
           <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full mb-3">
             <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
             الدليل الرسمي لمحافظة الإسماعيلية
           </span>
-          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug">كل خدمات الإسماعيلية<br class="sm:hidden"> في مكان واحد</h2>
-          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl leading-relaxed">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة، وصور حقيقية لكل خدمة.</p>
-          <div class="flex flex-wrap gap-2.5 mt-5">
+          <h2 class="text-2xl sm:text-[2rem] font-black text-white leading-snug">كل خدمات الإسماعيلية في مكان واحد</h2>
+          <p class="text-sm text-slate-400 font-semibold mt-2 max-w-xl mx-auto leading-relaxed">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
+          <div class="flex flex-wrap justify-center gap-2.5 mt-5">
             <div class="hero-stat">
               <span class="hero-stat__num" id="heroCount">0</span>
               <span class="hero-stat__label">خدمة موثقة</span>
@@ -102,16 +128,16 @@
         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none"></i>
       </div>
       <!-- التصنيفات -->
-      <div id="categoriesContainer" class="flex gap-2 overflow-x-auto no-scrollbar pt-3"></div>
+      <div id="categoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-3"></div>
       <!-- التصنيفات الفرعية (تظهر عند اختيار قسم رئيسي) -->
-      <div id="subcategoriesContainer" class="flex gap-2 overflow-x-auto no-scrollbar pt-2"></div>
+      <div id="subcategoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-2"></div>
       <!-- فلتر المناطق -->
-      <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
-        <div class="flex items-center gap-2 text-xs">
+      <div class="flex items-center gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
+        <div class="flex items-center gap-2 text-xs shrink-0">
           <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
           <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
         </div>
-        <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none" aria-label="فلتر المنطقة">
+        <select id="areaFilter" class="flex-1 min-w-0 bg-transparent text-xs font-bold text-white focus:outline-none" aria-label="فلتر المنطقة">
           <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
         </select>
       </div>
@@ -126,35 +152,10 @@
       <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full whitespace-nowrap">0 خدمة</span>
     </div>
 
-    <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الديسكتوب -->
-    <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الشاشات الواسعة -->
+    <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
   </main>
 
-  <!-- شريط التنقل السفلي -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <button id="btnHome" class="nav-btn flex flex-col items-center gap-1 text-amber-400">
-        <i data-lucide="compass" class="w-5 h-5"></i>
-        <span class="text-[10px] font-bold">الرئيسية</span>
-      </button>
-      <button id="btnEmergency" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 transition">
-        <i data-lucide="siren" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold">طوارئ 24/7</span>
-      </button>
-      <button id="btnTransport" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-        <i data-lucide="bus" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold">المواصلات</span>
-      </button>
-      <button id="btnSaved" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-        <i data-lucide="bookmark" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold">المحفوظات</span>
-      </button>
-      <button id="btnContact" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-amber-400 transition">
-        <i data-lucide="messages-square" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold">تواصل معنا</span>
-      </button>
-    </div>
-  </nav>
 
   <!-- النافذة المنبثقة (Bottom Sheet Modal) -->
   <div id="appModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center">

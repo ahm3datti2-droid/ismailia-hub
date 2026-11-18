@@ -105,20 +105,60 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, var(--bg-card) 45%);
 }
 
-/* أيقونة التصنيف داخل البطاقة */
-.service-avatar {
-  width: 2.75rem;
-  height: 2.75rem;
-  flex-shrink: 0;
+/* بطاقة أفقية: شعار ثابت في مربع فاتح + محتوى بجانبه.
+   المربع الفاتح يوحّد شكل كل الشعارات (الفاتح والداكن والصور)
+   فلا يضيع شعار داكن على خلفية داكنة، ولا يطفو شعار صغير في فراغ. */
+.service-top { display: flex; align-items: flex-start; gap: 0.75rem; }
+.service-thumb {
+  width: 6rem; height: 6rem; flex-shrink: 0;
   border-radius: 0.9rem;
-  background: linear-gradient(135deg, #fbbf24, #d97706);
-  color: #090d16;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+  background: linear-gradient(160deg, #ffffff 0%, #e8edf3 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.45rem; cursor: pointer; overflow: hidden;
 }
-.service-avatar svg { width: 1.25rem; height: 1.25rem; }
+.service-thumb img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+.service-thumb--fallback { color: #b45309; background: linear-gradient(160deg, #fef3c7, #fde68a); }
+.service-thumb--fallback svg { width: 2rem; height: 2rem; }
+.service-main { flex: 1; min-width: 0; }
+.service-head { display: flex; align-items: flex-start; gap: 0.5rem; }
+.service-name {
+  flex: 1; min-width: 0; cursor: pointer;
+  font-size: 0.95rem; font-weight: 800; color: #fff; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 2.76rem; /* سطران ثابتان فيحاذي كل البطاقات */
+}
+.service-name:hover { color: #fbbf24; }
+.service-verified { display: inline-block; width: 0.95rem; height: 0.95rem; color: #38bdf8; vertical-align: -0.15rem; }
+.service-fav { flex-shrink: 0; padding: 0.4rem; border-radius: 999px; color: #94a3b8; transition: color 0.15s ease, background 0.15s ease; }
+.service-fav:hover { color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
+.service-fav--on { color: #fbbf24; }
+.service-cat { font-size: 0.7rem; font-weight: 700; color: #fbbf24; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.service-addr { display: flex; align-items: flex-start; gap: 0.3rem; font-size: 0.72rem; color: #cbd5e1; line-height: 1.55; margin-top: 0.3rem; min-height: 2.24rem; }
+.service-addr svg { color: rgba(245, 158, 11, 0.8); margin-top: 0.1rem; }
+.service-addr span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.service-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; font-size: 0.7rem; font-weight: 700; color: #94a3b8; margin-top: 0.35rem; }
+.service-meta__rating { display: inline-flex; align-items: center; gap: 0.2rem; color: #fbbf24; }
+.service-meta__dot { color: #475569; }
+.service-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.service-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem 0.25rem; border-radius: 0.8rem; font-size: 0.75rem; font-weight: 800; transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease; white-space: nowrap; }
+.service-btn:active { transform: scale(0.97); }
+.service-btn--wa { background: #059669; color: #fff; }
+.service-btn--wa:hover { background: #10b981; }
+.service-btn--call { background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.08); }
+.service-btn--call:hover { background: #334155; }
+.service-btn--details { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
+.service-btn--details:hover { background: #f59e0b; color: #090d16; }
+/* حذف الأدمن: رابط نصي صغير أسفل الأزرار بدل شريط أحمر عريض */
+.service-del { display: flex; align-items: center; justify-content: center; gap: 0.3rem; width: 100%; margin-top: 0.55rem; padding: 0.3rem; font-size: 0.68rem; font-weight: 700; color: rgba(251, 113, 133, 0.65); background: none; border: none; cursor: pointer; transition: color 0.15s ease; }
+.service-del:hover { color: #fb7185; }
+
+/* تلاشٍ عند حافة صف التصنيفات القابل للتمرير (يُخفي القطع المفاجئ) */
+.chips-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px);
+  mask-image: linear-gradient(to right, transparent 0, #000 28px);
+}
 
 /* شارات أوضح: موثق / طوارئ / مفتوح */
 .badge {
@@ -229,12 +269,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   }
 }
 
-/* صورة الخدمة أعلى البطاقة — لا يُقص أي جزء من الصورة أبداً:
-   contain على خلفية داكنة متدرجة مع حشوة، فتظهر الشعارات العريضة
-   (مثل Mylerz) كاملة دون قص، والصور الفوتوغرافية كاملة أيضاً. */
-.service-photo { margin: -1rem -1rem 0.9rem; border-radius: var(--radius-card) var(--radius-card) 0 0; overflow: hidden; aspect-ratio: 16 / 9; background: linear-gradient(160deg, #0b1220 0%, #131c31 55%, #0d1526 100%); display: flex; align-items: center; justify-content: center; padding: 0.6rem; cursor: pointer; }
-.service-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.service-name { font-size: 0.95rem; }
+/* صورة الخدمة أعلى البطاقة — لم تعد مستخدمة (البطاقة الأفقية
+   تستخدم .service-thumb). تُركت القاعدة محذوفة عمداً. */
 
 /* ---------- الهيرو ---------- */
 .hero-panel {
@@ -269,7 +305,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .detail-photo {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: linear-gradient(160deg, #0b1220 0%, #131c31 55%, #0d1526 100%);
+  background: linear-gradient(160deg, #ffffff 0%, #e8edf3 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -364,11 +400,10 @@ a.detail-row:hover { border-color: rgba(245, 158, 11, 0.35); }
 .detail-action--danger { background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); color: #fb7185; }
 .detail-action--danger:hover { background: rgba(244, 63, 94, 0.22); }
 
-/* هيكل التحميل: كتلة صورة مطابقة لمساحة الصورة في البطاقة */
-.skeleton-photo {
-  aspect-ratio: 16 / 9;
+/* هيكل التحميل: مربع شعار + سطور مطابقة لبنية البطاقة الأفقية */
+.skeleton-thumb {
+  width: 6rem; height: 6rem; flex-shrink: 0;
   border-radius: 0.9rem;
-  margin-bottom: 0.9rem;
   background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite linear;
