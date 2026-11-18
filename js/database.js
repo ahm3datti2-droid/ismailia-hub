@@ -1,7 +1,7 @@
 // طبقة إدارة البيانات — Firestore أولاً، مع بديل محلي آمن.
 // - القراءة: من مجموعة "services" في Firestore، مرتبة بالأحدث أولاً.
 //   إذا كانت المجموعة فارغة أو تعذر الوصول إلى Firestore،
-//   نعرض الخدمات الافتراضية الثلاث حتى لا يظهر الموقع العام فارغاً أبداً.
+//   يظهر الموقع العام فارغاً (لا توجد خدمات افتراضية بعد حذفها).
 // - الكتابة (إضافة / تعديل / حذف / نشر الافتراضيات):
 //   تتطلب مستخدماً مسجلاً في Firebase Auth، وتتحقق قواعد Firestore
 //   من ذلك أيضاً من جهة الخادم. أي كتابة من غير تسجيل دخول ترفض
@@ -27,71 +27,7 @@ import { ADMIN_EMAIL } from './config.js';
 export const SERVICES_COLLECTION = 'services';
 const PENDING_KEY = 'ismailia_pending_services_v1';
 
-export const INITIAL_SERVICES = [
-  {
-    id: "srv_1",
-    name: "مركز النخبة الطبي التخصصي",
-    category: "medical",
-    area: "الشيخ زايد",
-    address: "شارع شبين الكوم، بجوار المسجد الكبير",
-    phone: "01001234567",
-    whatsapp: "201001234567",
-    mapUrl: "https://maps.google.com/?q=30.6043,32.2723",
-    openHour: 0,
-    closeHour: 24,
-    isEmergency: true,
-    verified: true,
-    rating: 4.9,
-    reviewsCount: 142,
-    tags: "باطنة، أطفال، تحاليل، أشعة، طوارئ",
-    menu: [
-      { item: "كشف استشاري", price: "300 ج.م" },
-      { item: "تحليل صورة دم كاملة", price: "180 ج.م" }
-    ]
-  },
-  {
-    id: "srv_2",
-    name: "أسماك القناة للمأكولات البحرية",
-    category: "food",
-    area: "طريق البلاجات",
-    address: "أمام نادي الشراع مباشرة",
-    phone: "01009876543",
-    whatsapp: "201009876543",
-    mapUrl: "https://maps.google.com/?q=30.5833,32.2667",
-    openHour: 12,
-    closeHour: 2,
-    isEmergency: false,
-    verified: true,
-    rating: 4.8,
-    reviewsCount: 310,
-    tags: "سمك، جمبري، طواجن، دليفري سريع",
-    menu: [
-      { item: "وجبة جمبري جامبو", price: "420 ج.م" },
-      { item: "طاجن سي فود بالكريمة", price: "280 ج.م" }
-    ]
-  },
-  {
-    id: "srv_3",
-    name: "المركز الهندسي لصيانة التكييف والأجهزة",
-    category: "maintenance",
-    area: "حي ثالث",
-    address: "المنطقة الخامسة، خلف الموقف الجديد",
-    phone: "01112223334",
-    whatsapp: "201112223334",
-    mapUrl: "https://maps.google.com/?q=30.6100,32.2650",
-    openHour: 9,
-    closeHour: 23,
-    isEmergency: true,
-    verified: true,
-    rating: 4.7,
-    reviewsCount: 89,
-    tags: "شحن فريون، صيانة تكييف، ثلاجات، غسالات",
-    menu: [
-      { item: "كشف وتحديد عطل", price: "150 ج.م" },
-      { item: "صيانة وغسيل تكييف", price: "350 ج.م" }
-    ]
-  }
-];
+export const INITIAL_SERVICES = [];
 
 function cloneInitialServices() {
   return JSON.parse(JSON.stringify(INITIAL_SERVICES));
@@ -238,8 +174,8 @@ class DatabaseService {
     return record;
   }
 
-  // نشر الخدمات الافتراضية الثلاث في Firestore — للأدمن فقط،
-  // وفقط عندما تكون المجموعة فارغة تماماً.
+  // نشر الخدمات الافتراضية في Firestore — للأدمن فقط،
+  // وفقط عندما تكون المجموعة فارغة تماماً. (القائمة الافتراضية فارغة الآن.)
   async seedInitialServices() {
     const user = requireAdminUser();
     const existing = await getDocs(collection(firestoreDb, SERVICES_COLLECTION));

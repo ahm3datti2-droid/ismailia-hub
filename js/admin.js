@@ -122,7 +122,7 @@ function updateSeedButton() {
   els.seedBtn.classList.toggle('opacity-40', !empty);
   els.seedBtn.classList.toggle('cursor-not-allowed', !empty);
   els.seedNote.textContent = empty
-    ? 'مجموعة خدمات Firestore فارغة — يمكنك نشر الخدمات الافتراضية الثلاث.'
+    ? 'مجموعة خدمات Firestore فارغة — لا توجد خدمات افتراضية للنشر.'
     : `يوجد ${state.remoteCount} خدمة في Firestore — زر النشر معطّل حتى لا تتكرر الخدمات.`;
 }
 
@@ -331,7 +331,7 @@ function bindEvents() {
   });
 
   els.seedBtn.addEventListener('click', async () => {
-    if (!confirm('سيتم نشر الخدمات الافتراضية الثلاث في Firestore. متابعة؟')) return;
+    if (!confirm('لا توجد خدمات افتراضية للنشر. متابعة؟')) return;
     try {
       const result = await db.seedInitialServices();
       alert(result.message);
