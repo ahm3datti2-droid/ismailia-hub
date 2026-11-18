@@ -388,7 +388,8 @@ function renderBannersList() {
         <button data-edit-banner="${esc(b.id)}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">تعديل</button>
         <button data-delete-banner="${esc(b.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   els.bannersList.querySelectorAll('[data-toggle-banner]').forEach((btn) => {
     btn.addEventListener('click', async () => {
