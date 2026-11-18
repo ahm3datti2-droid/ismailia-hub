@@ -396,18 +396,42 @@ export function renderTopRated(container, services, onOpenService) {
   if (window.lucide) window.lucide.createIcons();
 }
 
-// شريط "جديد في الدليل": آخر 6 خدمات مضافة — المحتوى مكرر مرتين
-// ليدور التمرير التلقائي بلا انقطاع، والضغطة تفتح تفاصيل الخدمة.
+// شريط "جديد في الدليل": آخر 8 خدمات مضافة، مكررة 4 مرات ليملأ الشريط
+// على أي عرض شاشة. التمرير بجافاسكربت (scrollLeft) لا بأنيميشن CSS —
+// فلو تعطّل التمرير لأي سبب يبقى الشريط ممتلئاً بالخدمات وقابلاً للسحب يدوياً.
+// الضغطة على اسم تفتح تفاصيل الخدمة.
 export function renderTicker(track, services, onOpenService) {
   if (!track) return;
-  const latest = services.slice().sort((a, b) => createdAtMs(b) - createdAtMs(a)).slice(0, 6);
+  const latest = services.slice().sort((a, b) => createdAtMs(b) - createdAtMs(a)).slice(0, 8);
   if (!latest.length) { track.innerHTML = ''; return; }
-  const half = latest.map((srv) => `
+  const copy = latest.map((srv) => `
     <button class="ticker-item" data-ticker-id="${srv.id}">
       <span>${srv.name}</span><span class="ticker-item__dot" aria-hidden="true">•</span>
     </button>`).join('');
-  track.innerHTML = half + half;
+  track.innerHTML = copy + copy + copy + copy;
   track.querySelectorAll('[data-ticker-id]').forEach((el) => {
     el.addEventListener('click', () => onOpenService(el.dataset.tickerId));
   });
+  // تشغيل التمرير مرة واحدة فقط.
+  if (track.dataset.tickerStarted) return;
+  track.dataset.tickerStarted = '1';
+  const viewport = track.parentElement;
+  if (!viewport) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  let paused = false;
+  let timer = null;
+  const step = () => {
+    if (paused || document.hidden) return;
+    viewport.scrollLeft += 1;
+    if (viewport.scrollLeft >= viewport.scrollWidth / 2) {
+      viewport.scrollLeft -= viewport.scrollWidth / 2;
+    }
+  };
+  const start = () => { if (!timer) timer = setInterval(step, 30); };
+  const stop = () => { clearInterval(timer); timer = null; };
+  viewport.addEventListener('mouseenter', () => { paused = true; });
+  viewport.addEventListener('mouseleave', () => { paused = false; });
+  viewport.addEventListener('touchstart', () => { paused = true; stop(); }, { passive: true });
+  viewport.addEventListener('touchend', () => { paused = false; start(); }, { passive: true });
+  start();
 }

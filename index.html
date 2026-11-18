@@ -44,24 +44,24 @@
   <header class="site-header sticky top-0 z-50 px-4">
     <div class="max-w-6xl mx-auto w-full">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-10 h-10 rounded-2xl shadow-lg shadow-blue-900/40">
-          <div>
-            <h1 class="text-lg font-black text-white leading-tight">خدمات الإسماعيلية</h1>
-            <p class="text-[11px] text-amber-400 font-semibold">المنصة الشاملة لأهالي المحافظة</p>
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-lg shadow-blue-900/40 shrink-0">
+          <div class="min-w-0">
+            <h1 class="text-base sm:text-lg font-black text-white leading-tight truncate">خدمات الإسماعيلية</h1>
+            <p class="hidden sm:block text-[11px] text-amber-400 font-semibold">المنصة الشاملة لأهالي المحافظة</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="btnAccount" class="bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition active:scale-95" title="حسابي" aria-label="حسابي">
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="btnAccount" class="bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition active:scale-95" title="حسابي" aria-label="حسابي">
             <i data-lucide="user-round" class="w-4 h-4"></i>
-            <span id="accountLabel">حسابي</span>
+            <span id="accountLabel" class="hidden sm:inline">حسابي</span>
           </button>
           <a href="admin.html" id="btnAdminToggle" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="لوحة تحكم الإدارة" aria-label="لوحة تحكم الإدارة">
             <i data-lucide="shield-check" class="w-4 h-4"></i>
           </a>
-          <button id="btnAddService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95">
+          <button id="btnAddService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            أضف خدمتك
+            <span class="hidden sm:inline">أضف خدمتك</span>
           </button>
         </div>
       </div>
@@ -72,7 +72,7 @@
   <div id="tickerBar" class="ticker hidden" aria-label="جديد في الدليل">
     <div class="max-w-6xl mx-auto flex items-center gap-2 px-4">
       <span class="ticker-label">جديد في الدليل</span>
-      <div class="ticker-viewport">
+      <div class="ticker-viewport" dir="ltr">
         <div id="tickerTrack" class="ticker-track" dir="ltr"></div>
       </div>
     </div>
@@ -83,27 +83,27 @@
     <div class="max-w-6xl mx-auto flex justify-between md:justify-center md:gap-8 items-center">
       <button id="btnHome" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-amber-400">
         <i data-lucide="compass" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-bold">الرئيسية</span>
+        <span class="text-[9px] md:text-xs font-bold whitespace-nowrap">الرئيسية</span>
       </button>
       <button id="btnEmergency" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-rose-400 transition">
         <i data-lucide="siren" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-semibold">طوارئ 24/7</span>
+        <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">طوارئ 24/7</span>
       </button>
       <button id="btnMap" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
         <i data-lucide="map" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-semibold">الخريطة</span>
+        <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">الخريطة</span>
       </button>
       <button id="btnTransport" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
         <i data-lucide="bus" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-semibold">المواصلات</span>
+        <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">المواصلات</span>
       </button>
       <button id="btnSaved" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
         <i data-lucide="bookmark" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-semibold">المحفوظات</span>
+        <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">المحفوظات</span>
       </button>
       <button id="btnContact" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-amber-400 transition">
         <i data-lucide="messages-square" class="w-5 h-5"></i>
-        <span class="text-[10px] md:text-xs font-semibold">تواصل معنا</span>
+        <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">تواصل معنا</span>
       </button>
     </div>
   </nav>
@@ -125,8 +125,8 @@
             <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
             الدليل الرسمي لمحافظة الإسماعيلية
           </span>
-          <h2 class="text-xl sm:text-[1.7rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
-          <p class="text-sm text-slate-400 font-semibold mt-1.5 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
+          <h2 class="text-lg sm:text-[1.7rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
+          <p class="hidden sm:block text-sm text-slate-400 font-semibold mt-1.5 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
           <!-- البحث داخل الهيرو -->
           <div class="relative max-w-xl mx-auto mt-4">
             <input type="search" id="heroSearchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)" autocomplete="off"
@@ -153,7 +153,7 @@
   </section>
 
   <!-- شريط البحث والفلاتر: ثابت تحت الهيدر أثناء التمرير -->
-  <div class="filter-bar sticky top-[4.25rem] z-40 glass-header px-4 py-3">
+  <div class="filter-bar sticky top-[3.5rem] md:top-[4.25rem] z-40 glass-header px-4 py-3">
     <div class="max-w-6xl mx-auto">
       <!-- البحث الذكي -->
       <div class="relative">

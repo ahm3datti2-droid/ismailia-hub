@@ -526,8 +526,9 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
 .banner-slider__dot--active{background:#FFC400;width:1.4rem}
 
 /* ---------- الهيدر الثابت ---------- */
+/* min-height لا height: المحتوى لا يُقصّ أبداً مهما ضاقت الشاشة. */
 .site-header {
-  height: 4.25rem;
+  min-height: 3.5rem;
   display: flex;
   align-items: center;
   background: rgba(9, 13, 22, 0.88);
@@ -535,6 +536,9 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 768px) {
+  .site-header { min-height: 4.25rem; }
 }
 
 /* ---------- شريط "جديد في الدليل" ---------- */
@@ -555,18 +559,19 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   white-space: nowrap;
 }
 .ticker-viewport {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   flex: 1;
   min-width: 0;
+  scrollbar-width: none;
   mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
+.ticker-viewport::-webkit-scrollbar { display: none; }
 .ticker-track {
   display: flex;
   width: max-content;
-  animation: ticker-scroll 45s linear infinite;
 }
-.ticker:hover .ticker-track { animation-play-state: paused; }
 .ticker-item {
   display: inline-flex;
   align-items: center;
@@ -576,17 +581,13 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   color: #cbd5e1;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s ease;
 }
 .ticker-item:hover { color: #FFC400; }
 .ticker-item__dot { color: #FFC400; }
-@keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
 
 /* ---------- الهيرو المدمج: بحث + إحصاءات أصغر ---------- */
 .hero-search:focus { box-shadow: 0 0 0 3px rgba(255, 196, 0, 0.25); }
