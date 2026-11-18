@@ -150,6 +150,14 @@ export function renderErrorState(container, onRetry) {
   lucide.createIcons();
 }
 
+// رقم واتساب بالصيغة الدولية: wa.me يرفض الصفر البادئ،
+// فأي رقم مصري يبدأ بـ 0 يتحول لـ 20 (مثال: 0102… ← 20102…).
+export function toWhatsAppNumber(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0')) return '20' + digits.slice(1);
+  return digits;
+}
+
 export function renderServiceCards(container, services, favorites, isAdmin, handlers) {
   if (!services.length) {
     container.innerHTML = `
@@ -172,7 +180,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     const cat = categoryInfo(srv.category);
     const subName = subcategoryName(srv.category, srv.subcategory);
     const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
-    const waNumber = String(srv.whatsapp || srv.phone || '').replace(/\D/g, '');
+    const waNumber = toWhatsAppNumber(srv.whatsapp || srv.phone);
 
     return `
       <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">

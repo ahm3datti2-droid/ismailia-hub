@@ -1,7 +1,7 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
 import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider, toWhatsAppNumber } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -355,7 +355,7 @@ function openServiceDetails(id) {
   const status = getOpenStatus(srv.openHour, srv.closeHour);
   const cat = categoryInfo(srv.category);
   const subName = subcategoryName(srv.category, srv.subcategory);
-  const waNumber = String(srv.whatsapp || srv.phone || '').replace(/\D/g, '');
+  const waNumber = toWhatsAppNumber(srv.whatsapp || srv.phone);
   const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
   // رابط الخريطة: رابط الخدمة المسجل، أو بحث جوجل ماب بالاسم والعنوان.
   const mapHref = srv.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${srv.name} ${srv.address} الإسماعيلية`)}`;
