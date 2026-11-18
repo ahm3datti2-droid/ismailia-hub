@@ -19,7 +19,8 @@ export const CATEGORIES = [
   { id: 'cars', name: 'خدمات سيارات', icon: 'car' },
   { id: 'real_estate', name: 'عقارات وتشطيبات', icon: 'building-2' },
   { id: 'mobiles', name: 'موبايلات', icon: 'smartphone' },
-  { id: 'clothing', name: 'ملابس', icon: 'shirt' }
+  { id: 'clothing', name: 'ملابس', icon: 'shirt' },
+  { id: 'makeup', name: 'ميكب ارتست', icon: 'sparkles' }
 ];
 
 export const AREAS = [
