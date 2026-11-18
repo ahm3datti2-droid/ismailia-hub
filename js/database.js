@@ -19,12 +19,14 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { auth, db as firestoreDb, isAdmin } from './firebase.js';
 import { ADMIN_EMAIL } from './config.js';
 
 export const SERVICES_COLLECTION = 'services';
+export const REVIEWS_COLLECTION = 'reviews';
 const PENDING_KEY = 'ismailia_pending_services_v1';
 
 export const INITIAL_SERVICES = [];
@@ -193,6 +195,120 @@ class DatabaseService {
       });
     }
     return { seeded: INITIAL_SERVICES.length, skipped: false, message: `تم نشر ${INITIAL_SERVICES.length} خدمات افتراضية في Firestore بنجاح.` };
+  }
+
+  // ===== التقييمات الحقيقية (مجموعة reviews) =====
+  // - أي مستخدم مسجل يستطيع إضافة تقييم واحد لكل خدمة.
+  // - التقييم الجديد يُحفظ بموافقة معلّقة (approved=false) ولا يظهر
+  //   للعامة إلا بعد موافقة الأدمن من لوحة التحكم.
+  // - عند الموافقة أو الحذف يُعاد حساب متوسط تقييم الخدمة وعدد
+  //   تقييماتها من التقييمات المعتمدة فقط. بلا تقييمات معتمدة تعود
+  //   الخدمة للقيمة الافتراضية (5 من 1) كما كانت قبل التقييمات.
+  // - الاستعلامات تستخدم مساواة فقط (==) بلا ترتيب من الخادم حتى لا
+  //   تتطلب فهارس مركّبة؛ الترتيب يتم محلياً.
+  async addReview({ serviceId, rating, text, userName }) {
+    const user = requireSignedIn();
+    const cleanRating = Number(rating);
+    if (!serviceId) throw new Error('خدمة غير معروفة.');
+    if (!(cleanRating >= 1 && cleanRating <= 5)) {
+      throw new Error('اختار تقييم من نجمة واحدة إلى 5 نجوم.');
+    }
+    const cleanText = String(text || '').trim().slice(0, 500);
+    if (cleanText.length < 2) throw new Error('اكتب رأيك في سطر على الأقل.');
+    const existing = await this.getUserReview(serviceId, user.uid);
+    if (existing) {
+      throw new Error('لقد قيّمت هذه الخدمة من قبل. تقييم واحد لكل خدمة.');
+    }
+    const ref = await addDoc(collection(firestoreDb, REVIEWS_COLLECTION), {
+      serviceId,
+      userId: user.uid,
+      userName: String(userName || 'مستخدم') .slice(0, 60),
+      rating: cleanRating,
+      text: cleanText,
+      approved: false,
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  // تقييم المستخدم الحالي لخدمة معينة (أي حالة: معلّق أو معتمد).
+  async getUserReview(serviceId, userId) {
+    if (!serviceId || !userId) return null;
+    const snap = await getDocs(query(
+      collection(firestoreDb, REVIEWS_COLLECTION),
+      where('serviceId', '==', serviceId),
+      where('userId', '==', userId)
+    ));
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() };
+  }
+
+  // التقييمات المعتمدة لخدمة — للعرض العام، مرتبة بالأحدث أولاً.
+  async getApprovedReviews(serviceId) {
+    const snap = await getDocs(query(
+      collection(firestoreDb, REVIEWS_COLLECTION),
+      where('serviceId', '==', serviceId),
+      where('approved', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  // التقييمات بانتظار المراجعة — للأدمن فقط.
+  async getPendingReviews() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, REVIEWS_COLLECTION),
+      where('approved', '==', false)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveReview(reviewId) {
+    requireAdminUser();
+    const ref = doc(firestoreDb, REVIEWS_COLLECTION, reviewId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('التقييم غير موجود.');
+    await updateDoc(ref, { approved: true });
+    await this.recomputeServiceRating(snap.data().serviceId);
+  }
+
+  async deleteReview(reviewId) {
+    requireAdminUser();
+    const ref = doc(firestoreDb, REVIEWS_COLLECTION, reviewId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('التقييم غير موجود.');
+    const serviceId = snap.data().serviceId;
+    await deleteDoc(ref);
+    await this.recomputeServiceRating(serviceId);
+  }
+
+  // إعادة حساب متوسط تقييم الخدمة وعدد تقييماتها من المعتمد فقط.
+  async recomputeServiceRating(serviceId) {
+    if (!serviceId) return;
+    const approved = await this.getApprovedReviews(serviceId);
+    const patch = approved.length
+      ? {
+          rating: Math.round((approved.reduce((s, r) => s + Number(r.rating || 0), 0) / approved.length) * 10) / 10,
+          reviewsCount: approved.length
+        }
+      : { rating: 5, reviewsCount: 1 };
+    await updateDoc(doc(firestoreDb, SERVICES_COLLECTION, serviceId), {
+      ...patch,
+      updatedAt: serverTimestamp()
+    });
   }
 }
 

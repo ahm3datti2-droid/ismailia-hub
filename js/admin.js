@@ -17,6 +17,7 @@ import { getOpenStatus } from './ui.js';
 const state = {
   services: [],
   remoteCount: 0,
+  pendingReviews: [],
   editingId: null,
   searchQuery: '',
   categoryFilter: 'all'
@@ -42,6 +43,8 @@ const els = {
   resultsCount: document.getElementById('adminResultsCount'),
   seedBtn: document.getElementById('btnSeed'),
   seedNote: document.getElementById('seedNote'),
+  pendingReviewsList: document.getElementById('pendingReviewsList'),
+  pendingReviewsCount: document.getElementById('pendingReviewsCount'),
   serviceForm: document.getElementById('serviceForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitServiceBtn')
@@ -124,9 +127,76 @@ async function loadServices() {
     state.services = [];
     state.remoteCount = 0;
   }
+  await loadPendingReviews();
   renderStats();
   renderList();
+  renderReviewsQueue();
   updateSeedButton();
+}
+
+// التقييمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
+// Firestore لم تُحدَّث بعد) تُعرض القائمة فارغة بدلاً من كسر اللوحة.
+async function loadPendingReviews() {
+  try {
+    state.pendingReviews = await db.getPendingReviews();
+  } catch (_) {
+    state.pendingReviews = [];
+  }
+}
+
+function renderReviewsQueue() {
+  const list = state.pendingReviews;
+  els.pendingReviewsCount.textContent = String(list.length);
+  if (!list.length) {
+    els.pendingReviewsList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">لا توجد تقييمات بانتظار المراجعة</p>
+      </div>`;
+    refreshIcons();
+    return;
+  }
+  els.pendingReviewsList.innerHTML = list.map((r) => {
+    const srv = state.services.find((s) => s.id === r.serviceId);
+    const stars = Array.from({ length: 5 }, (_, i) =>
+      `<span class="${i < Math.round(Number(r.rating) || 0) ? 'text-amber-400' : 'text-slate-600'}">★</span>`).join('');
+    return `
+      <article class="bg-slate-900/90 border border-amber-500/20 rounded-2xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div>
+            <p class="font-extrabold text-white text-sm">${esc(srv ? srv.name : 'خدمة محذوفة')}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">من: ${esc(r.userName || 'مستخدم')} • <span dir="ltr">${stars}</span> ${r.rating} من 5</p>
+          </div>
+          <div class="flex gap-1.5 shrink-0">
+            <button data-approve-review="${esc(r.id)}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">✓ نشر</button>
+            <button data-delete-review="${esc(r.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">✕ حذف</button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">${esc(r.text)}</p>
+      </article>`;
+  }).join('');
+
+  els.pendingReviewsList.querySelectorAll('[data-approve-review]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.approveReview(btn.dataset.approveReview);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر نشر التقييم.');
+      }
+    });
+  });
+  els.pendingReviewsList.querySelectorAll('[data-delete-review]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('هل أنت متأكد من حذف هذا التقييم نهائياً؟')) return;
+      try {
+        await db.deleteReview(btn.dataset.deleteReview);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف التقييم.');
+      }
+    });
+  });
+  refreshIcons();
 }
 
 function updateSeedButton() {
@@ -151,7 +221,8 @@ function renderStats() {
     { label: 'إجمالي الخدمات', value: total, icon: 'layout-grid', color: 'text-amber-400' },
     { label: 'خدمات طوارئ', value: emergency, icon: 'siren', color: 'text-rose-400' },
     { label: 'خدمات موثقة', value: verified, icon: 'badge-check', color: 'text-sky-400' },
-    { label: 'متوسط التقييم', value: avgRating, icon: 'star', color: 'text-emerald-400' }
+    { label: 'متوسط التقييم', value: avgRating, icon: 'star', color: 'text-emerald-400' },
+    { label: 'تقييمات بانتظار المراجعة', value: state.pendingReviews.length, icon: 'messages-square', color: 'text-violet-400' }
   ].map((s) => `
     <div class="admin-stat bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
       <div class="flex items-center gap-2 mb-1">

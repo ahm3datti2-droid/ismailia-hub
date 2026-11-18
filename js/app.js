@@ -368,6 +368,10 @@ function openServiceDetails(id) {
           </button>
         ` : ''}
       </div>
+
+      <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-800">
+        <p class="text-xs text-slate-400 font-bold">جاري تحميل التقييمات…</p>
+      </div>
     </div>
   `;
   showModal();
@@ -377,6 +381,7 @@ function openServiceDetails(id) {
     closeModal();
   });
   document.getElementById('detailDelBtn')?.addEventListener('click', () => handleDeleteService(srv.id));
+  loadDetailReviews(srv.id);
   document.getElementById('detailShareBtn')?.addEventListener('click', async () => {
     // الرابط الخاص بالخدمة: صفحة ثابتة فيها صورة واسم الخدمة (معاينة شيك في واتساب وفيسبوك)
     // وتحول تلقائياً لفتح الخدمة داخل التطبيق.
@@ -397,6 +402,134 @@ function openServiceDetails(id) {
       } catch (_) {
         window.prompt('انسخ رابط الخدمة:', url);
       }
+    }
+  });
+}
+
+// ===== التقييمات الحقيقية في صفحة التفاصيل =====
+// نصوص المستخدمين غير موثوقة — تُهرَّب قبل الحقن في HTML.
+function escHtml(s) {
+  return String(s ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function starsHtml(rating) {
+  const full = Math.round(Number(rating) || 0);
+  return Array.from({ length: 5 }, (_, i) =>
+    `<span class="${i < full ? 'text-amber-400' : 'text-slate-600'}">★</span>`).join('');
+}
+
+function reviewDateText(ts) {
+  try {
+    const d = ts?.toDate ? ts.toDate() : null;
+    return d ? d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  } catch (_) { return ''; }
+}
+
+async function loadDetailReviews(serviceId) {
+  const box = document.getElementById('reviewsSection');
+  if (!box) return;
+  let reviews = [];
+  try { reviews = await db.getApprovedReviews(serviceId); } catch (_) { reviews = []; }
+  if (!box.isConnected) return; // المستخدم فتح خدمة أخرى أثناء التحميل.
+  const user = state.currentUser;
+  let mine = null;
+  if (user) {
+    try { mine = await db.getUserReview(serviceId, user.uid); } catch (_) { mine = null; }
+  }
+  if (!box.isConnected) return;
+  const avg = reviews.length
+    ? (reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / reviews.length).toFixed(1)
+    : null;
+  box.innerHTML = `
+    <h4 class="text-sm font-extrabold text-white mb-1 flex items-center gap-1.5">
+      <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
+      التقييمات ${reviews.length ? `(${reviews.length})` : ''}
+      ${avg ? `<span class="text-amber-400 text-xs font-black">${avg} من 5</span>` : ''}
+    </h4>
+    ${reviews.length ? `
+      <div class="space-y-2.5 mt-3">
+        ${reviews.map(r => `
+          <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="text-xs font-extrabold text-white">${escHtml(r.userName || 'مستخدم')}</span>
+              <span class="text-sm leading-none" dir="ltr">${starsHtml(r.rating)}</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${escHtml(r.text)}</p>
+            ${reviewDateText(r.createdAt) ? `<p class="text-[10px] text-slate-500 mt-1.5">${reviewDateText(r.createdAt)}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : `<p class="text-xs text-slate-400 font-semibold mt-2">لا توجد تقييمات بعد — كن أول من يقيّم هذه الخدمة.</p>`}
+    <div id="reviewFormBox" class="mt-4"></div>
+  `;
+  lucide.createIcons();
+  renderReviewForm(serviceId, mine);
+}
+
+function renderReviewForm(serviceId, mine) {
+  const box = document.getElementById('reviewFormBox');
+  if (!box) return;
+  if (mine) {
+    box.innerHTML = mine.approved
+      ? `<p class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">تم نشر تقييمك لهذه الخدمة ✓ (${mine.rating} من 5)</p>`
+      : `<p class="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">تم إرسال تقييمك وهو بانتظار مراجعة الإدارة قبل النشر.</p>`;
+    return;
+  }
+  if (!state.currentUser) {
+    box.innerHTML = `
+      <button id="reviewLoginBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3 rounded-xl text-xs transition">
+        سجّل دخولك لتقييم هذه الخدمة
+      </button>`;
+    document.getElementById('reviewLoginBtn')?.addEventListener('click', () => {
+      closeModal();
+      openAuthModal('login');
+    });
+    return;
+  }
+  let selected = 5;
+  box.innerHTML = `
+    <p class="text-xs font-extrabold text-white mb-2">قيّم هذه الخدمة</p>
+    <div id="reviewStars" class="flex gap-1 mb-2.5" dir="ltr">
+      ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="text-2xl leading-none ${n <= selected ? 'text-amber-400' : 'text-slate-600'} transition active:scale-110" aria-label="${n} نجوم">★</button>`).join('')}
+    </div>
+    <textarea id="reviewText" rows="2" maxlength="500" placeholder="اكتب رأيك في الخدمة (اختياري لكنه يساعد غيرك)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs mb-2.5"></textarea>
+    <p id="reviewError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-2.5"></p>
+    <button id="reviewSubmitBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition">إرسال التقييم</button>
+    <p class="text-[10px] text-slate-500 mt-2">تقييمك يظهر بعد مراجعة الإدارة.</p>
+  `;
+  const paintStars = () => {
+    box.querySelectorAll('[data-star]').forEach(b => {
+      b.classList.toggle('text-amber-400', Number(b.dataset.star) <= selected);
+      b.classList.toggle('text-slate-600', Number(b.dataset.star) > selected);
+    });
+  };
+  box.querySelectorAll('[data-star]').forEach(b => {
+    b.addEventListener('click', () => { selected = Number(b.dataset.star); paintStars(); });
+  });
+  document.getElementById('reviewSubmitBtn')?.addEventListener('click', async () => {
+    const errEl = document.getElementById('reviewError');
+    const btn = document.getElementById('reviewSubmitBtn');
+    errEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    try {
+      await db.addReview({
+        serviceId,
+        rating: selected,
+        text: document.getElementById('reviewText').value,
+        userName: (state.profile && state.profile.name) || 'مستخدم'
+      });
+      await loadDetailReviews(serviceId);
+    } catch (err) {
+      errEl.textContent = err.message || 'تعذر إرسال التقييم. حاول مرة أخرى.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.style.opacity = '1';
     }
   });
 }
