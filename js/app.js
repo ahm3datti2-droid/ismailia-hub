@@ -1,13 +1,14 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
 import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
 const state = {
   services: [],
   offers: [],
+  banners: [],
   activeCategory: 'all',
   activeSubcategory: 'all',
   selectedArea: 'all',
@@ -118,6 +119,7 @@ async function loadServices() {
   try {
     state.services = await db.getAllServices();
     try { state.offers = await db.getActiveOffers(); } catch (_) { state.offers = []; }
+    try { state.banners = await db.getActiveBanners(); } catch (_) { state.banners = []; }
     refreshUI();
     openDeepLinkedService();
   } catch (err) {
@@ -242,6 +244,7 @@ function refreshUI() {
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
+  renderBannersSection(isHome);
   updateSectionTitle();
   if (isHome) {
     const counts = {};
@@ -276,6 +279,22 @@ function refreshUI() {
     onToggleFav: toggleFavorite,
     onDelete: handleDeleteService
   });
+}
+
+// شاشة العرض في أول الموقع — تظهر فقط على الرئيسية وعند وجود إعلانات مفعّلة.
+// إعادة الرسم تتم فقط عند تغيّر قائمة الإعلانات أو الانتقال من/إلى الرئيسية،
+// حتى لا يعيد التايمر نفسه مع كل ضغطة بحث أو فلتر.
+let renderedBannerSig = '';
+function renderBannersSection(isHome) {
+  const section = document.getElementById('bannersSection');
+  const slider = document.getElementById('bannerSlider');
+  if (!section || !slider) return;
+  const sig = (isHome ? 'home:' : 'away:') + state.banners.map((b) => `${b.id}:${b.order}:${b.active}`).join('|');
+  if (sig === renderedBannerSig && !section.classList.contains('hidden') === isHome) return;
+  renderedBannerSig = sig;
+  section.classList.toggle('hidden', !isHome || !state.banners.length);
+  if (!isHome || !state.banners.length) { stopBannerSlider(); return; }
+  renderBannerSlider(slider, state.banners, (serviceId) => openServiceDetails(serviceId));
 }
 
 // قسم العروض في الصفحة الرئيسية — يظهر فقط على الرئيسية وعند وجود عروض سارية.

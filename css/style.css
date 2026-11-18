@@ -506,3 +506,21 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   line-height: 0;
 }
 .qr-box img, .qr-box canvas { width: 140px; height: 140px; border-radius: 0.5rem; }
+
+/* ===== شاشة العرض: سلايدر إعلانات الرئيسية ===== */
+.banner-slider{position:relative;border-radius:1.5rem;overflow:hidden;border:1px solid #1e293b;background:#0f172a;aspect-ratio:16/7}
+@media (max-width:640px){.banner-slider{aspect-ratio:16/10}}
+.banner-slide{position:absolute;inset:0;opacity:0;transition:opacity .6s ease;pointer-events:none}
+.banner-slide--active{opacity:1;pointer-events:auto}
+.banner-slide--linked{cursor:pointer}
+.banner-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.banner-slide__overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(2,6,23,.88),rgba(2,6,23,.18) 55%,transparent);display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:1.25rem}
+.banner-slide__title{font-size:1.25rem;font-weight:900;color:#fff;line-height:1.3}
+.banner-slide__subtitle{font-size:.8rem;color:#cbd5e1;font-weight:600;margin-top:.25rem;line-height:1.5}
+.banner-slide__cta{display:inline-flex;margin-top:.6rem;background:#FFC400;color:#0A2463;font-size:.75rem;font-weight:900;padding:.5rem 1rem;border-radius:9999px}
+.banner-slider__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:2.25rem;height:2.25rem;border-radius:9999px;border:1px solid rgba(255,255,255,.35);background:rgba(2,6,23,.55);color:#fff;font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.banner-slider__arrow--prev{right:.6rem}
+.banner-slider__arrow--next{left:.6rem}
+.banner-slider__dots{position:absolute;bottom:.6rem;left:50%;transform:translateX(-50%);display:flex;gap:.4rem;z-index:2}
+.banner-slider__dot{width:.55rem;height:.55rem;border-radius:9999px;background:rgba(255,255,255,.45);border:none;cursor:pointer;padding:0;transition:width .3s ease,background .3s ease}
+.banner-slider__dot--active{background:#FFC400;width:1.4rem}

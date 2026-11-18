@@ -20,9 +20,11 @@ const state = {
   pendingReviews: [],
   pendingServices: [],
   offers: [],
+  banners: [],
   dailyStats: { visits: 0, groups: {} },
   approvingPendingId: null,
   editingId: null,
+  editingBannerId: null,
   searchQuery: '',
   categoryFilter: 'all'
 };
@@ -54,6 +56,13 @@ const els = {
   offerForm: document.getElementById('offerForm'),
   offerServiceSelect: document.getElementById('offerServiceSelect'),
   offersList: document.getElementById('offersList'),
+  bannerForm: document.getElementById('bannerForm'),
+  bannerLinkType: document.getElementById('bannerLinkType'),
+  bannerServiceSelect: document.getElementById('bannerServiceSelect'),
+  bannerUrlInput: document.getElementById('bannerUrlInput'),
+  bannersList: document.getElementById('bannersList'),
+  bannerSubmitBtn: document.getElementById('bannerSubmitBtn'),
+  bannerCancelEdit: document.getElementById('bannerCancelEdit'),
   todayVisitsTotal: document.getElementById('todayVisitsTotal'),
   todayVisitsDate: document.getElementById('todayVisitsDate'),
   todayGroupsList: document.getElementById('todayGroupsList'),
@@ -142,14 +151,17 @@ async function loadServices() {
   await loadPendingReviews();
   await loadPendingServices();
   await loadOffers();
+  await loadBanners();
   await loadDailyStats();
   renderStats();
   renderList();
   renderReviewsQueue();
   renderPendingServicesQueue();
   renderOffersList();
+  renderBannersList();
   renderDailyStats();
   fillOfferServiceSelect();
+  fillBannerServiceSelect();
   updateSeedButton();
 }
 
@@ -331,6 +343,119 @@ function fillOfferServiceSelect() {
     .map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`)
     .join('');
   if (current) sel.value = current;
+}
+
+// شاشة العرض — إذا فشل التحميل (مثلاً قواعد Firestore لم
+// تُحدَّث بعد) تُعرض القائمة فارغة بدلاً من كسر اللوحة.
+async function loadBanners() {
+  try {
+    state.banners = await db.getAllBanners();
+  } catch (_) {
+    state.banners = [];
+  }
+}
+
+function bannerLinkLabel(b) {
+  if (b.linkType === 'service') {
+    const srv = state.services.find((s) => s.id === b.serviceId);
+    return `خدمة: ${srv ? srv.name : 'محذوفة'}`;
+  }
+  if (b.linkType === 'url') return `رابط: ${b.url || ''}`;
+  return 'بدون رابط';
+}
+
+function renderBannersList() {
+  if (!els.bannersList) return;
+  const list = state.banners;
+  if (!list.length) {
+    els.bannersList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد إعلانات بعد — أضف أول إعلان من النموذج أعلاه وسيظهر في شاشة العرض أول الموقع.</p>`;
+    return;
+  }
+  els.bannersList.innerHTML = list.map((b) => `
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="${esc(b.imageUrl)}" alt="" referrerpolicy="no-referrer" class="w-16 h-10 object-cover rounded-lg bg-white shrink-0" onerror="this.remove()">
+        <div class="min-w-0">
+          <p class="text-xs font-extrabold text-white truncate">${esc(b.title)} <span class="text-amber-400 font-bold">#${Number(b.order || 0)}</span></p>
+          <p class="text-[11px] text-slate-400 mt-0.5 truncate">${esc(bannerLinkLabel(b))} • ${b.active ? '<span class="text-emerald-400 font-bold">مفعّل</span>' : '<span class="text-slate-500 font-bold">متوقف</span>'}</p>
+        </div>
+      </div>
+      <div class="flex gap-1.5 shrink-0">
+        <button data-toggle-banner="${esc(b.id)}" data-active="${b.active ? '0' : '1'}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">${b.active ? 'إيقاف' : 'تفعيل'}</button>
+        <button data-edit-banner="${esc(b.id)}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">تعديل</button>
+        <button data-delete-banner="${esc(b.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+      </div>
+    </div>`).join('');
+
+  els.bannersList.querySelectorAll('[data-toggle-banner]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setBannerActive(btn.dataset.toggleBanner, btn.dataset.active === '1');
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر تغيير حالة الإعلان.');
+      }
+    });
+  });
+  els.bannersList.querySelectorAll('[data-edit-banner]').forEach((btn) => {
+    btn.addEventListener('click', () => startEditBanner(btn.dataset.editBanner));
+  });
+  els.bannersList.querySelectorAll('[data-delete-banner]').forEach((btn) => {
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
+      try {
+        await db.deleteBanner(btn.dataset.deleteBanner);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف الإعلان.');
+      }
+    }));
+  });
+}
+
+function fillBannerServiceSelect() {
+  const sel = els.bannerServiceSelect;
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— اختر الخدمة —</option>' + state.services
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+    .map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`)
+    .join('');
+  if (current) sel.value = current;
+}
+
+function updateBannerLinkFields() {
+  if (!els.bannerLinkType) return;
+  const t = els.bannerLinkType.value;
+  els.bannerServiceSelect?.classList.toggle('hidden', t !== 'service');
+  els.bannerUrlInput?.classList.toggle('hidden', t !== 'url');
+}
+
+function startEditBanner(id) {
+  const b = state.banners.find((x) => x.id === id);
+  if (!b || !els.bannerForm) return;
+  state.editingBannerId = id;
+  const f = els.bannerForm;
+  f.title.value = b.title || '';
+  f.imageUrl.value = b.imageUrl || '';
+  f.subtitle.value = b.subtitle || '';
+  f.linkType.value = b.linkType || 'service';
+  f.serviceId.value = b.serviceId || '';
+  f.url.value = b.url || '';
+  f.order.value = b.order ?? 0;
+  f.active.checked = b.active !== false;
+  updateBannerLinkFields();
+  if (els.bannerSubmitBtn) els.bannerSubmitBtn.textContent = 'حفظ التعديلات';
+  els.bannerCancelEdit?.classList.remove('hidden');
+  els.bannerForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelBannerEdit() {
+  state.editingBannerId = null;
+  els.bannerForm?.reset();
+  if (els.bannerSubmitBtn) els.bannerSubmitBtn.textContent = 'إضافة الإعلان';
+  els.bannerCancelEdit?.classList.add('hidden');
+  updateBannerLinkFields();
 }
 
 // التقييمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
@@ -694,6 +819,37 @@ function bindEvents() {
       alert('تمت إضافة العرض بنجاح.');
     } catch (err) {
       alert(err.message || 'تعذر إضافة العرض.');
+    }
+  });
+
+  // شاشة العرض: إضافة إعلان جديد أو حفظ تعديلات إعلان موجود.
+  els.bannerLinkType?.addEventListener('change', updateBannerLinkFields);
+  els.bannerCancelEdit?.addEventListener('click', cancelBannerEdit);
+  els.bannerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = {
+      title: fd.get('title'),
+      subtitle: fd.get('subtitle'),
+      imageUrl: fd.get('imageUrl'),
+      linkType: fd.get('linkType'),
+      serviceId: fd.get('serviceId'),
+      url: fd.get('url'),
+      order: fd.get('order'),
+      active: fd.get('active') === 'on'
+    };
+    try {
+      if (state.editingBannerId) {
+        await db.updateBanner(state.editingBannerId, data);
+        alert('تم حفظ تعديلات الإعلان بنجاح.');
+      } else {
+        await db.addBanner(data);
+        alert('تمت إضافة الإعلان بنجاح — سيظهر في شاشة العرض أول الموقع.');
+      }
+      cancelBannerEdit();
+      await loadServices();
+    } catch (err) {
+      alert(err.message || 'تعذر حفظ الإعلان.');
     }
   });
 }

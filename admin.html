@@ -195,6 +195,37 @@
         </form>
       </div>
 
+      <!-- شاشة العرض: إعلانات متحركة في أول الموقع -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">شاشة العرض (إعلانات الرئيسية)</h3>
+        <p class="text-xs text-slate-400 font-semibold mb-4">سلايدر متحرك في أول الموقع يتبدل كل 5 ثوانٍ — الصورة مقاس عريض (مثال: 1200×500)، والضغط على الإعلان يفتح خدمته أو رابطه.</p>
+        <form id="bannerForm" class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="text" name="title" required placeholder="عنوان الإعلان * (مثال: خصم 20% في مطعم الدمشقي)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="text" name="imageUrl" required placeholder="صورة الإعلان * (/images/اسم-الصورة.jpg أو رابط مباشر)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <input type="text" name="subtitle" placeholder="سطر ثانٍ (اختياري — مثال: ساري حتى نهاية الشهر)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2">
+            <select name="linkType" id="bannerLinkType" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="service">الرابط: خدمة من الدليل</option>
+              <option value="url">الرابط: رابط خارجي</option>
+              <option value="none">بدون رابط</option>
+            </select>
+            <select name="serviceId" id="bannerServiceSelect" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="">— اختر الخدمة —</option>
+            </select>
+            <input type="url" name="url" id="bannerUrlInput" placeholder="الرابط الخارجي (https://…)" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <input type="number" name="order" placeholder="الترتيب (0 = الأول)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <label class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 font-bold">
+              <input type="checkbox" name="active" checked class="accent-amber-500"> مفعّل (يظهر في الشاشة)
+            </label>
+          </div>
+          <div class="flex gap-2">
+            <button type="submit" id="bannerSubmitBtn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إضافة الإعلان</button>
+            <button type="button" id="bannerCancelEdit" class="hidden px-4 bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3 rounded-xl transition">إلغاء التعديل</button>
+          </div>
+        </form>
+        <div id="bannersList" class="space-y-2 mt-4"></div>
+      </div>
+
       <!-- العروض والخصومات -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 mb-4">العروض والخصومات</h3>

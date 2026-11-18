@@ -254,3 +254,85 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
 
   lucide.createIcons();
 }
+
+// ===== شاشة العرض: سلايدر إعلانات متحرك =====
+// - الشرائح تتبدل تلقائياً كل 5 ثوانٍ (تلاشي)، مع نقاط وأسهم وسحب باللمس.
+// - يتوقف مؤقتاً عند لمس الشاشة أو تمرير الفأرة فوقه.
+// - الضغط على شريحة يفتح خدمتها في الدليل أو الرابط الخارجي حسب الإعلان.
+function escAttr(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+let bannerTimer = null;
+
+export function stopBannerSlider() {
+  if (bannerTimer) { clearInterval(bannerTimer); bannerTimer = null; }
+}
+
+export function renderBannerSlider(container, banners, onOpenService) {
+  if (!container) return;
+  stopBannerSlider();
+  if (!banners || !banners.length) { container.innerHTML = ''; return; }
+  let index = 0;
+  const goTo = (i) => {
+    index = (i + banners.length) % banners.length;
+    container.querySelectorAll('.banner-slide').forEach((el, n) => {
+      el.classList.toggle('banner-slide--active', n === index);
+    });
+    container.querySelectorAll('.banner-slider__dot').forEach((el, n) => {
+      el.classList.toggle('banner-slider__dot--active', n === index);
+    });
+  };
+  const startAuto = () => {
+    stopBannerSlider();
+    if (banners.length > 1) bannerTimer = setInterval(() => goTo(index + 1), 5000);
+  };
+  container.innerHTML = `
+    <div class="banner-slider">
+      ${banners.map((b, n) => {
+        const hasLink = b.linkType === 'service' || b.linkType === 'url';
+        const cta = b.linkType === 'service' ? 'عرض الخدمة' : (b.linkType === 'url' ? 'اعرف المزيد' : '');
+        return `
+        <div class="banner-slide${n === 0 ? ' banner-slide--active' : ''}${hasLink ? ' banner-slide--linked' : ''}" data-banner-i="${n}">
+          <img src="${escAttr(b.imageUrl)}" alt="${escAttr(b.title)}" referrerpolicy="no-referrer" onerror="this.remove()">
+          <div class="banner-slide__overlay">
+            <h3 class="banner-slide__title">${escAttr(b.title)}</h3>
+            ${b.subtitle ? `<p class="banner-slide__subtitle">${escAttr(b.subtitle)}</p>` : ''}
+            ${cta ? `<span class="banner-slide__cta">${cta}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+      ${banners.length > 1 ? `
+        <button type="button" class="banner-slider__arrow banner-slider__arrow--prev" aria-label="السابق">‹</button>
+        <button type="button" class="banner-slider__arrow banner-slider__arrow--next" aria-label="التالي">›</button>
+        <div class="banner-slider__dots">
+          ${banners.map((_, n) => `<button type="button" class="banner-slider__dot${n === 0 ? ' banner-slider__dot--active' : ''}" data-dot="${n}" aria-label="إعلان ${n + 1}"></button>`).join('')}
+        </div>` : ''}
+    </div>`;
+  const slider = container.querySelector('.banner-slider');
+  slider.querySelectorAll('.banner-slide').forEach((el) => {
+    el.addEventListener('click', () => {
+      const b = banners[Number(el.dataset.bannerI)];
+      if (!b) return;
+      if (b.linkType === 'service' && b.serviceId) onOpenService?.(b.serviceId);
+      else if (b.linkType === 'url' && b.url) window.open(b.url, '_blank', 'noopener');
+    });
+  });
+  slider.querySelector('.banner-slider__arrow--prev')?.addEventListener('click', (e) => { e.stopPropagation(); goTo(index - 1); startAuto(); });
+  slider.querySelector('.banner-slider__arrow--next')?.addEventListener('click', (e) => { e.stopPropagation(); goTo(index + 1); startAuto(); });
+  slider.querySelectorAll('.banner-slider__dot').forEach((el) => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); goTo(Number(el.dataset.dot)); startAuto(); });
+  });
+  slider.addEventListener('mouseenter', stopBannerSlider);
+  slider.addEventListener('mouseleave', startAuto);
+  let touchX = null;
+  slider.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; stopBannerSlider(); }, { passive: true });
+  slider.addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 40) goTo(index + (dx < 0 ? 1 : -1));
+    touchX = null;
+    startAuto();
+  }, { passive: true });
+  startAuto();
+}

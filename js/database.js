@@ -38,6 +38,7 @@ export const SERVICES_COLLECTION = 'services';
 export const REVIEWS_COLLECTION = 'reviews';
 export const PENDING_SERVICES_COLLECTION = 'pendingServices';
 export const OFFERS_COLLECTION = 'offers';
+export const BANNERS_COLLECTION = 'banners';
 export const DAILY_STATS_COLLECTION = 'dailyStats';
 
 // تاريخ اليوم المحلي بصيغة YYYY-MM-DD — مفتاح مستند إحصائيات اليوم.
@@ -469,6 +470,75 @@ class DatabaseService {
   async setOfferActive(offerId, active) {
     requireAdminUser();
     await updateDoc(doc(firestoreDb, OFFERS_COLLECTION, offerId), { active: Boolean(active) });
+  }
+
+  // ===== شاشة العرض — إعلانات الرئيسية (مجموعة banners) =====
+  // - الإعلان ينشئه الأدمن من لوحة التحكم: صورة + عنوان + سطر ثانٍ
+  //   اختياري + رابط (خدمة من الدليل أو رابط خارجي أو بلا رابط)
+  //   + ترتيب + تفعيل. الصورة مسار /images/... أو رابط مباشر.
+  // - الظاهر للعامة فقط active=true، مرتبة بالترتيب ثم الأحدث.
+  async getActiveBanners() {
+    const snap = await getDocs(query(
+      collection(firestoreDb, BANNERS_COLLECTION),
+      where('active', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => (Number(a.order || 0) - Number(b.order || 0))
+      || ((b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0)));
+    return list;
+  }
+
+  async getAllBanners() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, BANNERS_COLLECTION));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => (Number(a.order || 0) - Number(b.order || 0))
+      || ((b.createdAt?.toMillis ? b.createdAt.toMillis() : 0) - (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0)));
+    return list;
+  }
+
+  async addBanner(data) {
+    requireAdminUser();
+    if (!String(data.title || '').trim()) throw new Error('اكتب عنوان الإعلان.');
+    if (!String(data.imageUrl || '').trim()) throw new Error('اكتب رابط صورة الإعلان.');
+    const ref = await addDoc(collection(firestoreDb, BANNERS_COLLECTION), {
+      title: String(data.title).trim().slice(0, 120),
+      subtitle: String(data.subtitle || '').trim().slice(0, 200),
+      imageUrl: String(data.imageUrl).trim(),
+      linkType: data.linkType === 'url' ? 'url' : (data.linkType === 'service' ? 'service' : 'none'),
+      serviceId: String(data.serviceId || ''),
+      url: String(data.url || '').trim(),
+      order: Number(data.order || 0),
+      active: data.active !== false,
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async updateBanner(bannerId, data) {
+    requireAdminUser();
+    if (!String(data.title || '').trim()) throw new Error('اكتب عنوان الإعلان.');
+    if (!String(data.imageUrl || '').trim()) throw new Error('اكتب رابط صورة الإعلان.');
+    await updateDoc(doc(firestoreDb, BANNERS_COLLECTION, bannerId), {
+      title: String(data.title).trim().slice(0, 120),
+      subtitle: String(data.subtitle || '').trim().slice(0, 200),
+      imageUrl: String(data.imageUrl).trim(),
+      linkType: data.linkType === 'url' ? 'url' : (data.linkType === 'service' ? 'service' : 'none'),
+      serviceId: String(data.serviceId || ''),
+      url: String(data.url || '').trim(),
+      order: Number(data.order || 0),
+      active: data.active !== false
+    });
+  }
+
+  async deleteBanner(bannerId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, BANNERS_COLLECTION, bannerId));
+  }
+
+  async setBannerActive(bannerId, active) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, BANNERS_COLLECTION, bannerId), { active: Boolean(active) });
   }
 
   // ===== إحصائيات الزيارات اليومية (مجموعة dailyStats) =====
