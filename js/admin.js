@@ -140,7 +140,7 @@ function renderStats() {
     { label: 'خدمات موثقة', value: verified, icon: 'badge-check', color: 'text-sky-400' },
     { label: 'متوسط التقييم', value: avgRating, icon: 'star', color: 'text-emerald-400' }
   ].map((s) => `
-    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+    <div class="admin-stat bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
       <div class="flex items-center gap-2 mb-1">
         <i data-lucide="${s.icon}" class="w-4 h-4 ${s.color}"></i>
         <span class="text-[11px] font-bold text-slate-400">${s.label}</span>

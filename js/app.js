@@ -1,6 +1,6 @@
 import { AREAS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
-import { renderCategories, renderServiceCards, getOpenStatus } from './ui.js';
+import { renderCategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin } from './firebase.js';
 
 const state = {
@@ -46,15 +46,34 @@ async function initApp() {
     if (wasAdmin !== state.isAdmin) refreshUI();
   });
 
-  state.services = await db.getAllServices();
   bindEvents();
-  refreshUI();
+  // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
+  renderSkeleton(els.servicesGrid);
+  await loadServices();
+}
+
+async function loadServices() {
+  try {
+    state.services = await db.getAllServices();
+    refreshUI();
+  } catch (err) {
+    console.error('تعذر تحميل الخدمات:', err);
+    renderErrorState(els.servicesGrid, () => {
+      renderSkeleton(els.servicesGrid);
+      loadServices();
+    });
+  }
 }
 
 function bindEvents() {
+  // بحث مُؤجَّل 120ms: لا نعيد رسم كل البطاقات مع كل حرف يُكتب.
+  let searchTimer = null;
   els.searchInput.addEventListener('input', (e) => {
-    state.searchQuery = e.target.value.toLowerCase().trim();
-    refreshUI();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      state.searchQuery = e.target.value.toLowerCase().trim();
+      refreshUI();
+    }, 120);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -126,6 +145,17 @@ function refreshUI() {
   els.resultsCount.textContent = `${filtered.length} خدمة`;
 
   renderServiceCards(els.servicesGrid, filtered, state.favorites, state.isAdmin, {
+    onClearFilters: () => {
+      state.activeCategory = 'all';
+      state.selectedArea = 'all';
+      state.searchQuery = '';
+      state.onlyEmergency = false;
+      state.onlyFavorites = false;
+      els.searchInput.value = '';
+      els.areaSelect.value = 'all';
+      els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
+      refreshUI();
+    },
     onDetails: openServiceDetails,
     onToggleFav: (id) => {
       state.favorites = state.favorites.includes(id)

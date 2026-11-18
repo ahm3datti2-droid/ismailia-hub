@@ -5,8 +5,8 @@ export function getOpenStatus(openHour, closeHour) {
     return { isOpen: true, text: 'مفتوح 24 ساعة', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
   }
   const now = new Date().getHours();
-  const isOpen = closeHour < openHour 
-    ? (now >= openHour || now < closeHour) 
+  const isOpen = closeHour < openHour
+    ? (now >= openHour || now < closeHour)
     : (now >= openHour && now < closeHour);
 
   return isOpen
@@ -14,11 +14,15 @@ export function getOpenStatus(openHour, closeHour) {
     : { isOpen: false, text: `مغلق (يفتح ${openHour}:00)`, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' };
 }
 
+export function categoryInfo(id) {
+  return CATEGORIES.find((c) => c.id === id) || { id, name: id, icon: 'layout-grid' };
+}
+
 export function renderCategories(container, activeCat, onSelect) {
   container.innerHTML = CATEGORIES.map(cat => {
     const active = cat.id === activeCat;
     return `
-      <button data-cat="${cat.id}" class="cat-btn flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+      <button data-cat="${cat.id}" aria-pressed="${active}" class="cat-btn flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
         active
           ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 scale-[1.02]'
           : 'bg-slate-900/90 text-slate-300 border border-slate-800 hover:border-slate-700'
@@ -34,14 +38,56 @@ export function renderCategories(container, activeCat, onSelect) {
   });
 }
 
+/* بطاقات هيكلية أثناء تحميل Firestore — ارتفاع ثابت يمنع قفز التخطيط */
+export function renderSkeleton(container, count = 6) {
+  container.innerHTML = Array.from({ length: count }, () => `
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="skeleton-line" style="width:2.75rem;height:2.75rem;border-radius:0.9rem"></div>
+        <div class="flex-1 space-y-2">
+          <div class="skeleton-line skeleton-line--title"></div>
+          <div class="skeleton-line skeleton-line--short"></div>
+        </div>
+      </div>
+      <div class="skeleton-line skeleton-line--long mb-2"></div>
+      <div class="skeleton-line skeleton-line--short mb-4"></div>
+      <div class="grid grid-cols-12 gap-2">
+        <div class="skeleton-line col-span-5" style="height:2.5rem"></div>
+        <div class="skeleton-line col-span-4" style="height:2.5rem"></div>
+        <div class="skeleton-line col-span-3" style="height:2.5rem"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+export function renderErrorState(container, onRetry) {
+  container.innerHTML = `
+    <div class="error-state">
+      <i data-lucide="wifi-off" class="w-10 h-10 text-rose-400 mx-auto mb-2"></i>
+      <p class="text-white text-sm font-extrabold mb-1">تعذر تحميل الخدمات</p>
+      <p class="text-slate-400 text-xs font-semibold mb-4">تحقق من اتصالك بالإنترنت وحاول مرة أخرى.</p>
+      <button data-retry class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
+        إعادة المحاولة
+      </button>
+    </div>
+  `;
+  container.querySelector('[data-retry]')?.addEventListener('click', onRetry);
+  lucide.createIcons();
+}
+
 export function renderServiceCards(container, services, favorites, isAdmin, handlers) {
   if (!services.length) {
     container.innerHTML = `
-      <div class="text-center py-14 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+      <div class="empty-state">
         <i data-lucide="search-x" class="w-10 h-10 text-slate-600 mx-auto mb-2"></i>
-        <p class="text-slate-400 text-sm font-semibold">لا توجد خدمات مطابقة لبحثك حالياً</p>
+        <p class="text-white text-sm font-extrabold mb-1">لا توجد خدمات مطابقة لبحثك</p>
+        <p class="text-slate-400 text-xs font-semibold mb-4">جرّب كلمة بحث مختلفة أو غيّر التصنيف والمنطقة.</p>
+        <button data-clear-filters class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
+          مسح كل الفلاتر
+        </button>
       </div>
     `;
+    container.querySelector('[data-clear-filters]')?.addEventListener('click', () => handlers.onClearFilters?.());
     lucide.createIcons();
     return;
   }
@@ -49,47 +95,48 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
   container.innerHTML = services.map(srv => {
     const status = getOpenStatus(srv.openHour, srv.closeHour);
     const isFav = favorites.includes(srv.id);
+    const cat = categoryInfo(srv.category);
     const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
+    const tags = String(srv.tags || '').split('،').map((t) => t.trim()).filter(Boolean).slice(0, 3);
 
     return `
-      <article class="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-4 transition hover:border-amber-500/40 relative group">
-        <div class="flex justify-between items-start gap-2 mb-2">
-          <div class="cursor-pointer flex-1" data-open-details="${srv.id}">
-            <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-amber-400">${srv.area}</span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border ${status.color}">${status.text}</span>
-              ${srv.verified ? '<span class="text-[10px] text-sky-400 flex items-center gap-0.5 font-bold"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> موثق</span>' : ''}
+      <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">
+        <div class="flex items-start gap-3 mb-3">
+          <div class="service-avatar" aria-hidden="true">
+            <i data-lucide="${cat.icon}"></i>
+          </div>
+          <div class="cursor-pointer flex-1 min-w-0" data-open-details="${srv.id}">
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              <span class="badge badge--area">${srv.area}</span>
+              <span class="badge border ${status.color}">${status.text}</span>
+              ${srv.isEmergency ? '<span class="badge badge--emergency"><i data-lucide="siren" class="w-3 h-3"></i> طوارئ</span>' : ''}
             </div>
-            <h3 class="font-extrabold text-base text-white group-hover:text-amber-300 transition">${srv.name}</h3>
+            <h3 class="font-extrabold text-white leading-snug">${srv.name}</h3>
+            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">${cat.name}</p>
           </div>
-
-          <div class="flex items-center gap-1">
-            <button data-fav="${srv.id}" class="p-2 rounded-full bg-slate-800/70 text-slate-400 hover:text-amber-400 transition">
-              <i data-lucide="bookmark" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
-            </button>
-            ${isAdmin ? `
-              <button data-del="${srv.id}" class="p-2 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition" title="حذف">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            ` : ''}
-          </div>
+          <button data-fav="${srv.id}" aria-label="حفظ الخدمة" class="p-2 rounded-full bg-slate-800/70 text-slate-400 hover:text-amber-400 transition shrink-0">
+            <i data-lucide="bookmark" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
+          </button>
         </div>
 
-        <p class="text-xs text-slate-400 flex items-center gap-1.5 mb-2">
-          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-500/80 shrink-0"></i>
-          <span>${srv.address}</span>
-        </p>
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <p class="text-xs text-slate-400 flex items-start gap-1.5 leading-relaxed">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-500/80 shrink-0 mt-0.5"></i>
+            <span>${srv.address}</span>
+          </p>
+          ${srv.verified ? '<span class="badge badge--verified shrink-0"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> موثق</span>' : ''}
+        </div>
 
-        <div class="flex items-center justify-between text-[11px] text-slate-500 mb-3.5">
-          <span class="truncate max-w-[70%]">${srv.tags}</span>
-          <span class="flex items-center gap-1 text-amber-400 font-bold">
+        <div class="flex items-center justify-between gap-2 text-[11px] mb-3.5">
+          <span class="flex flex-wrap gap-1 min-w-0">${tags.map((t) => `<span class="tag-chip">${t}</span>`).join('')}</span>
+          <span class="rating-pill shrink-0">
             <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
             ${srv.rating} (${srv.reviewsCount})
           </span>
         </div>
 
-        <div class="grid grid-cols-12 gap-2">
-          <a href="https://wa.me/${srv.whatsapp}?text=${waMsg}" target="_blank"
+        <div class="grid grid-cols-12 gap-2 mt-auto">
+          <a href="https://wa.me/${srv.whatsapp}?text=${waMsg}" target="_blank" rel="noopener"
             class="col-span-5 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold transition active:scale-95">
             <i data-lucide="message-circle" class="w-4 h-4"></i>
             واتساب
@@ -100,9 +147,15 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
             اتصال
           </a>
           <button data-open-details="${srv.id}"
-            class="col-span-3 flex items-center justify-center gap-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 py-2.5 rounded-xl text-xs font-bold hover:bg-amber-500 hover:text-slate-950 transition">
+            class="col-span-3 flex items-center justify-center gap-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 py-2.5 rounded-xl text-xs font-bold hover:bg-amber-500 hover:text-slate-950 transition active:scale-95">
             التفاصيل
           </button>
+          ${isAdmin ? `
+            <button data-del="${srv.id}" aria-label="حذف الخدمة" class="col-span-12 flex items-center justify-center gap-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-xl text-xs font-bold transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              حذف من الدليل
+            </button>
+          ` : ''}
         </div>
       </article>
     `;

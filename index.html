@@ -2,22 +2,31 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>دليل خدمات الإسماعيلية | Ismailia Super App</title>
+  <meta name="description" content="الدليل الشامل لخدمات ومواصلات وطوارئ محافظة الإسماعيلية ومراكزها — عيادات، مطاعم، صيانة، خدمات سيارات وعقارات.">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <meta name="theme-color" content="#090d16">
+  <!-- Preconnects: cut DNS/TLS time on the CDN + Firebase hosts used below -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="pb-24 select-none">
 
-  <!-- الهيدر -->
-  <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
-    <div class="max-w-lg mx-auto">
-      <div class="flex items-center justify-between mb-3">
+  <!-- الهيدر (يمرّر مع الصفحة؛ شريط البحث والفلاتر ثابت) -->
+  <header class="px-4 pt-4 pb-3">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
             IS
           </div>
           <div>
@@ -26,7 +35,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <a href="admin.html" id="btnAdminToggle" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="لوحة تحكم الإدارة">
+          <a href="admin.html" id="btnAdminToggle" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="لوحة تحكم الإدارة" aria-label="لوحة تحكم الإدارة">
             <i data-lucide="shield-check" class="w-4 h-4"></i>
           </a>
           <button id="btnAddService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95">
@@ -35,58 +44,61 @@
           </button>
         </div>
       </div>
-
-      <!-- البحث الذكي -->
-      <div class="relative">
-        <input type="text" id="searchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)"
-          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3 pr-11 pl-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5"></i>
-      </div>
     </div>
   </header>
 
-  <!-- المحتوى -->
-  <main class="max-w-lg mx-auto px-4 pt-4">
-    <!-- التصنيفات -->
-    <div id="categoriesContainer" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3"></div>
-
-    <!-- فلتر المناطق -->
-    <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mb-4">
-      <div class="flex items-center gap-2 text-xs">
-        <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
-        <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
+  <!-- شريط البحث والفلاتر الثابت -->
+  <div class="filter-bar sticky top-0 z-40 glass-header px-4 py-3">
+    <div class="max-w-6xl mx-auto">
+      <!-- البحث الذكي -->
+      <div class="relative">
+        <input type="search" id="searchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)" autocomplete="off"
+          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none"></i>
       </div>
-      <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none">
-        <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
-      </select>
+      <!-- التصنيفات -->
+      <div id="categoriesContainer" class="flex gap-2 overflow-x-auto no-scrollbar pt-3"></div>
+      <!-- فلتر المناطق -->
+      <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
+        <div class="flex items-center gap-2 text-xs">
+          <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
+          <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
+        </div>
+        <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none" aria-label="فلتر المنطقة">
+          <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
+        </select>
+      </div>
     </div>
+  </div>
 
+  <!-- المحتوى -->
+  <main class="max-w-6xl mx-auto px-4 pt-4">
     <!-- شريط العنوان -->
     <div class="flex justify-between items-center mb-3">
-      <h2 id="sectionTitle" class="text-sm font-extrabold text-slate-200">أبرز الخدمات في الإسماعيلية</h2>
-      <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0 خدمة</span>
+      <h2 id="sectionTitle" class="text-base font-extrabold text-slate-100">أبرز الخدمات في الإسماعيلية</h2>
+      <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full whitespace-nowrap">0 خدمة</span>
     </div>
 
-    <!-- شبكة البطاقات -->
-    <div id="servicesGrid" class="space-y-3.5"></div>
+    <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الديسكتوب -->
+    <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
   </main>
 
   <!-- شريط التنقل السفلي -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5">
-    <div class="max-w-lg mx-auto flex justify-between items-center">
-      <button id="btnHome" class="flex flex-col items-center gap-1 text-amber-400">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <button id="btnHome" class="nav-btn flex flex-col items-center gap-1 text-amber-400">
         <i data-lucide="compass" class="w-5 h-5"></i>
         <span class="text-[10px] font-bold">الرئيسية</span>
       </button>
-      <button id="btnEmergency" class="flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 transition">
+      <button id="btnEmergency" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-rose-400 transition">
         <i data-lucide="siren" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">طوارئ 24/7</span>
       </button>
-      <button id="btnTransport" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+      <button id="btnTransport" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
         <i data-lucide="bus" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">المواصلات</span>
       </button>
-      <button id="btnSaved" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+      <button id="btnSaved" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
         <i data-lucide="bookmark" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">المحفوظات</span>
       </button>
