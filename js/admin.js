@@ -3,7 +3,7 @@
 // المحدد في js/config.js (ADMIN_EMAIL)، وأي بريد آخر مسجل
 // يظهر له "لا تملك صلاحية" ويُسجَّل خروجه فوراً.
 // كل عمليات الكتابة تمر عبر js/database.js (Firestore).
-import { CATEGORIES, AREAS, ADMIN_EMAIL } from './config.js';
+import { CATEGORIES, GROUPS, AREAS, ADMIN_EMAIL } from './config.js';
 import { db, INITIAL_SERVICES } from './database.js';
 import {
   auth,
@@ -102,6 +102,19 @@ function categoryName(id) {
   return (CATEGORIES.find((c) => c.id === id) || {}).name || id;
 }
 
+function subcategoryName(groupId, subId) {
+  const g = GROUPS.find((x) => x.id === groupId);
+  return (g && g.subs.find((s) => s.id === subId) || {}).name || '';
+}
+
+function fillSubSelect(groupId, selectedSub) {
+  const sel = document.getElementById('adminSubSelect');
+  if (!sel) return;
+  const g = GROUPS.find((x) => x.id === groupId);
+  sel.innerHTML = (g ? g.subs : []).map((s) => `<option value="${s.id}">${s.name}</option>`).join('');
+  if (selectedSub) sel.value = selectedSub;
+}
+
 async function loadServices() {
   try {
     state.services = await db.getAllServices();
@@ -198,7 +211,7 @@ function renderList() {
           <div>
             <div class="flex flex-wrap items-center gap-1.5 mb-1">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-amber-400">${esc(srv.area)}</span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">${esc(categoryName(srv.category))}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">${esc(categoryName(srv.category))}${subcategoryName(srv.category, srv.subcategory) ? ' • ' + esc(subcategoryName(srv.category, srv.subcategory)) : ''}</span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border ${status.color}">${status.text}</span>
               ${srv.verified ? '<span class="text-[10px] text-sky-400 font-bold">موثق</span>' : '<span class="text-[10px] text-slate-500 font-bold">غير موثق</span>'}
               ${srv.isEmergency ? '<span class="text-[10px] text-rose-400 font-bold">طوارئ</span>' : ''}
@@ -233,6 +246,7 @@ function readForm() {
   return {
     name: String(fd.get('name') || '').trim(),
     category: String(fd.get('category') || 'maintenance'),
+    subcategory: String(fd.get('subcategory') || ''),
     area: String(fd.get('area') || ''),
     address: String(fd.get('address') || '').trim(),
     phone: String(fd.get('phone') || '').trim(),
@@ -253,6 +267,7 @@ function fillForm(srv) {
   const f = els.serviceForm;
   f.name.value = srv.name || '';
   f.category.value = srv.category || 'maintenance';
+  fillSubSelect(srv.category || 'maintenance', srv.subcategory || '');
   f.area.value = srv.area || '';
   f.address.value = srv.address || '';
   f.phone.value = srv.phone || '';
@@ -331,6 +346,9 @@ function bindEvents() {
     state.categoryFilter = e.target.value;
     renderList();
   });
+  document.getElementById('adminGroupSelect')?.addEventListener('change', (e) => {
+    fillSubSelect(e.target.value, '');
+  });
 
   els.seedBtn.addEventListener('click', async () => {
     if (!confirm('لا توجد خدمات افتراضية للنشر. متابعة؟')) return;
@@ -388,6 +406,8 @@ function initAdmin() {
     opt.textContent = a;
     areaSelect.appendChild(opt);
   });
+  // التصنيفات الفرعية في النموذج تتبع القسم الرئيسي (الافتراضي: الأغذية).
+  fillSubSelect('food', '');
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {

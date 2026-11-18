@@ -1,4 +1,4 @@
-import { CATEGORIES } from './config.js';
+import { CATEGORIES, GROUPS, subcategoryInfo } from './config.js';
 
 export function getOpenStatus(openHour, closeHour) {
   if (openHour === 0 && closeHour === 24) {
@@ -18,6 +18,11 @@ export function categoryInfo(id) {
   return CATEGORIES.find((c) => c.id === id) || { id, name: id, icon: 'layout-grid' };
 }
 
+export function subcategoryName(groupId, subId) {
+  if (!subId) return '';
+  return (subcategoryInfo(groupId, subId) || {}).name || '';
+}
+
 export function renderCategories(container, activeCat, onSelect) {
   container.innerHTML = CATEGORIES.map(cat => {
     const active = cat.id === activeCat;
@@ -35,6 +40,33 @@ export function renderCategories(container, activeCat, onSelect) {
 
   container.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => onSelect(btn.dataset.cat));
+  });
+  lucide.createIcons();
+}
+
+// صف التصنيفات الفرعية — يظهر فقط عند اختيار قسم رئيسي له فروع.
+export function renderSubcategories(container, groupId, activeSub, onSelect) {
+  const group = GROUPS.find((g) => g.id === groupId);
+  if (!group || !group.subs || !group.subs.length) {
+    container.innerHTML = '';
+    return;
+  }
+  const chips = [{ id: 'all', name: 'الكل' }, ...group.subs];
+  container.innerHTML = chips.map((sub) => {
+    const active = sub.id === activeSub;
+    return `
+      <button data-sub="${sub.id}" aria-pressed="${active}" class="sub-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
+        active
+          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+          : 'bg-slate-900/70 text-slate-400 border border-slate-800 hover:border-slate-600'
+      }">
+        <span>${sub.name}</span>
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => onSelect(btn.dataset.sub));
   });
 }
 
@@ -96,6 +128,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     const status = getOpenStatus(srv.openHour, srv.closeHour);
     const isFav = favorites.includes(srv.id);
     const cat = categoryInfo(srv.category);
+    const subName = subcategoryName(srv.category, srv.subcategory);
     const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
     const tags = String(srv.tags || '').split('،').map((t) => t.trim()).filter(Boolean).slice(0, 3);
 
@@ -113,7 +146,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
               ${srv.isEmergency ? '<span class="badge badge--emergency"><i data-lucide="siren" class="w-3 h-3"></i> طوارئ</span>' : ''}
             </div>
             <h3 class="font-extrabold text-white leading-snug">${srv.name}</h3>
-            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">${cat.name}</p>
+            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">${subName ? `${cat.name} • ${subName}` : cat.name}</p>
           </div>
           <button data-fav="${srv.id}" aria-label="حفظ الخدمة" class="p-2 rounded-full bg-slate-800/70 text-slate-400 hover:text-amber-400 transition shrink-0">
             <i data-lucide="bookmark" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>

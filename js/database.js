@@ -62,6 +62,7 @@ function normaliseService(id, data) {
     id,
     name: data.name || '',
     category: data.category || 'maintenance',
+    subcategory: data.subcategory || '',
     area: data.area || '',
     address: data.address || '',
     phone: data.phone || '',

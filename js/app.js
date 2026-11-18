@@ -1,12 +1,13 @@
-import { AREAS, TRANSPORT_ROUTES } from './config.js';
+import { AREAS, GROUPS, TRANSPORT_ROUTES } from './config.js';
 import { db } from './database.js';
-import { renderCategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus } from './ui.js';
+import { renderCategories, renderSubcategories, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
 const state = {
   services: [],
   activeCategory: 'all',
+  activeSubcategory: 'all',
   selectedArea: 'all',
   searchQuery: '',
   onlyEmergency: false,
@@ -19,6 +20,7 @@ const state = {
 
 const els = {
   categories: document.getElementById('categoriesContainer'),
+  subcategories: document.getElementById('subcategoriesContainer'),
   areaSelect: document.getElementById('areaFilter'),
   searchInput: document.getElementById('searchInput'),
   servicesGrid: document.getElementById('servicesGrid'),
@@ -96,6 +98,7 @@ function bindEvents() {
 
   document.getElementById('btnHome').addEventListener('click', () => {
     state.activeCategory = 'all';
+    state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
     els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
@@ -133,13 +136,20 @@ function bindEvents() {
 function refreshUI() {
   renderCategories(els.categories, state.activeCategory, (catId) => {
     state.activeCategory = catId;
+    state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
     refreshUI();
   });
 
+  renderSubcategories(els.subcategories, state.activeCategory, state.activeSubcategory, (subId) => {
+    state.activeSubcategory = subId;
+    refreshUI();
+  });
+
   const filtered = state.services.filter(srv => {
     const matchCat = state.activeCategory === 'all' || srv.category === state.activeCategory;
+    const matchSub = state.activeSubcategory === 'all' || srv.subcategory === state.activeSubcategory;
     const matchArea = state.selectedArea === 'all' || srv.area === state.selectedArea;
     const matchEmerg = !state.onlyEmergency || srv.isEmergency;
     const matchFav = !state.onlyFavorites || state.favorites.includes(srv.id);
@@ -149,7 +159,7 @@ function refreshUI() {
       srv.tags.toLowerCase().includes(state.searchQuery) ||
       srv.address.toLowerCase().includes(state.searchQuery);
 
-    return matchCat && matchArea && matchEmerg && matchFav && matchQuery;
+    return matchCat && matchSub && matchArea && matchEmerg && matchFav && matchQuery;
   });
 
   els.resultsCount.textContent = `${filtered.length} خدمة`;
@@ -157,6 +167,7 @@ function refreshUI() {
   renderServiceCards(els.servicesGrid, filtered, state.favorites, state.isAdmin, {
     onClearFilters: () => {
       state.activeCategory = 'all';
+      state.activeSubcategory = 'all';
       state.selectedArea = 'all';
       state.searchQuery = '';
       state.onlyEmergency = false;
@@ -269,15 +280,12 @@ function openAddServiceModal() {
     <form id="addServiceForm" class="space-y-3 text-xs">
       <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
       <div class="grid grid-cols-2 gap-2">
-        <select name="category" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-          <option value="medical">عيادات وصيدليات</option>
-          <option value="food">مطاعم وكافيهات</option>
-          <option value="maintenance">صيانة وحرفيين</option>
-          <option value="cars">خدمات سيارات</option>
-          <option value="real_estate">عقارات</option>
-          <option value="mobiles">موبايلات</option>
-          <option value="clothing">ملابس</option>
+        <select name="category" id="addGroupSelect" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          ${GROUPS.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
         </select>
+        <select name="subcategory" id="addSubSelect" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
         <select name="area" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
           ${AREAS.map(a => `<option value="${a}">${a}</option>`).join('')}
         </select>
@@ -296,12 +304,22 @@ function openAddServiceModal() {
   `;
   showModal();
 
+  // التصنيفات الفرعية في نموذج الإضافة تتبع القسم الرئيسي المختار.
+  const fillAddSubs = () => {
+    const group = GROUPS.find((g) => g.id === document.getElementById('addGroupSelect').value);
+    const subSelect = document.getElementById('addSubSelect');
+    subSelect.innerHTML = (group ? group.subs : []).map((s) => `<option value="${s.id}">${s.name}</option>`).join('');
+  };
+  document.getElementById('addGroupSelect').addEventListener('change', fillAddSubs);
+  fillAddSubs();
+
   document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const payload = {
       name: fd.get('name'),
       category: fd.get('category'),
+      subcategory: fd.get('subcategory') || '',
       area: fd.get('area'),
       address: fd.get('address'),
       phone: fd.get('phone'),
