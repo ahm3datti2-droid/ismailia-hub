@@ -2,7 +2,7 @@
    الخط يُحمَّل من <link> في الـ HTML (أسرع من @import داخل CSS). */
 
 :root {
-  --bg-dark: #0A1330;
+  --bg-dark: #0E1E4A;
   --bg-card: #13224B;
   --bg-card-hover: #1A2C5E;
   --accent-gold: #FFC400; /* أصفر الإسماعيلية الرسمي */
@@ -22,7 +22,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.32), transparent 60%), radial-gradient(900px 300px at 88% 0%, rgba(255, 196, 0, 0.10), transparent 55%), var(--bg-dark);
+  background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.45), transparent 60%), radial-gradient(900px 300px at 88% 0%, rgba(255, 196, 0, 0.12), transparent 55%), var(--bg-dark);
   color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
@@ -49,7 +49,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* شريط التنقل السفلي: خلفية شبه معتمة بلا backdrop-filter. */
 .glass-nav {
-  background: rgba(10, 19, 48, 0.97);
+  background: rgba(14, 30, 74, 0.97);
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -69,7 +69,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 }
 
 .glass-header {
-  background: rgba(10, 19, 48, 0.92);
+  background: rgba(14, 30, 74, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
