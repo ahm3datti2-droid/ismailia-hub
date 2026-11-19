@@ -573,8 +573,16 @@ class DatabaseService {
     const cats = (Array.isArray(categories) ? categories : []).filter((c) => typeof c === 'string').slice(0, 6);
     if (!cats.length) throw new Error('اختار قسماً واحداً على الأقل.');
     const ref = doc(firestoreDb, 'jarakProviders', user.uid);
-    const snap = await getDoc(ref);
-    const prev = snap.exists() ? snap.data() : {};
+    // قراءة السجل السابق للحفاظ على التوفر والاعتماد عند إعادة التسجيل.
+    // getDoc على مستند غير موجود قد ترفضه القواعد إن لم تسمح بقراءة
+    // مستند مفقود — الخطأ هنا يعني "لا سجل سابق" وليس فشل التسجيل.
+    let prev = {};
+    try {
+      const snap = await getDoc(ref);
+      prev = snap.exists() ? snap.data() : {};
+    } catch (_) {
+      prev = {};
+    }
     await setDoc(ref, {
       userId: user.uid,
       name: cleanName,
@@ -712,6 +720,28 @@ class DatabaseService {
       return tb - ta;
     });
     return list;
+  }
+
+  // الطلبات المنشورة (للأدمن — للإشراف والحذف).
+  async getLiveJarakRequests() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakRequests'),
+      where('status', 'in', ['open', 'accepted'])
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async deleteJarakRequest(requestId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jarakRequests', requestId));
+    return true;
   }
 
   async approveJarakRequest(requestId) {

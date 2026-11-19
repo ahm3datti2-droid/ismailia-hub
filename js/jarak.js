@@ -62,6 +62,8 @@ const els = {
   providerAreaFilter: document.getElementById('providerAreaFilter'),
   providersList: document.getElementById('providersList'),
   requestForm: document.getElementById('requestForm'),
+  requestFormError: document.getElementById('requestFormError'),
+  providerFormError: document.getElementById('providerFormError'),
   requestCategory: document.getElementById('requestCategory'),
   requestArea: document.getElementById('requestArea'),
   requestPrice: document.getElementById('requestPrice'),
@@ -413,13 +415,15 @@ function bindEvents() {
         customerPhone: state.profile?.phoneNational || ''
       });
       alert('تم إرسال طلبك — يظهر للمزودين بعد موافقة الأدمن.');
+      els.requestFormError.classList.add('hidden');
       e.target.reset();
       els.requestPrice.value = 50;
       els.requestPriceLabel.textContent = '50 جنيه';
       await loadAll();
       switchTab('myRequests');
     } catch (err) {
-      alert(err.message || 'تعذر إرسال الطلب.');
+      els.requestFormError.textContent = err.message || 'تعذر إرسال الطلب.';
+      els.requestFormError.classList.remove('hidden');
     }
   });
 
@@ -434,10 +438,12 @@ function bindEvents() {
         area: fd.get('area'),
         categories
       });
+      els.providerFormError.classList.add('hidden');
       alert('تم تسجيلك كمزوّد — حسابك بانتظار موافقة الأدمن.');
       await loadAll();
     } catch (err) {
-      alert(err.message || 'تعذر التسجيل.');
+      els.providerFormError.textContent = err.message || 'تعذر التسجيل.';
+      els.providerFormError.classList.remove('hidden');
     }
   });
 

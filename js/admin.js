@@ -28,6 +28,7 @@ const state = {
   pendingOfferRequests: [],
   pendingJarakProviders: [],
   pendingJarakRequests: [],
+  liveJarakRequests: [],
   pendingJarakReviews: [],
   goldPrices: null,
   offers: [],
@@ -78,6 +79,8 @@ const els = {
   pendingJarakProvidersCount: document.getElementById('pendingJarakProvidersCount'),
   pendingJarakRequestsList: document.getElementById('pendingJarakRequestsList'),
   pendingJarakRequestsCount: document.getElementById('pendingJarakRequestsCount'),
+  liveJarakRequestsList: document.getElementById('liveJarakRequestsList'),
+  liveJarakRequestsCount: document.getElementById('liveJarakRequestsCount'),
   pendingJarakReviewsList: document.getElementById('pendingJarakReviewsList'),
   pendingJarakReviewsCount: document.getElementById('pendingJarakReviewsCount'),
   goldForm: document.getElementById('goldForm'),
@@ -202,6 +205,7 @@ async function loadServices() {
   await loadPendingOfferRequests();
   await loadPendingJarakProviders();
   await loadPendingJarakRequests();
+  await loadLiveJarakRequests();
   await loadPendingJarakReviews();
   await loadGoldPrices();
   await loadOffers();
@@ -215,6 +219,7 @@ async function loadServices() {
   renderPendingOfferRequests();
   renderPendingJarakProviders();
   renderPendingJarakRequests();
+  renderLiveJarakRequests();
   renderPendingJarakReviews();
   renderReviewsQueue();
   renderPendingServicesQueue();
@@ -463,6 +468,9 @@ async function loadPendingJarakRequests() {
 async function loadPendingJarakReviews() {
   try { state.pendingJarakReviews = await db.getPendingJarakReviews(); } catch (_) { state.pendingJarakReviews = []; }
 }
+async function loadLiveJarakRequests() {
+  try { state.liveJarakRequests = await db.getLiveJarakRequests(); } catch (_) { state.liveJarakRequests = []; }
+}
 
 function emptyQueueHtml(msg) {
   return `
@@ -523,6 +531,27 @@ function renderPendingJarakRequests() {
   els.pendingJarakRequestsList.querySelectorAll('[data-reject-jarak-request]').forEach((b) =>
     b.addEventListener('click', () => armDeleteConfirm(b, async () => {
       try { await db.rejectJarakRequest(b.dataset.rejectJarakRequest); await loadServices(); } catch (err) { alert(err.message || 'تعذر الرفض.'); }
+    })));
+}
+
+function renderLiveJarakRequests() {
+  if (!els.liveJarakRequestsList) return;
+  els.liveJarakRequestsCount.textContent = String(state.liveJarakRequests.length);
+  if (!state.liveJarakRequests.length) {
+    els.liveJarakRequestsList.innerHTML = emptyQueueHtml('لا توجد طلبات جارك منشورة');
+    return;
+  }
+  els.liveJarakRequestsList.innerHTML = state.liveJarakRequests.map((r) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(r.title)} <span class="text-[11px] font-bold text-slate-400">(${esc(r.status === 'accepted' ? 'قيد التنفيذ' : 'مفتوح')})</span></p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc(r.category || '')} • ${esc(r.area || '')} • يعرض ${Number(r.price || 0).toLocaleString('en-US')} جنيه • <span dir="ltr">${esc(r.customerPhone || '')}</span></p>
+      <div class="flex gap-2 mt-3">
+        <button data-delete-jarak-request="${esc(r.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">حذف الطلب</button>
+      </div>
+    </div>`).join('');
+  els.liveJarakRequestsList.querySelectorAll('[data-delete-jarak-request]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.deleteJarakRequest(b.dataset.deleteJarakRequest); await loadServices(); } catch (err) { alert(err.message || 'تعذر الحذف.'); }
     })));
 }
 
