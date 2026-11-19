@@ -117,6 +117,7 @@ function selectGroupTile(groupId) {
   state.activeSubcategory = 'all';
   state.onlyEmergency = false;
   state.onlyFavorites = false;
+  syncGroupHash();
   db.logGroupView(groupId);
   refreshUI();
   els.servicesSection.scrollIntoView({ behavior: 'smooth' });
@@ -135,6 +136,7 @@ function resetToHome() {
   const heroSearch = document.getElementById('heroSearchInput');
   if (heroSearch) heroSearch.value = '';
   els.areaSelect.value = 'all';
+  if (!location.hash.startsWith('#service-')) history.replaceState(null, '', location.pathname + location.search);
   refreshUI();
 }
 
@@ -144,7 +146,7 @@ async function loadServices() {
     try { state.offers = await db.getActiveOffers(); } catch (_) { state.offers = []; }
     try { state.banners = await db.getActiveBanners(); } catch (_) { state.banners = []; }
     refreshUI();
-    openDeepLinkedService();
+    if (!openDeepLinkedService()) openDeepLinkedGroup();
   } catch (err) {
     console.error('تعذر تحميل الخدمات:', err);
     renderErrorState(els.servicesGrid, () => {
@@ -164,12 +166,34 @@ function deepLinkedServiceId() {
 function openDeepLinkedService() {
   const id = deepLinkedServiceId();
   const srv = id && state.services.find(s => s.id === id);
-  if (!srv) return;
+  if (!srv) return false;
   // خلفية التفاصيل تعرض قسم الخدمة نفسها بدل كل الأنشطة.
   state.activeCategory = srv.category;
   state.activeSubcategory = 'all';
   refreshUI();
   openServiceDetails(id);
+  return true;
+}
+
+// رابط خاص لكل قسم: #group-<id> أو ?group=<id> يعرض خدمات القسم مباشرة عند فتح الرابط.
+function deepLinkedGroupId() {
+  const hash = (location.hash || '').match(/^#group-(.+)$/);
+  const raw = hash ? hash[1] : new URLSearchParams(location.search).get('group');
+  if (!raw) return null;
+  return GROUPS.some((g) => g.id === raw) || raw === 'all' ? raw : null;
+}
+
+function openDeepLinkedGroup() {
+  const groupId = deepLinkedGroupId();
+  if (!groupId) return;
+  selectGroupTile(groupId);
+}
+
+// يعكس القسم النشط في شريط العنوان حتى يصبح الرابط قابلاً للمشاركة.
+function syncGroupHash() {
+  if (location.hash.startsWith('#service-')) return;
+  const g = state.activeCategory;
+  history.replaceState(null, '', g && g !== 'all' ? `#group-${g}` : location.pathname + location.search);
 }
 
 function bindEvents() {
@@ -258,6 +282,7 @@ function refreshUI() {
     state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
+    syncGroupHash();
     db.logGroupView(catId);
     refreshUI();
   });
@@ -1260,7 +1285,10 @@ function closeModal() {
   els.modal.classList.remove('flex');
   els.modalContent.classList.remove('detail-sheet');
   document.title = 'دليل خدمات الإسماعيلية | Ismailia Super App';
-  if (location.hash.startsWith('#service-')) history.replaceState(null, '', location.pathname + location.search);
+  if (location.hash.startsWith('#service-')) {
+    const g = state.activeCategory;
+    history.replaceState(null, '', g && g !== 'all' ? `#group-${g}` : location.pathname + location.search);
+  }
 }
 
 initApp();
