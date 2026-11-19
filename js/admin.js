@@ -82,6 +82,8 @@ const els = {
   bulkImportBtn: document.getElementById('bulkImportBtn'),
   bulkImportFileName: document.getElementById('bulkImportFileName'),
   bulkImportStatus: document.getElementById('bulkImportStatus'),
+  verifyAllBtn: document.getElementById('verifyAllBtn'),
+  verifyAllStatus: document.getElementById('verifyAllStatus'),
   adminPhotoInput: document.getElementById('adminPhotoInput'),
   adminPhotoPreview: document.getElementById('adminPhotoPreview'),
   adminPhotoActions: document.getElementById('adminPhotoActions'),
@@ -858,6 +860,45 @@ async function handleBulkImport(file) {
   alert(`اكتمل الاستيراد: أُضيف ${added} خدمة • مكرر ${skippedDup} • غير صالح ${skippedBad}.`);
 }
 
+// توثيق كل الخدمات غير الموثقة التي لها صورة حقيقية وتليفون.
+// الصورة الحقيقية: imageUrl غير فارغ وليس رابط مشاركة فيسبوك (روابط
+// المشاركة لا تعرض صورة). تُتخطى الخدمات بلا صورة أو بلا تليفون
+// وتُعرض أسماؤها وأسباب تخطيها في التقرير.
+async function handleVerifyAll() {
+  const setStatus = (t) => { if (els.verifyAllStatus) els.verifyAllStatus.textContent = t; };
+  const isShareLink = (u) => /facebook\.com\/share|fb\.watch|l\.facebook\.com/i.test(String(u || ''));
+  const hasRealPhoto = (s) => {
+    const u = String(s.imageUrl || '').trim();
+    return u !== '' && !isShareLink(u);
+  };
+  const unverified = state.services.filter((s) => !s.verified);
+  const eligible = unverified.filter((s) => hasRealPhoto(s) && String(s.phone || '').trim() !== '');
+  const skipped = unverified.filter((s) => !eligible.includes(s));
+  if (!eligible.length) {
+    setStatus(`لا توجد خدمات قابلة للتوثيق — ${skipped.length} متبقية بلا صورة حقيقية أو بلا تليفون.`);
+    alert('لا توجد خدمات قابلة للتوثيق.');
+    return;
+  }
+  els.verifyAllBtn.disabled = true;
+  let done = 0, failed = 0;
+  for (let i = 0; i < eligible.length; i++) {
+    const s = eligible[i];
+    setStatus(`جارٍ التوثيق… ${i + 1}/${eligible.length} (تم ${done})`);
+    try {
+      await db.updateService(s.id, { verified: true });
+      done++;
+    } catch (_) {
+      failed++;
+    }
+  }
+  els.verifyAllBtn.disabled = false;
+  const skippedNames = skipped.map((s) => `${s.name} (${!hasRealPhoto(s) ? 'بلا صورة' : 'بلا تليفون'})`);
+  const msg = `اكتمل التوثيق: وُثّق ${done} • فشل ${failed} • تُخطّى ${skipped.length}${skippedNames.length ? ' — ' + skippedNames.join('، ') : ''}`;
+  setStatus(msg);
+  await loadServices();
+  alert(msg);
+}
+
 async function deleteService(id, btn) {
   armDeleteConfirm(btn, async () => {
     try {
@@ -944,6 +985,9 @@ function bindEvents() {
     if (els.bulkImportFileName) els.bulkImportFileName.textContent = bulkImportFile ? bulkImportFile.name : '';
   });
   els.bulkImportBtn?.addEventListener('click', () => handleBulkImport(bulkImportFile));
+
+  // توثيق كل الخدمات المكتملة (صورة حقيقية + تليفون).
+  els.verifyAllBtn?.addEventListener('click', () => handleVerifyAll());
 
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
