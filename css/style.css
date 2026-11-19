@@ -250,6 +250,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* أزرار التنقل السفلي — منطقة لمس أكبر */
 .nav-btn { min-width: 3.5rem; padding: 0.15rem 0.25rem; border-radius: 0.75rem; }
+/* أيقونات التنقل مضمّنة كـ SVG مباشرة (لا تعتمد على استبدال Lucide وقت التحميل) */
+.nav-btn svg { display: block; flex-shrink: 0; }
 .nav-btn:active { transform: scale(0.94); }
 
 /* ---------- حالات التحميل والفراغ والخطأ ---------- */

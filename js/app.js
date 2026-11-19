@@ -85,6 +85,18 @@ async function initApp() {
   renderGroupTiles(els.groupsGrid, GROUPS, {}, 0, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
   renderSkeleton(els.servicesGrid);
+  // إعادة رسم شريط التنقل السفلي بعد أول رسم: متصفحات الهاتف كانت
+  // تقصّ أيقوناته نصفياً حتى أول تمرير (خلل رسم أولي).
+  const navEl = document.querySelector('nav');
+  if (navEl) {
+    const nudgeNavPaint = () => {
+      navEl.style.willChange = 'transform';
+      void navEl.offsetHeight;
+      navEl.style.willChange = '';
+    };
+    requestAnimationFrame(() => requestAnimationFrame(nudgeNavPaint));
+    setTimeout(nudgeNavPaint, 600);
+  }
   await loadServices();
 }
 
