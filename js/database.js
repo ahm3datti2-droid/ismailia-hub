@@ -418,7 +418,7 @@ class DatabaseService {
 
   // الحقول التي يُسمح لصاحب النشاط بطلب تعديلها (لا تشمل الصورة
   // ولا التوثيق ولا التقييم ولا الملكية — تلك تبقى بيد الأدمن).
-  static EDITABLE_FIELDS = ['name', 'phone', 'whatsapp', 'address', 'area', 'openHour', 'closeHour', 'tags'];
+  static EDITABLE_FIELDS = ['name', 'phone', 'whatsapp', 'address', 'area', 'openHour', 'closeHour', 'tags', 'mapUrl'];
 
   async submitServiceEditRequest({ serviceId, changes }) {
     const user = requireSignedIn();

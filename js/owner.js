@@ -214,6 +214,7 @@ function openEditForm(serviceId) {
   f.phone.value = s.phone || '';
   f.whatsapp.value = s.whatsapp || '';
   f.address.value = s.address || '';
+  f.mapUrl.value = s.mapUrl || '';
   f.area.value = s.area || '';
   f.tags.value = s.tags || '';
   f.openHour.value = s.openHour ?? 9;
@@ -282,7 +283,7 @@ function bindForms() {
     if (!s) return;
     const fd = new FormData(e.target);
     const changes = {};
-    const strFields = ['name', 'phone', 'whatsapp', 'address', 'area', 'tags'];
+    const strFields = ['name', 'phone', 'whatsapp', 'address', 'area', 'tags', 'mapUrl'];
     for (const k of strFields) {
       const v = String(fd.get(k) || '').trim();
       if (v && v !== String(s[k] || '').trim()) changes[k] = v;
