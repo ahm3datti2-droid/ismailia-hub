@@ -79,7 +79,7 @@
   </div>
 
   <!-- شريط التنقل: ثابت أسفل الشاشة على الموبايل (بجافاسكربت — انظر .bottom-nav-js)، وشريط علوي عادي على الديسكتوب -->
-  <nav class="bottom-nav-js fixed bottom-0 left-0 right-0 z-40 glass-nav px-6 py-2.5 md:static md:z-auto md:bg-transparent md:border-0 md:backdrop-blur-none md:px-4 md:py-1">
+  <nav class="bottom-nav-js fixed bottom-0 left-0 right-0 z-50 glass-nav px-6 py-2.5 md:static md:z-auto md:bg-transparent md:border-0 md:backdrop-blur-none md:px-4 md:py-1">
     <div class="max-w-6xl mx-auto flex justify-between md:justify-center md:gap-8 items-center">
       <button id="btnHome" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-amber-400">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-compass w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/></svg>
@@ -153,12 +153,12 @@
   </section>
 
   <!-- شريط البحث والفلاتر: ثابت تحت الهيدر أثناء التمرير -->
-  <div class="filter-bar sticky top-[3.5rem] md:top-[4.25rem] z-40 glass-header px-4 py-3">
+  <div class="filter-bar sticky top-[3.5rem] md:top-[4.25rem] z-40 glass-header px-4 py-2">
     <div class="max-w-6xl mx-auto">
       <!-- البحث الذكي -->
       <div class="relative">
         <input type="search" id="searchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة... (Ctrl+K)" autocomplete="off"
-          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
+          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-2.5 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none"></i>
       </div>
       <!-- التصنيفات -->
@@ -166,7 +166,7 @@
       <!-- التصنيفات الفرعية (تظهر عند اختيار قسم رئيسي) -->
       <div id="subcategoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-2"></div>
       <!-- فلتر المناطق -->
-      <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-3">
+      <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-2">
         <div class="flex items-center gap-2 text-xs shrink-0">
           <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
           <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
