@@ -26,6 +26,9 @@ const state = {
   pendingServices: [],
   pendingEdits: [],
   pendingOfferRequests: [],
+  pendingJarakProviders: [],
+  pendingJarakRequests: [],
+  pendingJarakReviews: [],
   goldPrices: null,
   offers: [],
   banners: [],
@@ -71,6 +74,12 @@ const els = {
   pendingEditsCount: document.getElementById('pendingEditsCount'),
   pendingOfferRequestsList: document.getElementById('pendingOfferRequestsList'),
   pendingOfferRequestsCount: document.getElementById('pendingOfferRequestsCount'),
+  pendingJarakProvidersList: document.getElementById('pendingJarakProvidersList'),
+  pendingJarakProvidersCount: document.getElementById('pendingJarakProvidersCount'),
+  pendingJarakRequestsList: document.getElementById('pendingJarakRequestsList'),
+  pendingJarakRequestsCount: document.getElementById('pendingJarakRequestsCount'),
+  pendingJarakReviewsList: document.getElementById('pendingJarakReviewsList'),
+  pendingJarakReviewsCount: document.getElementById('pendingJarakReviewsCount'),
   goldForm: document.getElementById('goldForm'),
   goldUpdatedAt: document.getElementById('goldUpdatedAt'),
   goldStatus: document.getElementById('goldStatus'),
@@ -191,6 +200,9 @@ async function loadServices() {
   await loadPendingServices();
   await loadPendingEdits();
   await loadPendingOfferRequests();
+  await loadPendingJarakProviders();
+  await loadPendingJarakRequests();
+  await loadPendingJarakReviews();
   await loadGoldPrices();
   await loadOffers();
   await loadBanners();
@@ -201,6 +213,9 @@ async function loadServices() {
   renderUsersList();
   renderPendingEdits();
   renderPendingOfferRequests();
+  renderPendingJarakProviders();
+  renderPendingJarakRequests();
+  renderPendingJarakReviews();
   renderReviewsQueue();
   renderPendingServicesQueue();
   renderOffersList();
@@ -434,6 +449,107 @@ function renderPendingOfferRequests() {
   els.pendingOfferRequestsList.querySelectorAll('[data-reject-offer-req]').forEach((b) =>
     b.addEventListener('click', () => armDeleteConfirm(b, async () => {
       try { await db.rejectOfferRequest(b.dataset.rejectOfferReq); await loadServices(); } catch (err) { alert(err.message || 'تعذر رفض الطلب.'); }
+    })));
+}
+
+// جارك — قوائم المراجعة (مزودون/طلبات/تقييمات). الفشل الصامت يترك
+// القائمة فارغة بدل كسر اللوحة.
+async function loadPendingJarakProviders() {
+  try { state.pendingJarakProviders = await db.getPendingJarakProviders(); } catch (_) { state.pendingJarakProviders = []; }
+}
+async function loadPendingJarakRequests() {
+  try { state.pendingJarakRequests = await db.getPendingJarakRequests(); } catch (_) { state.pendingJarakRequests = []; }
+}
+async function loadPendingJarakReviews() {
+  try { state.pendingJarakReviews = await db.getPendingJarakReviews(); } catch (_) { state.pendingJarakReviews = []; }
+}
+
+function emptyQueueHtml(msg) {
+  return `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">${msg}</p>
+      </div>`;
+}
+
+function renderPendingJarakProviders() {
+  if (!els.pendingJarakProvidersList) return;
+  els.pendingJarakProvidersCount.textContent = String(state.pendingJarakProviders.length);
+  if (!state.pendingJarakProviders.length) {
+    els.pendingJarakProvidersList.innerHTML = emptyQueueHtml('لا يوجد مزودون بانتظار الاعتماد');
+    return;
+  }
+  els.pendingJarakProvidersList.innerHTML = state.pendingJarakProviders.map((p) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(p.name)}</p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc((p.categories || []).join('، '))} • ${esc(p.area || '')} • <span dir="ltr">${esc(p.phone || '')}</span></p>
+      <div class="flex gap-2 mt-3">
+        <button data-approve-jarak-provider="${esc(p.id)}" class="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-full">اعتماد المزود</button>
+        <button data-reject-jarak-provider="${esc(p.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">رفض وحذف</button>
+      </div>
+    </div>`).join('');
+  els.pendingJarakProvidersList.querySelectorAll('[data-approve-jarak-provider]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try { b.disabled = true; await db.approveJarakProvider(b.dataset.approveJarakProvider); await loadServices(); }
+      catch (err) { alert(err.message || 'تعذر الاعتماد.'); b.disabled = false; }
+    }));
+  els.pendingJarakProvidersList.querySelectorAll('[data-reject-jarak-provider]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.rejectJarakProvider(b.dataset.rejectJarakProvider); await loadServices(); } catch (err) { alert(err.message || 'تعذر الرفض.'); }
+    })));
+}
+
+function renderPendingJarakRequests() {
+  if (!els.pendingJarakRequestsList) return;
+  els.pendingJarakRequestsCount.textContent = String(state.pendingJarakRequests.length);
+  if (!state.pendingJarakRequests.length) {
+    els.pendingJarakRequestsList.innerHTML = emptyQueueHtml('لا توجد طلبات جارك بانتظار المراجعة');
+    return;
+  }
+  els.pendingJarakRequestsList.innerHTML = state.pendingJarakRequests.map((r) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(r.title)}</p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc(r.category || '')} • ${esc(r.area || '')} • يعرض ${Number(r.price || 0).toLocaleString('en-US')} جنيه • <span dir="ltr">${esc(r.customerPhone || '')}</span></p>
+      ${r.description ? `<p class="text-[11px] text-slate-400 font-semibold mt-1">${esc(r.description)}</p>` : ''}
+      <div class="flex gap-2 mt-3">
+        <button data-approve-jarak-request="${esc(r.id)}" class="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-full">نشر الطلب</button>
+        <button data-reject-jarak-request="${esc(r.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">رفض وحذف</button>
+      </div>
+    </div>`).join('');
+  els.pendingJarakRequestsList.querySelectorAll('[data-approve-jarak-request]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try { b.disabled = true; await db.approveJarakRequest(b.dataset.approveJarakRequest); await loadServices(); }
+      catch (err) { alert(err.message || 'تعذر النشر.'); b.disabled = false; }
+    }));
+  els.pendingJarakRequestsList.querySelectorAll('[data-reject-jarak-request]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.rejectJarakRequest(b.dataset.rejectJarakRequest); await loadServices(); } catch (err) { alert(err.message || 'تعذر الرفض.'); }
+    })));
+}
+
+function renderPendingJarakReviews() {
+  if (!els.pendingJarakReviewsList) return;
+  els.pendingJarakReviewsCount.textContent = String(state.pendingJarakReviews.length);
+  if (!state.pendingJarakReviews.length) {
+    els.pendingJarakReviewsList.innerHTML = emptyQueueHtml('لا توجد تقييمات جارك بانتظار المراجعة');
+    return;
+  }
+  els.pendingJarakReviewsList.innerHTML = state.pendingJarakReviews.map((r) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${'★'.repeat(Number(r.rating || 0))} — مزود: ${esc(r.providerId.slice(0, 8))}…</p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc(r.text || '')}</p>
+      <div class="flex gap-2 mt-3">
+        <button data-approve-jarak-review="${esc(r.id)}" class="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-full">اعتماد التقييم</button>
+        <button data-reject-jarak-review="${esc(r.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">حذف</button>
+      </div>
+    </div>`).join('');
+  els.pendingJarakReviewsList.querySelectorAll('[data-approve-jarak-review]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try { b.disabled = true; await db.approveJarakReview(b.dataset.approveJarakReview); await loadServices(); }
+      catch (err) { alert(err.message || 'تعذر الاعتماد.'); b.disabled = false; }
+    }));
+  els.pendingJarakReviewsList.querySelectorAll('[data-reject-jarak-review]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.deleteJarakReview(b.dataset.rejectJarakReview); await loadServices(); } catch (err) { alert(err.message || 'تعذر الحذف.'); }
     })));
 }
 
@@ -796,6 +912,7 @@ function renderStats() {
     { label: 'تقييمات بانتظار المراجعة', value: state.pendingReviews.length, icon: 'messages-square', color: 'text-violet-400' },
     { label: 'مستخدمون مسجلون', value: state.users.length, icon: 'users', color: 'text-emerald-400' },
     { label: 'طلبات إضافة بانتظار المراجعة', value: state.pendingServices.length, icon: 'inbox', color: 'text-sky-400' },
+    { label: 'طلبات جارك بانتظار المراجعة', value: state.pendingJarakProviders.length + state.pendingJarakRequests.length + state.pendingJarakReviews.length, icon: 'map-pin-house', color: 'text-emerald-400' },
     { label: 'عروض سارية', value: activeOffers, icon: 'badge-percent', color: 'text-amber-400' }
   ].map((s) => `
     <div class="admin-stat bg-slate-900/90 border border-slate-800 rounded-2xl p-4">

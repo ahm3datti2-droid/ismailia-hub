@@ -718,3 +718,48 @@ a.footer-line:hover { color: #FFC400; }
   text-decoration: none;
 }
 .gold-shops-link:hover { text-decoration: underline; }
+
+/* ---------- جارك — اقتصاد الجيران ---------- */
+.jarak-hero {
+  display: block;
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.20), rgba(249, 115, 22, 0.10)), linear-gradient(90deg, #052e1b, #0A2463);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  border-radius: 1.25rem;
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+}
+.jarak-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #052e1b;
+  background: #22c55e;
+  border-radius: 9999px;
+  padding: 0.2rem 0.7rem;
+}
+.jarak-hero__title { display: block; font-size: 1.15rem; font-weight: 900; color: #fff; margin-top: 0.6rem; }
+.jarak-hero__text { display: block; font-size: 0.8rem; font-weight: 600; color: #cbd5e1; margin-top: 0.25rem; line-height: 1.6; }
+.jarak-hero__cta { display: inline-flex; margin-top: 0.6rem; font-size: 0.8rem; font-weight: 800; color: #fb923c; }
+.jarak-tab {
+  flex: 1;
+  padding: 0.65rem 0.25rem;
+  border-radius: 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94a3b8;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  text-align: center;
+  white-space: nowrap;
+}
+.jarak-tab--active { background: #16a34a; color: #fff; border-color: #16a34a; }
+.jarak-status { font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.6rem; border-radius: 9999px; }
+.jarak-status--pending { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
+.jarak-status--open { color: #4ade80; background: rgba(74, 222, 128, 0.12); }
+.jarak-status--accepted { color: #60a5fa; background: rgba(96, 165, 250, 0.12); }
+.jarak-status--done { color: #94a3b8; background: rgba(148, 163, 184, 0.12); }
+.jarak-status--cancelled, .jarak-status--rejected { color: #f87171; background: rgba(248, 113, 113, 0.12); }
+.jarak-chip { font-size: 0.7rem; font-weight: 700; color: #86efac; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); padding: 0.15rem 0.6rem; border-radius: 9999px; }
+.jarak-verified { font-size: 0.7rem; font-weight: 800; color: #FFC400; background: rgba(255, 196, 0, 0.12); padding: 0.15rem 0.6rem; border-radius: 9999px; }

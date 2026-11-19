@@ -560,6 +560,396 @@ class DatabaseService {
   }
 
   // ===== سعر الذهب اليوم (مستند واحد siteMeta/gold) =====
+  // ===== جارك — اقتصاد الجيران =====
+  // المزودون: مستند واحد لكل مستخدم (المعرّف = uid).
+  // - التسجيل والتوفر بيد المالك؛ الاعتماد (isApproved) بيد الأدمن فقط.
+  // - الطلبات تبدأ 'pending' (لا تظهر إلا لصاحبها والأدمن) حتى يعتمدها الأدمن.
+  async registerJarakProvider({ name, phone, area, categories }) {
+    const user = requireSignedIn();
+    const cleanName = String(name || '').trim().slice(0, 60);
+    if (cleanName.length < 2) throw new Error('اكتب اسمك.');
+    const cleanPhone = normalizeOwnerPhone(phone);
+    if (!cleanPhone) throw new Error('اكتب رقم موبايلك.');
+    const cats = (Array.isArray(categories) ? categories : []).filter((c) => typeof c === 'string').slice(0, 6);
+    if (!cats.length) throw new Error('اختار قسماً واحداً على الأقل.');
+    const ref = doc(firestoreDb, 'jarakProviders', user.uid);
+    const snap = await getDoc(ref);
+    const prev = snap.exists() ? snap.data() : {};
+    await setDoc(ref, {
+      userId: user.uid,
+      name: cleanName,
+      phone: cleanPhone,
+      area: String(area || '').trim(),
+      categories: cats,
+      isAvailable: Boolean(prev.isAvailable),
+      isApproved: Boolean(prev.isApproved),
+      createdAt: prev.createdAt || serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    return user.uid;
+  }
+
+  async getMyJarakProvider() {
+    const user = requireSignedIn();
+    const snap = await getDoc(doc(firestoreDb, 'jarakProviders', user.uid));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  }
+
+  async setJarakAvailability(isAvailable) {
+    const user = requireSignedIn();
+    await updateDoc(doc(firestoreDb, 'jarakProviders', user.uid), {
+      isAvailable: Boolean(isAvailable),
+      updatedAt: serverTimestamp()
+    });
+    return true;
+  }
+
+  async getAvailableJarakProviders() {
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakProviders'),
+      where('isApproved', '==', true),
+      where('isAvailable', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getPendingJarakProviders() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakProviders'),
+      where('isApproved', '==', false)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveJarakProvider(userId) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, 'jarakProviders', userId), { isApproved: true, updatedAt: serverTimestamp() });
+    return true;
+  }
+
+  async rejectJarakProvider(userId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jarakProviders', userId));
+    return true;
+  }
+
+  async createJarakRequest({ title, category, area, description, price, customerPhone }) {
+    const user = requireSignedIn();
+    const cleanTitle = String(title || '').trim().slice(0, 120);
+    if (cleanTitle.length < 3) throw new Error('اكتب عنواناً واضحاً لطلبك.');
+    const cleanPrice = Number(price);
+    if (!(cleanPrice > 0)) throw new Error('حدد السعر الذي تعرضه.');
+    const ref = await addDoc(collection(firestoreDb, 'jarakRequests'), {
+      customerId: user.uid,
+      customerPhone: normalizeOwnerPhone(customerPhone),
+      title: cleanTitle,
+      category: String(category || 'errands'),
+      area: String(area || '').trim(),
+      description: String(description || '').trim().slice(0, 500),
+      price: cleanPrice,
+      status: 'pending',
+      acceptedOfferId: '',
+      providerId: '',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getMyJarakRequests() {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakRequests'),
+      where('customerId', '==', user.uid)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getOpenJarakRequests() {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakRequests'),
+      where('status', '==', 'open')
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getPendingJarakRequests() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakRequests'),
+      where('status', '==', 'pending')
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveJarakRequest(requestId) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, 'jarakRequests', requestId), { status: 'open' });
+    return true;
+  }
+
+  async rejectJarakRequest(requestId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jarakRequests', requestId));
+    return true;
+  }
+
+  async updateJarakRequestPrice(requestId, price) {
+    const user = requireSignedIn();
+    const cleanPrice = Number(price);
+    if (!(cleanPrice > 0)) throw new Error('حدد سعراً صحيحاً.');
+    const ref = doc(firestoreDb, 'jarakRequests', requestId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('الطلب غير موجود.');
+    if (snap.data().customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (snap.data().status !== 'open') throw new Error('لا يمكن تعديل السعر بعد بدء التنفيذ.');
+    await updateDoc(ref, { price: cleanPrice });
+    return true;
+  }
+
+  async cancelJarakRequest(requestId) {
+    const user = requireSignedIn();
+    const ref = doc(firestoreDb, 'jarakRequests', requestId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('الطلب غير موجود.');
+    if (snap.data().customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (!['pending', 'open'].includes(snap.data().status)) throw new Error('لا يمكن إلغاء هذا الطلب الآن.');
+    await updateDoc(ref, { status: 'cancelled' });
+    return true;
+  }
+
+  async submitJarakOffer({ requestId, price }) {
+    const user = requireSignedIn();
+    const cleanPrice = Number(price);
+    if (!(cleanPrice > 0)) throw new Error('حدد سعرك.');
+    const reqSnap = await getDoc(doc(firestoreDb, 'jarakRequests', requestId));
+    if (!reqSnap.exists()) throw new Error('الطلب غير موجود.');
+    if (reqSnap.data().status !== 'open') throw new Error('هذا الطلب لم يعد مفتوحاً للعروض.');
+    const provider = await this.getMyJarakProvider();
+    if (!provider) throw new Error('سجّل كمزوّد أولاً من "اكسب في طريقك".');
+    if (!provider.isApproved) throw new Error('حسابك كمزوّد بانتظار موافقة الأدمن.');
+    const existing = await getDocs(query(
+      collection(firestoreDb, 'jarakOffers'),
+      where('requestId', '==', requestId),
+      where('providerId', '==', user.uid)
+    ));
+    if (!existing.empty) throw new Error('أرسلت عرضاً على هذا الطلب من قبل.');
+    const ref = await addDoc(collection(firestoreDb, 'jarakOffers'), {
+      requestId,
+      providerId: user.uid,
+      providerName: provider.name,
+      providerPhone: provider.phone,
+      price: cleanPrice,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getOffersForRequest(requestId) {
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakOffers'),
+      where('requestId', '==', requestId)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getMyJarakOffers() {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakOffers'),
+      where('providerId', '==', user.uid)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async acceptJarakOffer(offerId) {
+    const user = requireSignedIn();
+    const offerRef = doc(firestoreDb, 'jarakOffers', offerId);
+    const offerSnap = await getDoc(offerRef);
+    if (!offerSnap.exists()) throw new Error('العرض غير موجود.');
+    const offer = offerSnap.data();
+    if (offer.status !== 'pending') throw new Error('هذا العرض لم يعد متاحاً.');
+    const reqRef = doc(firestoreDb, 'jarakRequests', offer.requestId);
+    const reqSnap = await getDoc(reqRef);
+    if (!reqSnap.exists()) throw new Error('الطلب غير موجود.');
+    const req = reqSnap.data();
+    if (req.customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (req.status !== 'open') throw new Error('هذا الطلب لم يعد مفتوحاً.');
+    await updateDoc(offerRef, { status: 'accepted' });
+    await updateDoc(reqRef, { status: 'accepted', acceptedOfferId: offerId, providerId: offer.providerId });
+    const others = await getDocs(query(
+      collection(firestoreDb, 'jarakOffers'),
+      where('requestId', '==', offer.requestId),
+      where('status', '==', 'pending')
+    ));
+    for (const d of others.docs) {
+      if (d.id !== offerId) await updateDoc(doc(firestoreDb, 'jarakOffers', d.id), { status: 'rejected' });
+    }
+    return true;
+  }
+
+  async declineJarakOffer(offerId) {
+    const user = requireSignedIn();
+    const offerRef = doc(firestoreDb, 'jarakOffers', offerId);
+    const offerSnap = await getDoc(offerRef);
+    if (!offerSnap.exists()) throw new Error('العرض غير موجود.');
+    const offer = offerSnap.data();
+    const reqSnap = await getDoc(doc(firestoreDb, 'jarakRequests', offer.requestId));
+    if (!reqSnap.exists() || reqSnap.data().customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (offer.status !== 'pending') throw new Error('هذا العرض لم يعد متاحاً.');
+    await updateDoc(offerRef, { status: 'rejected' });
+    return true;
+  }
+
+  async completeJarakRequest(requestId) {
+    const user = requireSignedIn();
+    const ref = doc(firestoreDb, 'jarakRequests', requestId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('الطلب غير موجود.');
+    const req = snap.data();
+    if (req.customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (req.status !== 'accepted') throw new Error('الطلب ليس في مرحلة التنفيذ.');
+    await updateDoc(ref, { status: 'done' });
+    return true;
+  }
+
+  async addJarakReview({ providerId, requestId, rating, text }) {
+    const user = requireSignedIn();
+    const cleanRating = Number(rating);
+    if (!(cleanRating >= 1 && cleanRating <= 5)) throw new Error('اختار تقييم من نجمة واحدة إلى 5 نجوم.');
+    const reqSnap = await getDoc(doc(firestoreDb, 'jarakRequests', requestId));
+    if (!reqSnap.exists()) throw new Error('الطلب غير موجود.');
+    const req = reqSnap.data();
+    if (req.customerId !== user.uid) throw new Error('هذا الطلب ليس لك.');
+    if (req.status !== 'done') throw new Error('قيّم بعد اكتمال التنفيذ.');
+    if (req.providerId !== providerId) throw new Error('مزود غير مطابق للطلب.');
+    const existing = await getDocs(query(
+      collection(firestoreDb, 'jarakReviews'),
+      where('requestId', '==', requestId),
+      where('customerId', '==', user.uid)
+    ));
+    if (!existing.empty) throw new Error('قيّمت هذه المهمة من قبل.');
+    const ref = await addDoc(collection(firestoreDb, 'jarakReviews'), {
+      providerId,
+      requestId,
+      customerId: user.uid,
+      rating: cleanRating,
+      text: String(text || '').trim().slice(0, 500),
+      approved: false,
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getApprovedJarakReviews(providerId) {
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakReviews'),
+      where('providerId', '==', providerId),
+      where('approved', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  // تقييمي أنا على طلب معين (إن وجد).
+  async getMyJarakReview(requestId) {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakReviews'),
+      where('requestId', '==', requestId),
+      where('customerId', '==', user.uid)
+    ));
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() };
+  }
+
+  // كل التقييمات المعتمدة (لتجميع متوسط كل مزود بقراءة واحدة).
+  async getAllApprovedJarakReviews() {
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakReviews'),
+      where('approved', '==', true)
+    ));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
+  async getPendingJarakReviews() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakReviews'),
+      where('approved', '==', false)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveJarakReview(reviewId) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, 'jarakReviews', reviewId), { approved: true });
+    return true;
+  }
+
+  async deleteJarakReview(reviewId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jarakReviews', reviewId));
+    return true;
+  }
+
   async getGoldPrices() {
     try {
       const snap = await getDoc(doc(firestoreDb, 'siteMeta', 'gold'));

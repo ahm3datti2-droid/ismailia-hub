@@ -142,6 +142,23 @@ export const AREAS = [
   "القنطرة غرب"
 ];
 
+// "جارك" — اقتصاد الجيران داخل الدليل (صفحة مستقلة jarak.html).
+// ليس قسم خدمات: لا يُضاف إلى GROUPS حتى لا يظهر كتصنيف خدمة
+// في الفلاتر ونموذج الأدمن وإحصائيات الأقسام.
+export const JARAK_CATEGORIES = [
+  { id: 'delivery', name: 'توصيل' },
+  { id: 'rides', name: 'مشاوير' },
+  { id: 'plumbing', name: 'سباكة' },
+  { id: 'electrical', name: 'كهرباء' },
+  { id: 'cleaning', name: 'تنظيف' },
+  { id: 'errands', name: 'مشاوير ومهام' }
+];
+
+export function jarakCategoryName(id) {
+  const c = JARAK_CATEGORIES.find((x) => x.id === id);
+  return c ? c.name : id;
+}
+
 export const TRANSPORT_ROUTES = [
   { from: "الموقف الجديد", to: "الشيخ زايد", fare: "5.5 جنيه", line: "سرفيس خط 1 / 3", time: "10 دقائق" },
   { from: "الموقف الجديد", to: "السلطان حسين", fare: "6.5 جنيه", line: "سرفيس المحطة", time: "15 دقيقة" },
