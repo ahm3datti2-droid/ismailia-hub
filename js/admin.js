@@ -78,6 +78,10 @@ const els = {
   serviceForm: document.getElementById('serviceForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitServiceBtn'),
+  bulkImportInput: document.getElementById('bulkImportInput'),
+  bulkImportBtn: document.getElementById('bulkImportBtn'),
+  bulkImportFileName: document.getElementById('bulkImportFileName'),
+  bulkImportStatus: document.getElementById('bulkImportStatus'),
   adminPhotoInput: document.getElementById('adminPhotoInput'),
   adminPhotoPreview: document.getElementById('adminPhotoPreview'),
   adminPhotoActions: document.getElementById('adminPhotoActions'),
@@ -790,6 +794,70 @@ async function handlePhotoPicked(kind, file) {
   }
 }
 
+// استيراد جماعي من ملف JSON: كل عنصر فيه name وphone وaddress وarea
+// وtarget_group وtarget_subcategory وimageUrl (مسار /images/... بعد رفع الصور).
+// - تُتخطى العناصر بلا اسم/تليفون أو بتصنيف غير موجود.
+// - تُتخطى المكررة بنفس رقم الهاتف (مقارنة بالأرقام فقط) سواء كانت
+//   موجودة في الدليل أصلاً أو تكررت داخل الملف نفسه.
+// - كل خدمة تُحفظ موثقة (verified) بتقييم 5 — نفس افتراضيات النموذج.
+async function handleBulkImport(file) {
+  if (!file) { alert('اختر ملف JSON أولاً.'); return; }
+  const setStatus = (t) => { if (els.bulkImportStatus) els.bulkImportStatus.textContent = t; };
+  let items;
+  try {
+    items = JSON.parse(await file.text());
+  } catch (_) {
+    alert('ملف JSON غير صالح.');
+    return;
+  }
+  if (!Array.isArray(items) || !items.length) {
+    alert('الملف يجب أن يحتوي على قائمة خدمات غير فارغة.');
+    return;
+  }
+  const groupIds = new Map(GROUPS.map((g) => [g.id, new Set(g.subs.map((s) => s.id))]));
+  const existingPhones = new Set(state.services.map((s) => String(s.phone || '').replace(/\D/g, '')));
+  const seenPhones = new Set();
+  let added = 0, skippedDup = 0, skippedBad = 0;
+  els.bulkImportBtn.disabled = true;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i] || {};
+    const name = String(it.name || '').trim();
+    const phone = String(it.phone || '').trim();
+    const digits = phone.replace(/\D/g, '');
+    const validCat = groupIds.has(it.target_group) && groupIds.get(it.target_group).has(it.target_subcategory);
+    if (!name || !phone || !validCat) { skippedBad++; continue; }
+    if (existingPhones.has(digits) || seenPhones.has(digits)) { skippedDup++; continue; }
+    seenPhones.add(digits);
+    setStatus(`جارٍ الاستيراد… ${i + 1}/${items.length} (أُضيف ${added} حتى الآن)`);
+    try {
+      await db.addService({
+        name,
+        category: it.target_group,
+        subcategory: it.target_subcategory,
+        area: String(it.area || 'الإسماعيلية'),
+        address: String(it.address || ''),
+        phone,
+        whatsapp: '',
+        imageUrl: String(it.imageUrl || ''),
+        tags: '',
+        isEmergency: false,
+        openHour: 9,
+        closeHour: 23,
+        verified: true,
+        rating: 5
+      });
+      existingPhones.add(digits);
+      added++;
+    } catch (_) {
+      skippedBad++;
+    }
+  }
+  els.bulkImportBtn.disabled = false;
+  setStatus(`اكتمل الاستيراد: أُضيف ${added} • مكرر ${skippedDup} • غير صالح ${skippedBad}`);
+  await loadServices();
+  alert(`اكتمل الاستيراد: أُضيف ${added} خدمة • مكرر ${skippedDup} • غير صالح ${skippedBad}.`);
+}
+
 async function deleteService(id, btn) {
   armDeleteConfirm(btn, async () => {
     try {
@@ -868,6 +936,14 @@ function bindEvents() {
     handlePhotoPicked('banner', els.bannerPhotoInput.files && els.bannerPhotoInput.files[0]);
   });
   els.bannerPhotoRemove?.addEventListener('click', () => clearPhotoPreview('banner'));
+
+  // استيراد جماعي من ملف JSON.
+  let bulkImportFile = null;
+  els.bulkImportInput?.addEventListener('change', () => {
+    bulkImportFile = els.bulkImportInput.files && els.bulkImportInput.files[0];
+    if (els.bulkImportFileName) els.bulkImportFileName.textContent = bulkImportFile ? bulkImportFile.name : '';
+  });
+  els.bulkImportBtn?.addEventListener('click', () => handleBulkImport(bulkImportFile));
 
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();

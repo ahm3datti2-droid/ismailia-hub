@@ -214,6 +214,19 @@
         </form>
       </div>
 
+      <!-- استيراد جماعي: ملف JSON فيه قائمة خدمات جاهزة (name, phone, address, area, target_group, target_subcategory, imageUrl) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 mt-4">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">استيراد جماعي (ملف JSON)</h3>
+        <p class="text-xs text-slate-400 font-semibold mb-4">لإضافة دفعات جاهزة دفعة واحدة (مثل خدمات infoeg) — تُتخطى المكررة بنفس رقم الهاتف تلقائياً، وتُحفظ كل خدمة موثقة.</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <label for="bulkImportInput" class="px-4 bg-slate-800 hover:bg-slate-700 text-white font-extrabold py-3 rounded-xl cursor-pointer transition text-xs">اختر ملف JSON</label>
+          <input type="file" id="bulkImportInput" accept=".json,application/json" class="hidden">
+          <button type="button" id="bulkImportBtn" class="px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition text-xs">بدء الاستيراد</button>
+          <span id="bulkImportFileName" class="text-xs text-slate-400 font-semibold"></span>
+        </div>
+        <p id="bulkImportStatus" class="text-xs text-slate-300 font-semibold mt-3"></p>
+      </div>
+
       <!-- شاشة العرض: إعلانات متحركة في أول الموقع -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 mb-1">شاشة العرض (إعلانات الرئيسية)</h3>
