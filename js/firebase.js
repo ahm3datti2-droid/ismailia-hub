@@ -12,7 +12,6 @@ import {
   signOut
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { FIREBASE_CONFIG, ADMIN_EMAIL } from './config.js';
 
 // إعادة تصدير بريد الأدمن حتى تستخدمه باقي الملفات (مثل js/auth.js).
@@ -21,7 +20,9 @@ export { ADMIN_EMAIL };
 export const app = initializeApp(FIREBASE_CONFIG);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+// ملاحظة: لا يوجد Storage — الصور تُصغَّر داخل المتصفح وتُحفظ
+// مع المستند (downscaleImageToDataUrl في js/ui.js)، لأن تفعيل
+// Firebase Storage يحتاج خطة Blaze المدفوعة.
 
 // إعادة تصدير دوال المصادقة حتى تستخدمها باقي الملفات من مكان واحد.
 export { onAuthStateChanged, signInWithEmailAndPassword, signOut };

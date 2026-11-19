@@ -173,6 +173,19 @@
             <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
             <input type="url" name="mapUrl" placeholder="رابط الموقع على الخريطة" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2" dir="ltr">
             <input type="text" name="imageUrl" placeholder="رابط صورة الخدمة (اختياري) — يقبل مساراً محلياً مثل /images/..." class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2" dir="ltr">
+            <div class="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <p class="font-bold text-slate-200 mb-2 text-xs">أو اختر صورة من جهازك</p>
+              <label for="adminPhotoInput" class="flex items-center justify-center gap-2 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl cursor-pointer transition text-xs">
+                <i data-lucide="image-plus" class="w-4 h-4"></i> اختر صورة من جهازك
+              </label>
+              <input type="file" id="adminPhotoInput" accept="image/*" class="hidden">
+              <img id="adminPhotoPreview" class="hidden w-full max-h-44 object-contain bg-white rounded-xl mt-2" alt="معاينة صورة الخدمة">
+              <div class="hidden mt-2 flex gap-3" id="adminPhotoActions">
+                <button type="button" id="adminPhotoRemove" class="text-red-400 font-bold text-xs">إزالة الصورة</button>
+                <a id="adminPhotoDownload" href="#" download="service-photo.jpg" class="text-sky-400 font-bold text-xs">تحميل الصورة (لرفعها على GitHub لاحقاً)</a>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-2">تُصغَّر الصورة تلقائياً وتُحفظ داخل الخدمة — بدون رفع خارجي.</p>
+            </div>
             <div class="grid grid-cols-3 gap-2 sm:col-span-2">
               <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">
                 ساعة الفتح
@@ -209,6 +222,19 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input type="text" name="title" required placeholder="عنوان الإعلان * (مثال: خصم 20% في مطعم الدمشقي)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
             <input type="text" name="imageUrl" required placeholder="صورة الإعلان * (/images/اسم-الصورة.jpg أو رابط مباشر)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <div class="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <p class="font-bold text-slate-200 mb-2 text-xs">أو اختر صورة من جهازك (مقاس عريض أفضل — 1200×500)</p>
+              <label for="bannerPhotoInput" class="flex items-center justify-center gap-2 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl cursor-pointer transition text-xs">
+                <i data-lucide="image-plus" class="w-4 h-4"></i> اختر صورة من جهازك
+              </label>
+              <input type="file" id="bannerPhotoInput" accept="image/*" class="hidden">
+              <img id="bannerPhotoPreview" class="hidden w-full max-h-44 object-contain bg-white rounded-xl mt-2" alt="معاينة صورة الإعلان">
+              <div class="hidden mt-2 flex gap-3" id="bannerPhotoActions">
+                <button type="button" id="bannerPhotoRemove" class="text-red-400 font-bold text-xs">إزالة الصورة</button>
+                <a id="bannerPhotoDownload" href="#" download="banner-photo.jpg" class="text-sky-400 font-bold text-xs">تحميل الصورة (لرفعها على GitHub لاحقاً)</a>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-2">تُصغَّر الصورة تلقائياً وتُحفظ داخل الإعلان — بدون رفع خارجي.</p>
+            </div>
             <input type="text" name="subtitle" placeholder="سطر ثانٍ (اختياري — مثال: ساري حتى نهاية الشهر)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2">
             <select name="linkType" id="bannerLinkType" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
               <option value="service">الرابط: خدمة من الدليل</option>

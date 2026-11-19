@@ -12,7 +12,7 @@ import {
   signOut,
   isAdmin
 } from './firebase.js';
-import { getOpenStatus, armDeleteConfirm } from './ui.js';
+import { getOpenStatus, armDeleteConfirm, downscaleImageToDataUrl } from './ui.js';
 
 // تسجيل Service Worker حتى يمكن تثبيت اللوحة كتطبيق (PWA) من /admin.html.
 if ('serviceWorker' in navigator) {
@@ -30,6 +30,10 @@ const state = {
   approvingPendingId: null,
   editingId: null,
   editingBannerId: null,
+  // صورة مختارة من الجهاز (Data URL بعد التصغير) لنموذج الخدمة/الإعلان.
+  // تُحفظ داخل المستند عند الحفظ؛ null تعني الاعتماد على حقل الرابط النصي.
+  servicePhotoDataUrl: null,
+  bannerPhotoDataUrl: null,
   searchQuery: '',
   categoryFilter: 'all'
 };
@@ -73,7 +77,17 @@ const els = {
   todayGroupsList: document.getElementById('todayGroupsList'),
   serviceForm: document.getElementById('serviceForm'),
   formTitle: document.getElementById('formTitle'),
-  submitBtn: document.getElementById('submitServiceBtn')
+  submitBtn: document.getElementById('submitServiceBtn'),
+  adminPhotoInput: document.getElementById('adminPhotoInput'),
+  adminPhotoPreview: document.getElementById('adminPhotoPreview'),
+  adminPhotoActions: document.getElementById('adminPhotoActions'),
+  adminPhotoRemove: document.getElementById('adminPhotoRemove'),
+  adminPhotoDownload: document.getElementById('adminPhotoDownload'),
+  bannerPhotoInput: document.getElementById('bannerPhotoInput'),
+  bannerPhotoPreview: document.getElementById('bannerPhotoPreview'),
+  bannerPhotoActions: document.getElementById('bannerPhotoActions'),
+  bannerPhotoRemove: document.getElementById('bannerPhotoRemove'),
+  bannerPhotoDownload: document.getElementById('bannerPhotoDownload')
 };
 
 function esc(s) {
@@ -256,7 +270,7 @@ function renderPendingServicesQueue() {
         </div>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">${esc(p.address || 'بدون عنوان')}${p.phone ? ` • <span dir="ltr">${esc(p.phone)}</span>` : ''}</p>
-      ${p.imageUrl ? `<a href="${esc(p.imageUrl)}" target="_blank" rel="noopener"><img src="${esc(p.imageUrl)}" alt="صورة مرفقة" referrerpolicy="no-referrer" class="w-full max-h-40 object-contain bg-white rounded-xl mt-2" onerror="this.remove()"></a>` : `<p class="text-[11px] text-amber-400 mt-1.5">بدون صورة مرفقة — أضف صورة موثقة من صفحة المحل قبل النشر.</p>`}
+      ${p.imageUrl ? `<a href="${esc(p.imageUrl)}" target="_blank" rel="noopener"><img src="${esc(p.imageUrl)}" alt="صورة مرفقة" referrerpolicy="no-referrer" class="w-full max-h-40 object-contain bg-white rounded-xl mt-2" onerror="this.remove()"></a>${String(p.imageUrl).startsWith('data:') ? `<a href="${esc(p.imageUrl)}" download="${esc(p.name)}.jpg" class="inline-block mt-2 text-sky-400 font-bold text-[11px]">⬇ تحميل الصورة (لرفعها على GitHub عند النشر)</a>` : ''}` : `<p class="text-[11px] text-amber-400 mt-1.5">بدون صورة مرفقة — أضف صورة موثقة من صفحة المحل قبل النشر.</p>`}
     </article>`).join('');
 
   els.pendingServicesList.querySelectorAll('[data-approve-service]').forEach((btn) => {
@@ -446,7 +460,15 @@ function startEditBanner(id) {
   state.editingBannerId = id;
   const f = els.bannerForm;
   f.title.value = b.title || '';
-  f.imageUrl.value = b.imageUrl || '';
+  if (b.imageUrl && String(b.imageUrl).startsWith('data:')) {
+    state.bannerPhotoDataUrl = b.imageUrl;
+    f.imageUrl.value = '';
+    showPhotoPreview('banner', b.imageUrl);
+  } else {
+    state.bannerPhotoDataUrl = null;
+    clearPhotoPreview('banner');
+    f.imageUrl.value = b.imageUrl || '';
+  }
   f.subtitle.value = b.subtitle || '';
   f.linkType.value = b.linkType || 'service';
   f.serviceId.value = b.serviceId || '';
@@ -462,6 +484,8 @@ function startEditBanner(id) {
 
 function cancelBannerEdit() {
   state.editingBannerId = null;
+  state.bannerPhotoDataUrl = null;
+  clearPhotoPreview('banner');
   els.bannerForm?.reset();
   if (els.bannerSubmitBtn) els.bannerSubmitBtn.textContent = 'إضافة الإعلان';
   els.bannerCancelEdit?.classList.add('hidden');
@@ -660,7 +684,8 @@ function readForm() {
     phone: String(fd.get('phone') || '').trim(),
     whatsapp: String(fd.get('whatsapp') || '').trim(),
     mapUrl: String(fd.get('mapUrl') || '').trim(),
-    imageUrl: String(fd.get('imageUrl') || '').trim(),
+    // الصورة المختارة من الجهاز (Data URL) تتقدم على حقل الرابط النصي.
+    imageUrl: state.servicePhotoDataUrl || String(fd.get('imageUrl') || '').trim(),
     openHour: Number(fd.get('openHour') ?? 9),
     closeHour: Number(fd.get('closeHour') ?? 23),
     isEmergency: fd.get('isEmergency') === 'on',
@@ -689,7 +714,17 @@ function fillForm(srv) {
   f.phone.value = srv.phone || '';
   f.whatsapp.value = srv.whatsapp || '';
   f.mapUrl.value = srv.mapUrl || '';
-  f.imageUrl.value = srv.imageUrl || '';
+  // صورة محفوظة كبيانات داخل المستند (من جهاز) تُعرض في المعاينة
+  // وتُحفَظ كما هي عند الحفظ؛ أما الرابط/المسار فيبقى في الحقل النصي.
+  if (srv.imageUrl && String(srv.imageUrl).startsWith('data:')) {
+    state.servicePhotoDataUrl = srv.imageUrl;
+    f.imageUrl.value = '';
+    showPhotoPreview('service', srv.imageUrl);
+  } else {
+    state.servicePhotoDataUrl = null;
+    clearPhotoPreview('service');
+    f.imageUrl.value = srv.imageUrl || '';
+  }
   f.openHour.value = srv.openHour ?? 9;
   f.closeHour.value = srv.closeHour ?? 23;
   f.isEmergency.checked = Boolean(srv.isEmergency);
@@ -712,9 +747,47 @@ function startEdit(id) {
 function resetForm() {
   state.editingId = null;
   state.approvingPendingId = null;
+  state.servicePhotoDataUrl = null;
+  clearPhotoPreview('service');
   els.serviceForm.reset();
   els.formTitle.textContent = 'إضافة خدمة جديدة';
   els.submitBtn.textContent = 'حفظ الخدمة';
+}
+
+// صورة من الجهاز لنموذجي الخدمة والإعلان: تُصغَّر داخل المتصفح
+// وتُحفظ كـ Data URL في state، ويظهر زر تحميلها لرفعها على GitHub لاحقاً.
+function showPhotoPreview(kind, dataUrl) {
+  const preview = kind === 'banner' ? els.bannerPhotoPreview : els.adminPhotoPreview;
+  const actions = kind === 'banner' ? els.bannerPhotoActions : els.adminPhotoActions;
+  const download = kind === 'banner' ? els.bannerPhotoDownload : els.adminPhotoDownload;
+  if (!preview) return;
+  preview.src = dataUrl;
+  preview.classList.remove('hidden');
+  actions?.classList.remove('hidden');
+  if (download) download.href = dataUrl;
+}
+
+function clearPhotoPreview(kind) {
+  const input = kind === 'banner' ? els.bannerPhotoInput : els.adminPhotoInput;
+  const preview = kind === 'banner' ? els.bannerPhotoPreview : els.adminPhotoPreview;
+  const actions = kind === 'banner' ? els.bannerPhotoActions : els.adminPhotoActions;
+  if (input) input.value = '';
+  if (preview) { preview.src = ''; preview.classList.add('hidden'); }
+  actions?.classList.add('hidden');
+  if (kind === 'banner') state.bannerPhotoDataUrl = null;
+  else state.servicePhotoDataUrl = null;
+}
+
+async function handlePhotoPicked(kind, file) {
+  if (!file) return;
+  try {
+    const dataUrl = await downscaleImageToDataUrl(file, kind === 'banner' ? 1200 : 900, 0.72);
+    if (kind === 'banner') state.bannerPhotoDataUrl = dataUrl;
+    else state.servicePhotoDataUrl = dataUrl;
+    showPhotoPreview(kind, dataUrl);
+  } catch (err) {
+    alert(err.message || 'تعذرت معالجة الصورة.');
+  }
 }
 
 async function deleteService(id, btn) {
@@ -784,6 +857,18 @@ function bindEvents() {
   });
   document.getElementById('btnCancelEdit').addEventListener('click', resetForm);
 
+  // اختيار صورة من الجهاز لنموذج الخدمة.
+  els.adminPhotoInput?.addEventListener('change', () => {
+    handlePhotoPicked('service', els.adminPhotoInput.files && els.adminPhotoInput.files[0]);
+  });
+  els.adminPhotoRemove?.addEventListener('click', () => clearPhotoPreview('service'));
+
+  // اختيار صورة من الجهاز لنموذج الإعلان.
+  els.bannerPhotoInput?.addEventListener('change', () => {
+    handlePhotoPicked('banner', els.bannerPhotoInput.files && els.bannerPhotoInput.files[0]);
+  });
+  els.bannerPhotoRemove?.addEventListener('click', () => clearPhotoPreview('banner'));
+
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = readForm();
@@ -841,7 +926,8 @@ function bindEvents() {
     const data = {
       title: fd.get('title'),
       subtitle: fd.get('subtitle'),
-      imageUrl: fd.get('imageUrl'),
+      // الصورة المختارة من الجهاز (Data URL) تتقدم على حقل الرابط النصي.
+      imageUrl: state.bannerPhotoDataUrl || fd.get('imageUrl'),
       linkType: fd.get('linkType'),
       serviceId: fd.get('serviceId'),
       url: fd.get('url'),

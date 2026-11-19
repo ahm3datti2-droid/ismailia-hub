@@ -158,6 +158,52 @@ export function toWhatsAppNumber(phone) {
   return digits;
 }
 
+// تصغير صورة من الجهاز إلى Data URL (JPEG) داخل المتصفح نفسه.
+// بديل مجاني لرفع الصور: Firebase Storage يحتاج خطة Blaze المدفوعة،
+// فبدلاً من الرفع لخادم خارجي تُصغَّر الصورة وتُحفظ كسلسلة نصية
+// داخل مستند الخدمة/الطلب في Firestore (عادة 60–150KB).
+// - maxDim: أطول ضلع بالبكسل (900 للخدمات، 1200 لصور الإعلانات العريضة).
+// - quality: جودة JPEG (0.72).
+// - الخلفية البيضاء تملأ فراغات PNG الشفافة حتى لا تظهر سوداء.
+export function downscaleImageToDataUrl(file, maxDim = 900, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      reject(new Error('اختر ملف صورة (JPG أو PNG أو WebP).'));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error('حجم الصورة كبير — الحد الأقصى 10 ميجا.'));
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * scale));
+        const h = Math.max(1, Math.round(img.naturalHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch (_) {
+        URL.revokeObjectURL(url);
+        reject(new Error('تعذرت معالجة الصورة. جرّب صورة أخرى.'));
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('تعذرت قراءة الصورة. جرّب صورة أخرى.'));
+    };
+    img.src = url;
+  });
+}
+
 export function renderServiceCards(container, services, favorites, isAdmin, handlers) {
   if (!services.length) {
     container.innerHTML = `

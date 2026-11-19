@@ -1,7 +1,7 @@
 import { AREAS, GROUPS, TRANSPORT_ROUTES, EMERGENCY_NUMBERS } from './config.js';
 import { SERVICE_LOCATIONS } from './service-locations.js';
 import { db } from './database.js';
-import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider, toWhatsAppNumber, renderTopRated, renderTicker, createdAtMs } from './ui.js';
+import { renderCategories, renderSubcategories, renderGroupTiles, renderServiceCards, renderSkeleton, renderErrorState, getOpenStatus, categoryInfo, subcategoryName, armDeleteConfirm, renderBannerSlider, stopBannerSlider, toWhatsAppNumber, renderTopRated, renderTicker, createdAtMs, downscaleImageToDataUrl } from './ui.js';
 import { auth, onAuthStateChanged, isAdmin, signOut } from './firebase.js';
 import { signUp, signIn, getProfile, translateAuthError } from './auth.js';
 
@@ -1032,7 +1032,7 @@ function openAddServiceModal() {
   document.getElementById('addGroupSelect').addEventListener('change', fillAddSubs);
   fillAddSubs();
 
-  // اختيار صورة من الجهاز: معاينة فورية + تحقق من النوع والحجم (5MB).
+  // اختيار صورة من الجهاز: معاينة فورية + تحقق من النوع والحجم (10MB).
   let addPhotoFile = null;
   const photoInput = document.getElementById('addPhotoInput');
   const photoPreview = document.getElementById('addPhotoPreview');
@@ -1041,7 +1041,7 @@ function openAddServiceModal() {
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { alert('اختر ملف صورة (JPG أو PNG أو WebP).'); photoInput.value = ''; return; }
-    if (file.size > 5 * 1024 * 1024) { alert('حجم الصورة كبير — الحد الأقصى 5 ميجا.'); photoInput.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { alert('حجم الصورة كبير — الحد الأقصى 10 ميجا.'); photoInput.value = ''; return; }
     addPhotoFile = file;
     photoPreview.src = URL.createObjectURL(file);
     photoPreview.classList.remove('hidden');
@@ -1058,14 +1058,16 @@ function openAddServiceModal() {
   document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    // رفع الصورة المختارة أولاً (إن وجدت) — رابطها يصبح صورة الطلب.
+    // تجهيز الصورة المختارة أولاً (إن وجدت): تُصغَّر داخل المتصفح
+    // وتُحفظ مع الطلب — بدون رفع خارجي (Firebase Storage غير متاح
+    // على الخطة المجانية). رابطها يصبح صورة الطلب.
     let uploadedImageUrl = '';
     if (addPhotoFile) {
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'جارٍ رفع الصورة…';
+      submitBtn.textContent = 'جارٍ تجهيز الصورة…';
       try {
-        uploadedImageUrl = await db.uploadPendingImage(addPhotoFile);
+        uploadedImageUrl = await downscaleImageToDataUrl(addPhotoFile, 900, 0.72);
       } catch (err) {
         submitBtn.disabled = false;
         submitBtn.textContent = state.isAdmin ? 'حفظ ونشر الخدمة فوراً' : 'إرسال الطلب للمراجعة';

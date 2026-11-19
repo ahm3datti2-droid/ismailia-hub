@@ -26,13 +26,8 @@ import {
   serverTimestamp,
   increment
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { auth, db as firestoreDb, isAdmin, storage } from './firebase.js';
+import { auth, db as firestoreDb, isAdmin } from './firebase.js';
 import { ADMIN_EMAIL } from './config.js';
-import {
-  getDownloadURL,
-  ref as storageRef,
-  uploadBytes
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 export const SERVICES_COLLECTION = 'services';
 export const REVIEWS_COLLECTION = 'reviews';
@@ -334,29 +329,12 @@ class DatabaseService {
   // - أي مستخدم مسجل يرسل طلبه؛ الطلب لا يظهر للعامة أبداً.
   // - الأدمن يراجع الطلبات من لوحة التحكم: يوافق (ينشر الخدمة في
   //   مجموعة services مع الصورة المرفقة) أو يرفض (يحذف الطلب).
-  // - الصورة يرفعها صاحب المحل من جهازه إلى Firebase Storage
-  //   (uploadPendingImage) أو يرفق رابطاً مباشراً — والأدمن يتحقق
-  //   منها قبل النشر؛ قاعدة "لا نشر بدون صورة" تظل سارية عند الموافقة.
-  // رفع صورة مرفقة مع طلب إضافة خدمة إلى Firebase Storage.
-  // - المسار: pending-images/{uid}/{timestamp}-{اسم آمن} — كل مستخدم
-  //   يرفع في مجلده فقط (قواعد التخزين تفرض ذلك من جهة الخادم).
-  // - الحد: صورة فقط وحتى 5MB — تُفحص هنا وفي قواعد التخزين.
-  // - يرجع رابط تحميل عام يُحفظ في مستند الطلب (imageUrl)؛ عند موافقة
-  //   الأدمن ينتقل الرابط كما هو إلى الخدمة المنشورة.
-  async uploadPendingImage(file) {
-    const user = requireSignedIn();
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-      throw new Error('اختر ملف صورة (JPG أو PNG أو WebP).');
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('حجم الصورة كبير — الحد الأقصى 5 ميجا.');
-    }
-    const safeName = String(file.name || 'photo').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60) || 'photo';
-    const path = `pending-images/${user.uid}/${Date.now()}-${safeName}`;
-    const snap = await uploadBytes(storageRef(storage, path), file);
-    return getDownloadURL(snap.ref);
-  }
-
+  // - الصورة يختارها صاحب المحل من جهازه فتُصغَّر داخل المتصفح
+  //   (downscaleImageToDataUrl في js/ui.js) وتُحفظ مع الطلب —
+  //   بدون رفع خارجي، لأن Firebase Storage يحتاج خطة Blaze المدفوعة.
+  //   والأدمن يتحقق منها قبل النشر؛ قاعدة "لا نشر بدون صورة" تظل
+  //   سارية عند الموافقة. من قائمة الطلبات يمكن للأدمن تحميل الصورة
+  //   ورفعها على GitHub كمسار /images/... بدلاً من نسخة البيانات.
   async submitService(payload) {
     const user = requireSignedIn();
     const name = String(payload?.name || '').trim();
