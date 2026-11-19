@@ -26,6 +26,8 @@ const state = {
   pendingServices: [],
   offers: [],
   banners: [],
+  users: [],
+  usersLoadFailed: false,
   dailyStats: { visits: 0, groups: {} },
   approvingPendingId: null,
   editingId: null,
@@ -62,6 +64,8 @@ const els = {
   pendingReviewsCount: document.getElementById('pendingReviewsCount'),
   pendingServicesList: document.getElementById('pendingServicesList'),
   pendingServicesCount: document.getElementById('pendingServicesCount'),
+  usersList: document.getElementById('usersList'),
+  usersCount: document.getElementById('usersCount'),
   offerForm: document.getElementById('offerForm'),
   offerServiceSelect: document.getElementById('offerServiceSelect'),
   offersList: document.getElementById('offersList'),
@@ -177,9 +181,11 @@ async function loadServices() {
   await loadPendingServices();
   await loadOffers();
   await loadBanners();
+  await loadUsers();
   await loadDailyStats();
   renderStats();
   renderList();
+  renderUsersList();
   renderReviewsQueue();
   renderPendingServicesQueue();
   renderOffersList();
@@ -227,6 +233,60 @@ function renderDailyStats() {
         <div class="h-full bg-amber-400 rounded-full" style="width:${Math.max(4, Math.round((r.count / max) * 100))}%"></div>
       </div>
       <span class="text-xs font-black text-white w-8 text-left shrink-0">${r.count}</span>
+    </div>`).join('');
+  refreshIcons();
+}
+
+// المستخدمون المسجلون — إذا فشل التحميل (غالباً قواعد Firestore
+// لا تسمح للأدمن بقراءة مجموعة users بعد) تُعرض رسالة توضح السبب
+// بدلاً من قائمة فارغة مضللة.
+async function loadUsers() {
+  try {
+    state.users = await db.getAllUsers();
+    state.usersLoadFailed = false;
+  } catch (_) {
+    state.users = [];
+    state.usersLoadFailed = true;
+  }
+}
+
+function formatUserDate(u) {
+  try {
+    const ms = u.createdAt?.toMillis ? u.createdAt.toMillis() : 0;
+    if (!ms) return '—';
+    return new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch (_) {
+    return '—';
+  }
+}
+
+function renderUsersList() {
+  if (!els.usersList) return;
+  els.usersCount.textContent = String(state.users.length);
+  if (state.usersLoadFailed) {
+    els.usersList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-amber-400 text-xs font-bold">تعذر تحميل المستخدمين — قواعد Firestore لا تسمح للأدمن بقراءة مجموعة users بعد.</p>
+        <p class="text-slate-400 text-[11px] font-semibold mt-1">حدّث القواعد من Firebase Console (Firestore ← Rules) ثم أعد تحميل اللوحة.</p>
+      </div>`;
+    return;
+  }
+  if (!state.users.length) {
+    els.usersList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">لا يوجد مستخدمون مسجلون بعد — تظهر هنا حسابات منشأة من صفحة "حسابي" فور إنشائها.</p>
+      </div>`;
+    return;
+  }
+  els.usersList.innerHTML = state.users.map((u) => `
+    <div class="flex flex-wrap items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-2xl px-3 py-2.5">
+      <span class="w-9 h-9 shrink-0 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-black text-sm">${esc((u.name || 'م')[0] || 'م')}</span>
+      <span class="min-w-0 flex-1">
+        <span class="block text-xs font-extrabold text-white truncate">${esc(u.name || 'مستخدم')}</span>
+        <span class="block text-[11px] font-bold text-slate-400" dir="ltr">${esc(u.phone || '')}${u.email ? ' • ' + esc(u.email) : ''}</span>
+      </span>
+      <span class="text-[11px] font-bold text-slate-400 shrink-0">${formatUserDate(u)}</span>
+      ${u.phone ? `<a href="tel:${esc(u.phone.replace(/[^0-9+]/g, ''))}" class="shrink-0 text-[11px] font-extrabold text-sky-400 bg-sky-500/10 px-2.5 py-1.5 rounded-full">اتصال</a>` : ''}
     </div>`).join('');
   refreshIcons();
 }
@@ -588,6 +648,7 @@ function renderStats() {
     { label: 'خدمات موثقة', value: verified, icon: 'badge-check', color: 'text-sky-400' },
     { label: 'متوسط التقييم', value: avgRating, icon: 'star', color: 'text-emerald-400' },
     { label: 'تقييمات بانتظار المراجعة', value: state.pendingReviews.length, icon: 'messages-square', color: 'text-violet-400' },
+    { label: 'مستخدمون مسجلون', value: state.users.length, icon: 'users', color: 'text-emerald-400' },
     { label: 'طلبات إضافة بانتظار المراجعة', value: state.pendingServices.length, icon: 'inbox', color: 'text-sky-400' },
     { label: 'عروض سارية', value: activeOffers, icon: 'badge-percent', color: 'text-amber-400' }
   ].map((s) => `

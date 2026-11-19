@@ -379,6 +379,21 @@ class DatabaseService {
     return list;
   }
 
+  // المستخدمون المسجلون (للأدمن فقط): كل مستندات مجموعة users.
+  // ملاحظة: قواعد Firestore يجب أن تسمح للأدمن بقراءة المجموعة
+  // كلها، وإلا رفض هذا الاستعلام (permission-denied).
+  async getAllUsers() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, 'users'));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
   // الموافقة على طلب: نشر الخدمة ثم حذف الطلب.
   async approvePendingService(pendingId, serviceData) {
     requireAdminUser();
