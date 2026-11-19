@@ -2,15 +2,15 @@
    الخط يُحمَّل من <link> في الـ HTML (أسرع من @import داخل CSS). */
 
 :root {
-  --bg-dark: #090d16;
-  --bg-card: #111827;
-  --bg-card-hover: #16213a;
+  --bg-dark: #0A1330;
+  --bg-card: #13224B;
+  --bg-card-hover: #1A2C5E;
   --accent-gold: #FFC400; /* أصفر الإسماعيلية الرسمي */
   --accent-gold-soft: rgba(255, 196, 0, 0.12);
   --accent-blue: #2563EB; /* أزرق الإسماعيلية الرسمي */
   --accent-blue-light: #60A5FA;
   --accent-blue-deep: #0A2463;
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(147, 197, 253, 0.16);
   --radius-card: 1.25rem;
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
   --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 196, 0, 0.25);
@@ -22,7 +22,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.16), transparent 60%), var(--bg-dark);
+  background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.32), transparent 60%), radial-gradient(900px 300px at 88% 0%, rgba(255, 196, 0, 0.10), transparent 55%), var(--bg-dark);
   color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
@@ -49,7 +49,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* شريط التنقل السفلي: خلفية شبه معتمة بلا backdrop-filter. */
 .glass-nav {
-  background: rgba(9, 13, 22, 0.97);
+  background: rgba(10, 19, 48, 0.97);
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -69,7 +69,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 }
 
 .glass-header {
-  background: rgba(9, 13, 22, 0.92);
+  background: rgba(10, 19, 48, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
@@ -96,7 +96,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .services-grid { align-items: stretch; }
 
 .service-card {
-  background: linear-gradient(180deg, #131c2e 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
@@ -180,7 +180,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* بلاطات الأقسام في الصفحة الرئيسية: أيقونة كبيرة + اسم + عدد الخدمات */
 .group-tile {
-  background: linear-gradient(180deg, #131c2e 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 1.1rem;
   padding: 1rem 0.5rem 0.85rem;
@@ -325,13 +325,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* ---------- الهيرو ---------- */
 .hero-panel {
-  background: linear-gradient(165deg, #10275C 0%, #0b1120 55%, #0a0f1c 100%);
+  background: linear-gradient(150deg, #1E40AF 0%, #0A2463 48%, #081A4D 100%);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 .hero-glow {
   background:
-    radial-gradient(55% 130% at 88% -10%, rgba(255, 196, 0, 0.22), transparent 60%),
-    radial-gradient(45% 120% at 0% 110%, rgba(37, 99, 235, 0.28), transparent 55%);
+    radial-gradient(55% 130% at 88% -10%, rgba(255, 196, 0, 0.32), transparent 60%),
+    radial-gradient(45% 120% at 0% 110%, rgba(37, 99, 235, 0.45), transparent 55%);
 }
 .hero-stat {
   display: flex;
@@ -617,7 +617,7 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   display: flex;
   gap: 0.7rem;
   align-items: flex-start;
-  background: linear-gradient(180deg, #131c2e 0%, var(--bg-card) 100%);
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
   padding: 0.7rem;
