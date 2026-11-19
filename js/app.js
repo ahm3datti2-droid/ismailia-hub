@@ -85,17 +85,26 @@ async function initApp() {
   renderGroupTiles(els.groupsGrid, GROUPS, {}, 0, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
   renderSkeleton(els.servicesGrid);
-  // إعادة رسم شريط التنقل السفلي بعد أول رسم: متصفحات الهاتف كانت
-  // تقصّ أيقوناته نصفياً حتى أول تمرير (خلل رسم أولي).
-  const navEl = document.querySelector('nav');
+  // شريط التنقل السفلي على الموبايل: تثبيت بجافاسكربت (absolute + transform)
+  // بدل position: fixed — متصفح الهاتف يقصّ أيقونات الشريط الثابت عند
+  // موضع التمرير صفر ويعيدها سليمة مع التمرير. يُحدَّث مع كل تمرير/تغيير حجم.
+  const navEl = document.querySelector('nav.bottom-nav-js');
   if (navEl) {
-    const nudgeNavPaint = () => {
-      navEl.style.willChange = 'transform';
-      void navEl.offsetHeight;
-      navEl.style.willChange = '';
+    let navRaf = null;
+    const placeNav = () => {
+      navRaf = null;
+      if (window.innerWidth >= 768) { navEl.style.transform = ''; return; }
+      const y = window.scrollY + window.innerHeight - navEl.offsetHeight;
+      navEl.style.transform = `translateY(${y}px)`;
     };
-    requestAnimationFrame(() => requestAnimationFrame(nudgeNavPaint));
-    setTimeout(nudgeNavPaint, 600);
+    const scheduleNav = () => { if (!navRaf) navRaf = requestAnimationFrame(placeNav); };
+    window.addEventListener('scroll', scheduleNav, { passive: true });
+    window.addEventListener('resize', scheduleNav);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', scheduleNav);
+      window.visualViewport.addEventListener('scroll', scheduleNav);
+    }
+    placeNav();
   }
   await loadServices();
 }

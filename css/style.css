@@ -47,12 +47,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* شريط التنقل السفلي: خلفية شبه معتمة بلا backdrop-filter — الفلتر على عنصر
-   fixed كان يقصّ الأيقونات نصفياً عند أول رسم في متصفحات الهاتف. */
+/* شريط التنقل السفلي: خلفية شبه معتمة بلا backdrop-filter. */
 .glass-nav {
   background: rgba(9, 13, 22, 0.97);
   border-top: 1px solid var(--border-subtle);
-  transform: translateZ(0);
+}
+
+/* شريط التنقل السفلي على الموبايل: موضعه بجافاسكربت (absolute + transform)
+   بدل position: fixed — متصفح الهاتف كان يقصّ أيقوناته عند موضع التمرير صفر
+   (خلل قصّ في طبقة العنصر الثابت يصحّحه التمرير). على الديسكتوب يبقى شريطاً عادياً. */
+@media (max-width: 767px) {
+  nav.bottom-nav-js { position: absolute; top: 0; bottom: auto; will-change: transform; }
 }
 
 .glass-header {
