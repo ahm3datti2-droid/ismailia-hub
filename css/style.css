@@ -21,7 +21,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: radial-gradient(1200px 420px at 50% -10%, rgba(37, 99, 235, 0.16), transparent 60%), var(--bg-dark);
   color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
