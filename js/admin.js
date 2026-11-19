@@ -14,6 +14,11 @@ import {
 } from './firebase.js';
 import { getOpenStatus, armDeleteConfirm } from './ui.js';
 
+// تسجيل Service Worker حتى يمكن تثبيت اللوحة كتطبيق (PWA) من /admin.html.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
 const state = {
   services: [],
   remoteCount: 0,

@@ -1,10 +1,14 @@
-const CACHE_NAME = 'ismailia-hub-v6';
+const CACHE_NAME = 'ismailia-hub-v7';
 const ASSETS = [
   '/',
   '/index.html',
   '/admin.html',
   '/manifest.json',
+  '/manifest-admin.json',
   '/icons/icon.svg',
+  '/icons/icon-admin-192.png',
+  '/icons/icon-admin-512.png',
+  '/icons/icon-admin-maskable-512.png',
   '/css/style.css',
   '/js/config.js',
   '/js/firebase.js',
