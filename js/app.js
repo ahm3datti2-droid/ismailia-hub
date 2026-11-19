@@ -196,6 +196,16 @@ function syncGroupHash() {
   history.replaceState(null, '', g && g !== 'all' ? `#group-${g}` : location.pathname + location.search);
 }
 
+// تغيير الرابط يدوياً في نفس التبويب المفتوحة (مثال: لصق رابط قسم آخر)
+// يبدّل القسم فوراً دون إعادة تحميل — replaceState لا يطلق هذا الحدث
+// فلا توجد حلقة.
+window.addEventListener('hashchange', () => {
+  if (!els.modal.classList.contains('hidden')) closeModal();
+  if (deepLinkedServiceId()) { openDeepLinkedService(); return; }
+  const groupId = deepLinkedGroupId();
+  if (groupId) selectGroupTile(groupId);
+});
+
 function bindEvents() {
   // بحث مُؤجَّل 120ms: لا نعيد رسم كل البطاقات مع كل حرف يُكتب.
   let searchTimer = null;
