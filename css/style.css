@@ -53,11 +53,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   border-top: 1px solid var(--border-subtle);
 }
 
-/* شريط التنقل السفلي على الموبايل: موضعه بجافاسكربت (absolute + transform)
-   بدل position: fixed — متصفح الهاتف كان يقصّ أيقوناته عند موضع التمرير صفر
-   (خلل قصّ في طبقة العنصر الثابت يصحّحه التمرير). على الديسكتوب يبقى شريطاً عادياً. */
+/* شريط التنقل السفلي على الموبايل: position: fixed حقيقي أسفل الشاشة —
+   التثبيت بجافاسكربت (absolute + transform) كان يتأخر عن التمرير في
+   متصفح الهاتف فيبدو الشريط طالعاً مع الصفحة. translateZ(0) يثبّت
+   طبقة الرسم حتى لا تُقصّ الأيقونات عند موضع التمرير صفر.
+   على الديسكتوب يبقى شريطاً عادياً. */
 @media (max-width: 767px) {
-  nav.bottom-nav-js { position: absolute; top: 0; bottom: auto; will-change: transform; }
+  nav.bottom-nav-js {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    transform: translateZ(0);
+    padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .glass-header {
