@@ -163,6 +163,43 @@
         <div id="pendingServicesList" class="space-y-3"></div>
       </div>
 
+      <!-- طلبات تعديل من أصحاب الأنشطة -->
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">طلبات تعديل من أصحاب الأنشطة <span id="pendingEditsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
+        <div id="pendingEditsList" class="space-y-3"></div>
+      </div>
+
+      <!-- طلبات عروض من أصحاب الأنشطة -->
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">طلبات عروض من أصحاب الأنشطة <span id="pendingOfferRequestsCount" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
+        <div id="pendingOfferRequestsList" class="space-y-3"></div>
+      </div>
+
+      <!-- سعر الذهب اليوم -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 flex items-center gap-2 mb-1">
+          <i data-lucide="coins" class="w-5 h-5"></i>
+          سعر الذهب اليوم
+        </h3>
+        <p class="text-xs text-slate-400 font-semibold mb-4">الأسعار تظهر في شريط أعلى الرئيسية — حدّثها كل صباح. آخر تحديث: <span id="goldUpdatedAt" class="text-slate-200">—</span></p>
+        <form id="goldForm" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">عيار 24 (جنيه)
+            <input type="number" name="price24" min="0" step="1" class="w-full bg-transparent text-white font-bold focus:outline-none" dir="ltr">
+          </label>
+          <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">عيار 21 (جنيه)
+            <input type="number" name="price21" min="0" step="1" class="w-full bg-transparent text-white font-bold focus:outline-none" dir="ltr">
+          </label>
+          <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">عيار 18 (جنيه)
+            <input type="number" name="price18" min="0" step="1" class="w-full bg-transparent text-white font-bold focus:outline-none" dir="ltr">
+          </label>
+          <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">جنيه الذهب
+            <input type="number" name="pound" min="0" step="1" class="w-full bg-transparent text-white font-bold focus:outline-none" dir="ltr">
+          </label>
+          <button type="submit" class="col-span-2 sm:col-span-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">حفظ أسعار الذهب</button>
+        </form>
+        <p id="goldStatus" class="text-xs text-slate-300 font-semibold mt-3"></p>
+      </div>
+
       <!-- نموذج الإضافة / التعديل -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 id="formTitle" class="text-base font-extrabold text-amber-400 mb-4">إضافة خدمة جديدة</h3>
@@ -176,6 +213,7 @@
             <select name="area" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
             <input type="text" name="address" placeholder="العنوان التفصيلي (اختياري إن لم يكن مؤكداً)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
             <input type="tel" name="phone" required placeholder="رقم الهاتف *" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
+            <input type="tel" name="ownerPhone" placeholder="تليفون صاحب النشاط (لربط حسابه بلوحة المالك)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
             <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white" dir="ltr">
             <input type="url" name="mapUrl" placeholder="رابط الموقع على الخريطة" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2" dir="ltr">
             <input type="text" name="imageUrl" placeholder="رابط صورة الخدمة (اختياري) — يقبل مساراً محلياً مثل /images/..." class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2" dir="ltr">

@@ -181,6 +181,26 @@
 
   <!-- المحتوى -->
   <main class="max-w-6xl mx-auto px-4 pt-4">
+    <!-- سعر الذهب اليوم: يظهر على الرئيسية فقط عند توفر أسعار محفوظة -->
+    <section id="goldSection" class="hidden mb-5">
+      <div class="gold-strip">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-base font-extrabold text-white flex items-center gap-1.5">
+            <i data-lucide="coins" class="w-5 h-5 text-amber-400"></i>
+            سعر الذهب اليوم
+          </h2>
+          <span id="goldUpdatedLabel" class="text-[11px] font-bold text-slate-300"></span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="gold-price"><span class="gold-price__label">عيار 24</span><span class="gold-price__value" id="goldPrice24">—</span></div>
+          <div class="gold-price"><span class="gold-price__label">عيار 21</span><span class="gold-price__value" id="goldPrice21">—</span></div>
+          <div class="gold-price"><span class="gold-price__label">عيار 18</span><span class="gold-price__value" id="goldPrice18">—</span></div>
+          <div class="gold-price"><span class="gold-price__label">جنيه الذهب</span><span class="gold-price__value" id="goldPricePound">—</span></div>
+        </div>
+        <a href="#group-fashion" class="gold-shops-link">محلات الذهب والمجوهرات في الدليل</a>
+      </div>
+    </section>
+
     <!-- عروض اليوم: تظهر على الرئيسية فقط عند وجود عروض سارية -->
     <section id="offersSection" class="hidden mb-5">
       <div class="flex justify-between items-center mb-3">

@@ -24,6 +24,9 @@ const state = {
   remoteCount: 0,
   pendingReviews: [],
   pendingServices: [],
+  pendingEdits: [],
+  pendingOfferRequests: [],
+  goldPrices: null,
   offers: [],
   banners: [],
   users: [],
@@ -64,6 +67,13 @@ const els = {
   pendingReviewsCount: document.getElementById('pendingReviewsCount'),
   pendingServicesList: document.getElementById('pendingServicesList'),
   pendingServicesCount: document.getElementById('pendingServicesCount'),
+  pendingEditsList: document.getElementById('pendingEditsList'),
+  pendingEditsCount: document.getElementById('pendingEditsCount'),
+  pendingOfferRequestsList: document.getElementById('pendingOfferRequestsList'),
+  pendingOfferRequestsCount: document.getElementById('pendingOfferRequestsCount'),
+  goldForm: document.getElementById('goldForm'),
+  goldUpdatedAt: document.getElementById('goldUpdatedAt'),
+  goldStatus: document.getElementById('goldStatus'),
   usersList: document.getElementById('usersList'),
   usersCount: document.getElementById('usersCount'),
   offerForm: document.getElementById('offerForm'),
@@ -179,6 +189,9 @@ async function loadServices() {
   }
   await loadPendingReviews();
   await loadPendingServices();
+  await loadPendingEdits();
+  await loadPendingOfferRequests();
+  await loadGoldPrices();
   await loadOffers();
   await loadBanners();
   await loadUsers();
@@ -186,6 +199,8 @@ async function loadServices() {
   renderStats();
   renderList();
   renderUsersList();
+  renderPendingEdits();
+  renderPendingOfferRequests();
   renderReviewsQueue();
   renderPendingServicesQueue();
   renderOffersList();
@@ -289,6 +304,137 @@ function renderUsersList() {
       ${u.phone ? `<a href="tel:${esc(u.phone.replace(/[^0-9+]/g, ''))}" class="shrink-0 text-[11px] font-extrabold text-sky-400 bg-sky-500/10 px-2.5 py-1.5 rounded-full">اتصال</a>` : ''}
     </div>`).join('');
   refreshIcons();
+}
+
+// طلبات تعديل وعروض أصحاب الأنشطة — إذا فشل التحميل تُعرض القائمة
+// فارغة بدلاً من كسر اللوحة.
+async function loadPendingEdits() {
+  try {
+    state.pendingEdits = await db.getPendingEditRequests();
+  } catch (_) {
+    state.pendingEdits = [];
+  }
+}
+
+async function loadPendingOfferRequests() {
+  try {
+    state.pendingOfferRequests = await db.getPendingOfferRequests();
+  } catch (_) {
+    state.pendingOfferRequests = [];
+  }
+}
+
+async function loadGoldPrices() {
+  try {
+    state.goldPrices = await db.getGoldPrices();
+  } catch (_) {
+    state.goldPrices = null;
+  }
+  fillGoldForm();
+}
+
+function fillGoldForm() {
+  const g = state.goldPrices;
+  const f = els.goldForm;
+  if (!f) return;
+  f.price24.value = g?.price24 || '';
+  f.price21.value = g?.price21 || '';
+  f.price18.value = g?.price18 || '';
+  f.pound.value = g?.pound || '';
+  if (els.goldUpdatedAt) {
+    try {
+      const ms = g?.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
+      els.goldUpdatedAt.textContent = ms
+        ? new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '—';
+    } catch (_) {
+      els.goldUpdatedAt.textContent = '—';
+    }
+  }
+}
+
+function serviceNameById(id) {
+  const s = state.services.find((x) => x.id === id);
+  return s ? s.name : 'نشاط';
+}
+
+function renderPendingEdits() {
+  if (!els.pendingEditsList) return;
+  els.pendingEditsCount.textContent = String(state.pendingEdits.length);
+  if (!state.pendingEdits.length) {
+    els.pendingEditsList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">لا توجد طلبات تعديل بانتظار المراجعة</p>
+      </div>`;
+    return;
+  }
+  els.pendingEditsList.innerHTML = state.pendingEdits.map((r) => {
+    const changes = Object.entries(r.changes || {}).map(([k, v]) => `<p class="text-[11px] text-slate-300 font-semibold">• ${esc(k)}: ${esc(String(v))}</p>`).join('');
+    return `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(serviceNameById(r.serviceId))}</p>
+      <div class="mt-2 space-y-0.5">${changes}</div>
+      <div class="flex gap-2 mt-3">
+        <button data-approve-edit="${esc(r.id)}" class="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-full">موافقة وتطبيق</button>
+        <button data-reject-edit="${esc(r.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">رفض</button>
+      </div>
+    </div>`;
+  }).join('');
+  els.pendingEditsList.querySelectorAll('[data-approve-edit]').forEach((b) =>
+    b.addEventListener('click', () => handleApproveEdit(b.dataset.approveEdit, b)));
+  els.pendingEditsList.querySelectorAll('[data-reject-edit]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.rejectEditRequest(b.dataset.rejectEdit); await loadServices(); } catch (err) { alert(err.message || 'تعذر رفض الطلب.'); }
+    })));
+}
+
+async function handleApproveEdit(id, btn) {
+  try {
+    if (btn) btn.disabled = true;
+    await db.approveEditRequest(id);
+    await loadServices();
+    alert('تم تطبيق التعديل على الخدمة.');
+  } catch (err) {
+    alert(err.message || 'تعذر تطبيق التعديل.');
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderPendingOfferRequests() {
+  if (!els.pendingOfferRequestsList) return;
+  els.pendingOfferRequestsCount.textContent = String(state.pendingOfferRequests.length);
+  if (!state.pendingOfferRequests.length) {
+    els.pendingOfferRequestsList.innerHTML = `
+      <div class="text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+        <p class="text-slate-400 text-xs font-semibold">لا توجد طلبات عروض بانتظار المراجعة</p>
+      </div>`;
+    return;
+  }
+  els.pendingOfferRequestsList.innerHTML = state.pendingOfferRequests.map((r) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(serviceNameById(r.serviceId))}</p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc(r.title || '')}${r.discount ? ' — ' + esc(r.discount) : ''}${r.validUntil ? ' (حتى ' + esc(r.validUntil) + ')' : ''}</p>
+      <div class="flex gap-2 mt-3">
+        <button data-approve-offer-req="${esc(r.id)}" class="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-full">موافقة ونشر</button>
+        <button data-reject-offer-req="${esc(r.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">رفض</button>
+      </div>
+    </div>`).join('');
+  els.pendingOfferRequestsList.querySelectorAll('[data-approve-offer-req]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try {
+        b.disabled = true;
+        await db.approveOfferRequest(b.dataset.approveOfferReq);
+        await loadServices();
+        alert('تم نشر العرض في "عروض اليوم".');
+      } catch (err) {
+        alert(err.message || 'تعذر نشر العرض.');
+        b.disabled = false;
+      }
+    }));
+  els.pendingOfferRequestsList.querySelectorAll('[data-reject-offer-req]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.rejectOfferRequest(b.dataset.rejectOfferReq); await loadServices(); } catch (err) { alert(err.message || 'تعذر رفض الطلب.'); }
+    })));
 }
 
 // طلبات إضافة خدمات بانتظار المراجعة — إذا فشل التحميل (مثلاً قواعد
@@ -740,6 +886,14 @@ function renderList() {
   refreshIcons();
 }
 
+function normalizeOwnerPhoneInput(p) {
+  const d = String(p || '').replace(/[^0-9]/g, '');
+  if (!d) return '';
+  if (d.length === 12 && d.startsWith('20')) return '0' + d.slice(2);
+  if (d.length === 10 && d.startsWith('1')) return '0' + d;
+  return d;
+}
+
 function readForm() {
   const fd = new FormData(els.serviceForm);
   return {
@@ -749,6 +903,7 @@ function readForm() {
     area: String(fd.get('area') || ''),
     address: String(fd.get('address') || '').trim(),
     phone: String(fd.get('phone') || '').trim(),
+    ownerPhone: normalizeOwnerPhoneInput(fd.get('ownerPhone')),
     whatsapp: String(fd.get('whatsapp') || '').trim(),
     mapUrl: String(fd.get('mapUrl') || '').trim(),
     // الصورة المختارة من الجهاز (Data URL) تتقدم على حقل الرابط النصي.
@@ -779,6 +934,7 @@ function fillForm(srv) {
   f.area.value = srv.area || '';
   f.address.value = srv.address || '';
   f.phone.value = srv.phone || '';
+  f.ownerPhone.value = srv.ownerPhone || srv.submitterPhone || '';
   f.whatsapp.value = srv.whatsapp || '';
   f.mapUrl.value = srv.mapUrl || '';
   // صورة محفوظة كبيانات داخل المستند (من جهاز) تُعرض في المعاينة
@@ -1049,6 +1205,24 @@ function bindEvents() {
 
   // توثيق كل الخدمات المكتملة (صورة حقيقية + تليفون).
   els.verifyAllBtn?.addEventListener('click', () => handleVerifyAll());
+
+  // حفظ أسعار الذهب اليوم.
+  els.goldForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(els.goldForm);
+    try {
+      await db.setGoldPrices({
+        price24: fd.get('price24'),
+        price21: fd.get('price21'),
+        price18: fd.get('price18'),
+        pound: fd.get('pound')
+      });
+      if (els.goldStatus) els.goldStatus.textContent = 'تم حفظ أسعار الذهب — تظهر في الرئيسية فوراً.';
+      await loadGoldPrices();
+    } catch (err) {
+      if (els.goldStatus) els.goldStatus.textContent = err.message || 'تعذر حفظ الأسعار.';
+    }
+  });
 
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();

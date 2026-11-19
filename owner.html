@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة صاحب النشاط | خدمات الإسماعيلية</title>
+  <meta name="theme-color" content="#0A2463">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        amber: { 300: '#FFE45C', 400: '#FFC400', 500: '#FFC400', 600: '#E0A800' },
+        brand: { yellow: '#FFC400', blue: '#2563EB', deep: '#0A2463', light: '#60A5FA' }
+      } } }
+    };
+  </script>
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pb-12 select-none">
+
+  <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 rounded-2xl shadow-lg shadow-blue-900/40">
+        <div>
+          <h1 class="text-lg font-black text-white leading-tight">لوحة صاحب النشاط</h1>
+          <p class="text-[11px] text-amber-400 font-semibold">خدمات الإسماعيلية — إدارة نشاطك بنفسك</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
+          <i data-lucide="home" class="w-4 h-4"></i> الرئيسية
+        </a>
+        <button id="btnLogout" class="hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 text-xs font-bold flex items-center gap-1">
+          <i data-lucide="log-out" class="w-4 h-4"></i> خروج
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-5">
+    <!-- تسجيل الدخول / إنشاء حساب -->
+    <section id="loginSection" class="max-w-md mx-auto">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h2 class="text-lg font-extrabold text-white">دخول أصحاب الأنشطة</h2>
+        <p class="text-xs text-slate-400 font-semibold mt-1 mb-4">سجّل دخولك بنفس رقم الموبايل وكلمة السر بتوع حسابك في الدليل.</p>
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <button id="tabLogin" class="py-2.5 rounded-xl text-xs font-extrabold transition bg-amber-500 text-slate-950">تسجيل الدخول</button>
+          <button id="tabSignup" class="py-2.5 rounded-xl text-xs font-extrabold transition bg-slate-800 text-slate-300">إنشاء حساب</button>
+        </div>
+        <p id="authError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
+        <form id="loginForm" class="space-y-3 text-xs">
+          <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+          <input type="password" name="password" required placeholder="كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">دخول</button>
+        </form>
+        <form id="signupForm" class="space-y-3 text-xs hidden">
+          <input type="text" name="name" required placeholder="الاسم بالكامل" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+          <input type="email" name="email" placeholder="البريد الإلكتروني (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <input type="password" name="password" required minlength="6" placeholder="كلمة السر (6 أحرف على الأقل)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <input type="password" name="confirmPassword" required minlength="6" placeholder="تأكيد كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إنشاء الحساب</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- لوحة التحكم -->
+    <section id="dashboardSection" class="hidden space-y-5">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <p class="text-sm text-slate-300 font-bold">أهلاً بيك، <span id="ownerName" class="text-white font-black"></span></p>
+        <p class="text-xs text-slate-400 font-semibold mt-1">رقم حسابك: <span id="ownerPhone" dir="ltr"></span> — خدماتك المربوطة برقمك تظهر هنا.</p>
+        <p id="noProfileNote" class="hidden text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-3">حسابك بلا ملف مسجل — لو نشاطك في الدليل ومش ظاهر هنا، تواصل مع الإدارة على واتساب 01117543009 لربطه برقمك.</p>
+      </div>
+
+      <!-- خدماتي -->
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">خدماتي <span id="myServicesCount" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
+        <div id="myServicesList" class="space-y-3"></div>
+        <div id="noServicesHint" class="hidden text-center py-6 bg-slate-900/40 rounded-3xl border border-slate-800/80">
+          <p class="text-slate-400 text-xs font-semibold">لسه مفيش نشاط مربوط برقم موبايل حسابك.</p>
+          <p class="text-slate-400 text-[11px] font-semibold mt-1">لو نشاطك موجود في الدليل، ابعت لنا على <a class="text-emerald-400 font-bold" href="https://wa.me/201117543009" target="_blank" rel="noopener">واتساب 01117543009</a> وهنربطه بحسابك — أو قدّم طلب إضافة خدمة من الصفحة الرئيسية.</p>
+        </div>
+      </div>
+
+      <!-- نموذج طلب تعديل -->
+      <div id="editRequestBox" class="hidden bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">طلب تعديل: <span id="editServiceName"></span></h3>
+        <p class="text-xs text-slate-400 font-semibold mb-4">عدّل البيانات المطلوبة — الطلب يروح للأدمن للمراجعة قبل النشر.</p>
+        <form id="editRequestForm" class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="text" name="name" placeholder="اسم النشاط" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="tel" name="phone" dir="ltr" placeholder="رقم الهاتف" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="tel" name="whatsapp" dir="ltr" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="text" name="address" placeholder="العنوان" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="text" name="area" placeholder="المنطقة" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="text" name="tags" placeholder="كلمات مفتاحية" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2">
+            <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">ساعة الفتح
+              <input type="number" name="openHour" min="0" max="24" class="w-full bg-transparent text-white font-bold focus:outline-none">
+            </label>
+            <label class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">ساعة الإغلاق
+              <input type="number" name="closeHour" min="0" max="24" class="w-full bg-transparent text-white font-bold focus:outline-none">
+            </label>
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إرسال طلب التعديل</button>
+            <button type="button" id="editCancelBtn" class="px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- نموذج طلب عرض -->
+      <div id="offerRequestBox" class="hidden bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">أضف عرض: <span id="offerServiceName"></span></h3>
+        <p class="text-xs text-slate-400 font-semibold mb-4">العرض يظهر في "عروض اليوم" على الرئيسية بعد موافقة الأدمن.</p>
+        <form id="offerRequestForm" class="space-y-3 text-xs">
+          <input type="text" name="title" required maxlength="120" placeholder="عنوان العرض (مثال: خصم 15% على كل المشغولات الذهبية)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <input type="text" name="discount" maxlength="120" placeholder="تفاصيل الخصم (اختياري — مثال: 15%)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <label class="block bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300">ساري حتى
+            <input type="date" name="validUntil" class="w-full bg-transparent text-white font-bold focus:outline-none">
+          </label>
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إرسال طلب العرض</button>
+            <button type="button" id="offerCancelBtn" class="px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- طلباتي -->
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">طلباتي <span id="myRequestsCount" class="text-xs font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
+        <div id="myRequestsList" class="space-y-2"></div>
+      </div>
+
+      <!-- التقييمات على خدماتي -->
+      <div>
+        <h3 class="text-sm font-extrabold text-slate-200 mb-2">التقييمات على خدماتي</h3>
+        <div id="myReviewsList" class="space-y-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/owner.js"></script>
+</body>
+</html>

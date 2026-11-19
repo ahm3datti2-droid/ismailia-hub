@@ -9,6 +9,7 @@ const state = {
   services: [],
   offers: [],
   banners: [],
+  gold: null,
   activeCategory: 'all',
   activeSubcategory: 'all',
   selectedArea: 'all',
@@ -124,6 +125,7 @@ async function loadServices() {
     state.services = await db.getAllServices();
     try { state.offers = await db.getActiveOffers(); } catch (_) { state.offers = []; }
     try { state.banners = await db.getActiveBanners(); } catch (_) { state.banners = []; }
+    try { state.gold = await db.getGoldPrices(); } catch (_) { state.gold = null; }
     refreshUI();
     if (!openDeepLinkedService()) openDeepLinkedGroup();
   } catch (err) {
@@ -288,6 +290,7 @@ function refreshUI() {
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
+  renderGoldSection(isHome);
   renderBannersSection(isHome);
   renderTopRatedSection(isHome);
   renderTickerSection(isHome);
@@ -384,6 +387,30 @@ function renderTickerSection(isHome) {
 }
 
 // قسم العروض في الصفحة الرئيسية — يظهر فقط على الرئيسية وعند وجود عروض سارية.
+// سعر الذهب اليوم: يظهر على الرئيسية فقط عند وجود أسعار محفوظة.
+function renderGoldSection(isHome) {
+  const section = document.getElementById('goldSection');
+  if (!section) return;
+  const g = state.gold;
+  const hasPrices = g && (Number(g.price21) > 0 || Number(g.price24) > 0);
+  section.classList.toggle('hidden', !isHome || !hasPrices);
+  if (!isHome || !hasPrices) return;
+  const fmt = (v) => Number(v) > 0 ? Number(v).toLocaleString('en-US') + ' ج.م' : '—';
+  document.getElementById('goldPrice24').textContent = fmt(g.price24);
+  document.getElementById('goldPrice21').textContent = fmt(g.price21);
+  document.getElementById('goldPrice18').textContent = fmt(g.price18);
+  document.getElementById('goldPricePound').textContent = fmt(g.pound);
+  const label = document.getElementById('goldUpdatedLabel');
+  try {
+    const ms = g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
+    label.textContent = ms
+      ? 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+  } catch (_) {
+    label.textContent = '';
+  }
+}
+
 function renderOffersSection(isHome) {
   const section = document.getElementById('offersSection');
   const row = document.getElementById('offersRow');
@@ -1252,6 +1279,7 @@ function openProfileModal() {
       ${p && p.email ? `<p class="text-slate-300">✉️ ${p.email}</p>` : ''}
       ${state.isAdmin ? '<p class="text-amber-400 font-bold">حساب إدارة الدليل</p>' : ''}
     </div>
+    <a href="owner.html" class="block text-center w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition mb-2">لوحة صاحب النشاط</a>
     <button id="btnLogout" class="w-full bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">تسجيل الخروج</button>
   `;
   showModal();

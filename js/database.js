@@ -92,8 +92,21 @@ function normaliseService(id, data) {
     rating: Number(data.rating ?? 5),
     reviewsCount: Number(data.reviewsCount ?? 1),
     tags: data.tags || '',
-    menu: Array.isArray(data.menu) ? data.menu : []
+    menu: Array.isArray(data.menu) ? data.menu : [],
+    // ربط النشاط بحساب صاحبه: رقم موبايل الحساب (11 رقماً يبدأ بـ 01)
+    // + uid الحساب. يُملأ من الأدمن أو من طلب الإضافة المعتمد.
+    ownerId: data.ownerId || '',
+    ownerPhone: normalizeOwnerPhone(data.ownerPhone || '')
   };
+}
+
+// رقم موبايل مالك النشاط بصيغة موحدة: أرقام فقط، بصفر بادئ (01xxxxxxxxx).
+function normalizeOwnerPhone(p) {
+  const d = String(p || '').replace(/[^0-9]/g, '');
+  if (!d) return '';
+  if (d.length === 12 && d.startsWith('20')) return '0' + d.slice(2);
+  if (d.length === 10 && d.startsWith('1')) return '0' + d;
+  return d;
 }
 
 class DatabaseService {
@@ -392,6 +405,182 @@ class DatabaseService {
       return tb - ta;
     });
     return list;
+  }
+
+  // ===== لوحة صاحب النشاط =====
+  // خدماتي: كل الخدمات المربوطة برقم موبايل حسابي.
+  async getMyServices(ownerPhone) {
+    const phone = normalizeOwnerPhone(ownerPhone);
+    if (!phone) return [];
+    const all = await this.getAllServices();
+    return all.filter((s) => normalizeOwnerPhone(s.ownerPhone) === phone);
+  }
+
+  // الحقول التي يُسمح لصاحب النشاط بطلب تعديلها (لا تشمل الصورة
+  // ولا التوثيق ولا التقييم ولا الملكية — تلك تبقى بيد الأدمن).
+  static EDITABLE_FIELDS = ['name', 'phone', 'whatsapp', 'address', 'area', 'openHour', 'closeHour', 'tags'];
+
+  async submitServiceEditRequest({ serviceId, changes }) {
+    const user = requireSignedIn();
+    if (!serviceId) throw new Error('خدمة غير معروفة.');
+    const clean = {};
+    for (const k of DatabaseService.EDITABLE_FIELDS) {
+      if (changes && changes[k] !== undefined && changes[k] !== '') clean[k] = changes[k];
+    }
+    if (!Object.keys(clean).length) throw new Error('اكتب التعديل المطلوب أولاً.');
+    const ref = await addDoc(collection(firestoreDb, 'serviceEditRequests'), {
+      serviceId,
+      ownerId: user.uid,
+      changes: clean,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getMyEditRequests() {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'serviceEditRequests'),
+      where('ownerId', '==', user.uid)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getPendingEditRequests() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'serviceEditRequests'),
+      where('status', '==', 'pending')
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveEditRequest(requestId) {
+    requireAdminUser();
+    const ref = doc(firestoreDb, 'serviceEditRequests', requestId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('الطلب غير موجود.');
+    const req = snap.data();
+    const clean = {};
+    for (const k of DatabaseService.EDITABLE_FIELDS) {
+      if (req.changes && req.changes[k] !== undefined) clean[k] = req.changes[k];
+    }
+    if (Object.keys(clean).length) await this.updateService(req.serviceId, clean);
+    await deleteDoc(ref);
+    return true;
+  }
+
+  async rejectEditRequest(requestId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'serviceEditRequests', requestId));
+    return true;
+  }
+
+  // طلب عرض (خصم) من صاحب النشاط — يراجعه الأدمن قبل النشر.
+  async submitOfferRequest({ serviceId, title, discount, validUntil }) {
+    const user = requireSignedIn();
+    if (!serviceId) throw new Error('خدمة غير معروفة.');
+    if (!String(title || '').trim()) throw new Error('اكتب عنوان العرض.');
+    const ref = await addDoc(collection(firestoreDb, 'offerRequests'), {
+      serviceId,
+      ownerId: user.uid,
+      title: String(title).trim().slice(0, 120),
+      discount: String(discount || '').trim().slice(0, 120),
+      validUntil: String(validUntil || ''),
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getMyOfferRequests() {
+    const user = requireSignedIn();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'offerRequests'),
+      where('ownerId', '==', user.uid)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getPendingOfferRequests() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'offerRequests'),
+      where('status', '==', 'pending')
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async approveOfferRequest(requestId) {
+    requireAdminUser();
+    const ref = doc(firestoreDb, 'offerRequests', requestId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('الطلب غير موجود.');
+    const req = snap.data();
+    await this.addOffer({
+      serviceId: req.serviceId,
+      title: req.title,
+      discount: req.discount || '',
+      validUntil: req.validUntil || '',
+      active: true
+    });
+    await deleteDoc(ref);
+    return true;
+  }
+
+  async rejectOfferRequest(requestId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'offerRequests', requestId));
+    return true;
+  }
+
+  // ===== سعر الذهب اليوم (مستند واحد siteMeta/gold) =====
+  async getGoldPrices() {
+    try {
+      const snap = await getDoc(doc(firestoreDb, 'siteMeta', 'gold'));
+      if (!snap.exists()) return null;
+      return { id: snap.id, ...snap.data() };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async setGoldPrices(data) {
+    requireAdminUser();
+    const clean = {
+      price24: Number(data.price24 || 0),
+      price21: Number(data.price21 || 0),
+      price18: Number(data.price18 || 0),
+      pound: Number(data.pound || 0),
+      updatedAt: serverTimestamp()
+    };
+    await setDoc(doc(firestoreDb, 'siteMeta', 'gold'), clean, { merge: true });
+    return clean;
   }
 
   // الموافقة على طلب: نشر الخدمة ثم حذف الطلب.

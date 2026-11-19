@@ -690,3 +690,31 @@ a.footer-line:hover { color: #FFC400; }
 }
 .footer-social:hover { color: #FFC400; border-color: rgba(255, 196, 0, 0.4); }
 .footer-social svg { width: 1.1rem; height: 1.1rem; }
+
+/* ---------- سعر الذهب اليوم ---------- */
+.gold-strip {
+  background: linear-gradient(120deg, rgba(255, 196, 0, 0.14), rgba(255, 196, 0, 0.04)), linear-gradient(90deg, #0A2463, #123a8f);
+  border: 1px solid rgba(255, 196, 0, 0.35);
+  border-radius: 1.25rem;
+  padding: 1rem 1.1rem;
+}
+.gold-price {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.9rem;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.gold-price__label { font-size: 0.7rem; font-weight: 700; color: #cbd5e1; }
+.gold-price__value { font-size: 1.05rem; font-weight: 900; color: #FFC400; line-height: 1.2; }
+.gold-shops-link {
+  display: inline-flex;
+  margin-top: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #FFC400;
+  text-decoration: none;
+}
+.gold-shops-link:hover { text-decoration: underline; }
