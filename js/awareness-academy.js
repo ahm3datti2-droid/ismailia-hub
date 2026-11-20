@@ -65,7 +65,7 @@ function courseProgress(course, st) {
     totalQ += l.quiz.length;
     if (ls) {
       if (ls.done) doneLessons++;
-      correctQ += (ls.answers || []).filter(Boolean).length;
+      correctQ += (ls.answers || []).filter((a, i) => a === l.quiz[i].correct).length;
     }
   }
   const earned = doneLessons === course.lessons.length && correctQ === totalQ && totalQ > 0;
@@ -136,7 +136,7 @@ function renderCourse(el, data, slug) {
   const lessons = course.lessons.map((l, i) => {
     const ls = p.saved.lessons[l.id];
     const done = ls && ls.done;
-    const correct = ls ? (ls.answers || []).filter(Boolean).length : 0;
+    const correct = ls ? (ls.answers || []).filter((a, i) => a === l.quiz[i].correct).length : 0;
     return `<a href="#/academy/${esc(course.slug)}/${esc(l.id)}" class="awareness-card">
       <span class="awareness-card__icon">${done ? '✓' : (i + 1)}</span>
       <span class="awareness-card__title">${esc(l.title)}</span>
@@ -199,7 +199,7 @@ function renderLesson(el, data, slug, lessonId) {
     const cur = academyState();
     const curSaved = ((cur.courses[course.slug] || {}).lessons || {})[lesson.id] || {};
     const allAnswered = answers.length === lesson.quiz.length && answers.every((a) => a !== undefined);
-    const correctCount = answers.filter(Boolean).length;
+    const correctCount = answers.filter((a, i) => a === lesson.quiz[i].correct).length;
     const done = curSaved.done === true;
     el.innerHTML = `<a href="#/academy/${esc(course.slug)}" class="inline-flex items-center gap-1 text-xs font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-full transition hover:bg-amber-500 hover:text-slate-950 active:scale-95">→ دروس «${esc(course.title)}»</a>
       ${toolHero(iconName(course.icon), lesson.title, `${course.title} · درس ${idx + 1} من ${course.lessons.length} · ${lesson.minutes} دقائق`)}
@@ -254,7 +254,7 @@ function renderLesson(el, data, slug, lessonId) {
     }).join('');
     qWrap.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
       const qi = Number(b.dataset.q);
-      answers[qi] = Number(b.dataset.opt) === lesson.quiz[qi].correct;
+      answers[qi] = Number(b.dataset.opt);
       persistAnswers();
       paint();
     }));
