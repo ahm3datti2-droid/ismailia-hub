@@ -606,9 +606,12 @@ class DatabaseService {
 
   async setJarakAvailability(isAvailable) {
     const user = requireSignedIn();
+    // NOTE: update ONLY isAvailable here. The jarakProviders update rule
+    // allows owners to change only [isAvailable, categories, area, name, phone];
+    // writing updatedAt too made every toggle fail with "Missing or
+    // insufficient permissions" (found live 2026-11-20).
     await updateDoc(doc(firestoreDb, 'jarakProviders', user.uid), {
-      isAvailable: Boolean(isAvailable),
-      updatedAt: serverTimestamp()
+      isAvailable: Boolean(isAvailable)
     });
     return true;
   }

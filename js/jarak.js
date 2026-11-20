@@ -78,6 +78,7 @@ const els = {
   providerDashMeta: document.getElementById('providerDashMeta'),
   providerDashApproval: document.getElementById('providerDashApproval'),
   availabilityToggle: document.getElementById('availabilityToggle'),
+  availabilityError: document.getElementById('availabilityError'),
   statEarnings: document.getElementById('statEarnings'),
   statOffers: document.getElementById('statOffers'),
   statAccepted: document.getElementById('statAccepted'),
@@ -450,10 +451,13 @@ function bindEvents() {
   els.availabilityToggle.addEventListener('click', async () => {
     if (!state.myProvider) return;
     try {
+      els.availabilityError.classList.add('hidden');
       await db.setJarakAvailability(!state.myProvider.isAvailable);
       await loadAll();
     } catch (err) {
-      alert(err.message || 'تعذر تغيير الحالة.');
+      // خطأ ظاهر داخل الصفحة بدل alert() — النوافذ المنبثقة لا تظهر في متصفح التطبيق.
+      els.availabilityError.textContent = err.message || 'تعذر تغيير الحالة.';
+      els.availabilityError.classList.remove('hidden');
     }
   });
 }
