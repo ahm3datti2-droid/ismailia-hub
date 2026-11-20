@@ -838,7 +838,7 @@ a.awareness-number:hover { box-shadow: var(--shadow-card-hover); border-color: r
 .awareness-source {
   display: inline-flex; align-items: center; font-size: 0.75rem; font-weight: 800; color: #bfdbfe;
   background: rgba(37, 99, 235, 0.12); border: 1px solid rgba(37, 99, 235, 0.35);
-  border-radius: 9999px; padding: 0.4rem 0.8rem; text-decoration: none;
+  border-radius: 9999px; padding: 0.65rem 0.9rem; text-decoration: none;
 }
 .awareness-source:hover { background: rgba(37, 99, 235, 0.25); color: #fff; }
 
