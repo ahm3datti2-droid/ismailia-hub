@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ismailia-hub-v10';
+const CACHE_NAME = 'ismailia-hub-v11';
 const ASSETS = [
   '/',
   '/index.html',
@@ -24,7 +24,12 @@ const ASSETS = [
   '/data/awareness/sources.json',
   '/data/awareness/tools.json',
   '/data/awareness/topics.json',
-  '/data/awareness/meta.json'
+  '/data/awareness/quiz.json',
+  '/data/awareness/checklist.json',
+  '/data/awareness/incident.json',
+  '/data/awareness/scam.json',
+  '/data/awareness/meta.json',
+  '/js/awareness-tools.js'
 ];
 
 self.addEventListener('install', (e) => {

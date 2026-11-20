@@ -879,3 +879,70 @@ a.awareness-number:hover { box-shadow: var(--shadow-card-hover); border-color: r
 .awareness-src a { color: #60A5FA; text-decoration: none; }
 .awareness-src a:hover { color: #fff; }
 .awareness-topic__share { display: inline-flex; margin-top: 0.8rem; font-size: 0.8rem; font-weight: 800; color: #4ade80; text-decoration: none; }
+
+/* ---------- مركز الوعي الرقمي — الأدوات التفاعلية (المرحلة 3) ---------- */
+.awareness-progress { height: 0.6rem; background: #1e293b; border-radius: 9999px; overflow: hidden; }
+.awareness-progress span { display: block; height: 100%; background: #FFC400; border-radius: 9999px; transition: width 0.4s ease; }
+.awareness-badge {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 0.9rem 0.8rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.25rem;
+}
+.awareness-badge--locked { opacity: 0.45; filter: grayscale(0.6); }
+.awareness-badge__emoji { font-size: 1.6rem; line-height: 1; }
+.awareness-badge__label { font-size: 0.8rem; font-weight: 900; color: #fff; }
+.awareness-badge__desc { font-size: 0.68rem; font-weight: 600; color: #94a3b8; line-height: 1.6; }
+.awareness-badge__got { font-size: 0.68rem; font-weight: 900; color: #4ade80; }
+.awareness-quiz {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1.1rem; box-shadow: var(--shadow-card); display: grid; gap: 0.8rem;
+}
+.awareness-quiz__q { font-size: 1rem; font-weight: 900; color: #fff; line-height: 1.8; margin: 0; }
+.awareness-opt {
+  display: block; width: 100%; text-align: start; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;
+  background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem; padding: 0.75rem 0.9rem;
+  transition: border-color 0.15s ease, background 0.15s ease; line-height: 1.7;
+}
+.awareness-opt:hover:not(:disabled) { border-color: rgba(255, 196, 0, 0.5); }
+.awareness-opt:disabled { cursor: default; }
+.awareness-opt--correct { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.15) !important; color: #bbf7d0 !important; }
+.awareness-opt--wrong { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; color: #fecaca !important; }
+.awareness-why { border-radius: 0.9rem; padding: 0.8rem 0.9rem; font-size: 0.85rem; line-height: 1.8; }
+.awareness-why b { display: block; font-weight: 900; margin-bottom: 0.3rem; }
+.awareness-why p { margin: 0.3rem 0; font-weight: 600; }
+.awareness-why--good { background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); color: #bbf7d0; }
+.awareness-why--good b { color: #4ade80; }
+.awareness-why--bad { background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.3); color: #fecaca; }
+.awareness-why--bad b { color: #f87171; }
+.awareness-quiz__read { display: inline-block; margin-top: 0.5rem; font-size: 0.8rem; font-weight: 800; color: #60A5FA; text-decoration: none; }
+.awareness-result {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1.2rem; box-shadow: var(--shadow-card); text-align: center;
+}
+.awareness-result__score { font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0; }
+.awareness-result__pct { font-size: 2.4rem; font-weight: 900; color: #FFC400; margin: 0.2rem 0 0.8rem; line-height: 1; }
+.awareness-check {
+  display: flex; align-items: flex-start; gap: 0.75rem; width: 100%;
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 0.9rem; box-shadow: var(--shadow-card);
+}
+.awareness-check--on { border-color: rgba(34, 197, 94, 0.5); }
+.awareness-check__box {
+  flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 0.5rem; margin-top: 0.1rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; font-weight: 900; color: #0A2463;
+  background: #1e293b; border: 1px solid #475569;
+}
+.awareness-check--on .awareness-check__box { background: #4ade80; border-color: #4ade80; }
+.awareness-pw {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1.1rem; box-shadow: var(--shadow-card);
+}
+.awareness-msg { background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem; padding: 0.9rem; }
+.awareness-msg__head { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.75rem; font-weight: 800; color: #94a3b8; margin-bottom: 0.5rem; }
+.awareness-msg__channel { background: #1e293b; border: 1px solid #475569; color: #fbbf24; border-radius: 9999px; padding: 0.15rem 0.6rem; font-size: 0.7rem; }
+.awareness-msg__text { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; line-height: 1.8; margin: 0; }

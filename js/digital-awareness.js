@@ -4,6 +4,7 @@
 // التوجيه بالـ hash: #/ للأ الرئيسية، و#/category/<id> و#/quiz إلخ
 // للمراحل الجاية — أي مسار لسه متبناش بيعرض صفحة «قريباً».
 import { AWARENESS_EMERGENCY_NUMBERS } from './config.js';
+import { renderTool, TOOL_IDS } from './awareness-tools.js';
 
 function esc(s) {
   return String(s ?? '')
@@ -122,6 +123,7 @@ function renderCategory(catId, scrollSlug) {
   document.getElementById('catTopics').innerHTML = topics.map((t, i) => topicArticle(t, i + 1)).join('');
   document.getElementById('mainView').classList.add('hidden');
   document.getElementById('comingSoonView').classList.add('hidden');
+  document.getElementById('toolView').classList.add('hidden');
   const view = document.getElementById('categoryView');
   view.classList.remove('hidden');
   refreshIcons();
@@ -162,11 +164,17 @@ function applyRoute() {
   const main = document.getElementById('mainView');
   const soon = document.getElementById('comingSoonView');
   const catView = document.getElementById('categoryView');
-  if (!main || !soon || !catView) return;
-  if (hash === '#/' || hash === '' || hash === '#') {
-    main.classList.remove('hidden');
+  const toolView = document.getElementById('toolView');
+  if (!main || !soon || !catView || !toolView) return;
+  const hideAll = () => {
+    main.classList.add('hidden');
     soon.classList.add('hidden');
     catView.classList.add('hidden');
+    toolView.classList.add('hidden');
+  };
+  if (hash === '#/' || hash === '' || hash === '#') {
+    hideAll();
+    main.classList.remove('hidden');
     return;
   }
   const catMatch = hash.match(/^#\/category\/([\w-]+)/);
@@ -177,12 +185,19 @@ function applyRoute() {
   if (topicMatch) {
     if (renderCategory(topicMatch[1], topicMatch[2])) return;
   }
+  const toolMatch = hash.match(/^#\/([\w-]+)/);
+  if (toolMatch && TOOL_IDS.includes(toolMatch[1])) {
+    hideAll();
+    toolView.classList.remove('hidden');
+    renderTool(toolMatch[1], toolView);
+    window.scrollTo({ top: 0 });
+    return;
+  }
   const { name, phase } = routeNameAndPhase(hash);
   document.getElementById('comingSoonTitle').textContent = name;
   document.getElementById('comingSoonText').textContent =
     `القسم ده هيتفتح في المرحلة ${phase} من مركز الوعي الرقمي — تابع الصفحة الرئيسية للقسم.`;
-  main.classList.add('hidden');
-  catView.classList.add('hidden');
+  hideAll();
   soon.classList.remove('hidden');
   window.scrollTo({ top: 0 });
   refreshIcons();
