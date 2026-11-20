@@ -841,3 +841,41 @@ a.awareness-number:hover { box-shadow: var(--shadow-card-hover); border-color: r
   border-radius: 9999px; padding: 0.4rem 0.8rem; text-decoration: none;
 }
 .awareness-source:hover { background: rgba(37, 99, 235, 0.25); color: #fff; }
+
+/* ---------- مركز الوعي الرقمي — صفحات المواضيع (المرحلة 2) ---------- */
+.awareness-toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.awareness-toc a {
+  display: block; font-size: 0.85rem; font-weight: 800; color: #bfdbfe; text-decoration: none;
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: 0.9rem; padding: 0.65rem 0.8rem;
+}
+.awareness-toc a:hover { border-color: rgba(255, 196, 0, 0.4); color: #fff; }
+.awareness-topic {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1.1rem; box-shadow: var(--shadow-card); scroll-margin-top: 5.5rem;
+}
+.awareness-topic h3 { font-size: 1.05rem; font-weight: 900; color: #fff; line-height: 1.6; margin: 0; }
+.awareness-topic__num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.7rem; height: 1.7rem; border-radius: 0.6rem; margin-inline-end: 0.5rem;
+  font-size: 0.9rem; font-weight: 900; color: #0A2463; background: #FFC400; vertical-align: middle;
+}
+.awareness-topic__lead { font-size: 0.9rem; font-weight: 700; color: #cbd5e1; line-height: 1.8; margin: 0.6rem 0 0; }
+.awareness-topic h4 { font-size: 0.85rem; font-weight: 900; color: #FFC400; margin: 0.9rem 0 0.4rem; }
+.awareness-steps { margin: 0; padding-inline-start: 1.3rem; display: grid; gap: 0.45rem; }
+.awareness-steps li { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; line-height: 1.8; }
+.awareness-steps li::marker { color: #FFC400; font-weight: 900; }
+.awareness-bad, .awareness-tip { border-radius: 0.9rem; padding: 0.7rem 0.8rem; margin-top: 0.8rem; }
+.awareness-bad { background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.3); }
+.awareness-bad b { display: block; font-size: 0.8rem; font-weight: 900; color: #f87171; margin-bottom: 0.35rem; }
+.awareness-bad ul { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: 0.3rem; }
+.awareness-bad li { font-size: 0.8rem; font-weight: 600; color: #fecaca; line-height: 1.7; }
+.awareness-tip { background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); }
+.awareness-tip b { display: block; font-size: 0.8rem; font-weight: 900; color: #4ade80; margin-bottom: 0.35rem; }
+.awareness-tip ul { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: 0.3rem; }
+.awareness-tip li { font-size: 0.8rem; font-weight: 600; color: #bbf7d0; line-height: 1.7; }
+.awareness-src { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-top: 0.9rem; line-height: 1.8; }
+.awareness-src a { color: #60A5FA; text-decoration: none; }
+.awareness-src a:hover { color: #fff; }
+.awareness-topic__share { display: inline-flex; margin-top: 0.8rem; font-size: 0.8rem; font-weight: 800; color: #4ade80; text-decoration: none; }

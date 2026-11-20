@@ -24,7 +24,7 @@ async function loadJson(path) {
   return r.json();
 }
 
-const state = { categories: [], tools: [], featured: [], sources: [], meta: null };
+const state = { categories: [], tools: [], featured: [], sources: [], meta: null, topics: [] };
 
 function categoryCard(c) {
   return `<a href="#/category/${esc(c.id)}" class="awareness-card">
@@ -45,11 +45,13 @@ function toolCard(t) {
 }
 
 function featuredCard(f) {
-  return `<article class="awareness-featured">
-    <span class="awareness-featured__cat">${esc(f.categoryName)}</span>
+  const inner = `<span class="awareness-featured__cat">${esc(f.categoryName)}</span>
     <h3 class="awareness-featured__title">${esc(f.title)}</h3>
     <p class="awareness-featured__summary">${esc(f.summary)}</p>
-  </article>`;
+    <span class="awareness-card__meta">اقرأ الموضوع ←</span>`;
+  return f.topic
+    ? `<a href="#/topic/${esc(f.topic)}" class="awareness-featured block">${inner}</a>`
+    : `<article class="awareness-featured">${inner}</article>`;
 }
 
 function numberCard(n) {
@@ -87,6 +89,57 @@ function renderAll() {
   refreshIcons();
 }
 
+function topicArticle(t, num) {
+  const steps = t.steps.map((s) => `<li>${esc(s)}</li>`).join('');
+  const mistakes = (t.mistakes || []).length
+    ? `<div class="awareness-bad"><b>🚫 اوعى تعمل كده — أخطاء شائعة</b><ul>${t.mistakes.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>` : '';
+  const tip = t.tip
+    ? `<div class="awareness-tip"><b>💡 نصيحة</b><ul><li>${esc(t.tip)}</li></ul></div>` : '';
+  const sources = (t.sources || []).length
+    ? `<div class="awareness-src"><b>المصادر:</b> ${t.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(' · ')}</div>` : '';
+  const shareUrl = `${location.origin}/awareness/${esc(t.category)}-${esc(t.id)}.html`;
+  return `<article id="topic-${esc(t.id)}" class="awareness-topic">
+    <h3><span class="awareness-topic__num">${num}</span>${esc(t.title)}</h3>
+    <p class="awareness-topic__lead">${esc(t.lead)}</p>
+    <h4>الخطوات — تعمل إيه؟</h4>
+    <ol class="awareness-steps">${steps}</ol>
+    ${mistakes}
+    ${tip}
+    ${sources}
+    <a href="https://wa.me/?text=${encodeURIComponent(t.title + ' — مركز الوعي الرقمي: ' + shareUrl)}" target="_blank" rel="noopener" class="awareness-topic__share">شارك الموضوع على واتساب ←</a>
+  </article>`;
+}
+
+function renderCategory(catId, scrollSlug) {
+  const cat = state.categories.find((x) => x.id === catId);
+  if (!cat) return false;
+  const topics = state.topics.filter((t) => t.category === catId);
+  document.getElementById('catBadge').textContent = cat.name;
+  document.getElementById('catTitle').textContent = cat.name;
+  document.getElementById('catDetail').textContent = cat.detail || cat.desc;
+  document.getElementById('catToc').innerHTML = topics.map((t, i) =>
+    `<li><a href="#topic-${esc(t.id)}" data-scroll-topic="${esc(t.id)}">${i + 1}. ${esc(t.title)}</a></li>`).join('');
+  document.getElementById('catTopics').innerHTML = topics.map((t, i) => topicArticle(t, i + 1)).join('');
+  document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('comingSoonView').classList.add('hidden');
+  const view = document.getElementById('categoryView');
+  view.classList.remove('hidden');
+  refreshIcons();
+  // روابط الفهرس بتمرير سلس للموضوع بدل تغيير الـ hash.
+  view.querySelectorAll('[data-scroll-topic]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('topic-' + a.dataset.scrollTopic)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+  if (scrollSlug) {
+    setTimeout(() => document.getElementById('topic-' + scrollSlug)?.scrollIntoView(), 50);
+  } else {
+    window.scrollTo({ top: 0 });
+  }
+  return true;
+}
+
 // التوجيه: الرئيسية بس في المرحلة 1؛ أي مسار تاني بيعرض «قريباً»
 // مع اسم القسم والمرحلة اللي هيتفتح فيها.
 function routeNameAndPhase(hash) {
@@ -108,17 +161,28 @@ function applyRoute() {
   const hash = location.hash || '#/';
   const main = document.getElementById('mainView');
   const soon = document.getElementById('comingSoonView');
-  if (!main || !soon) return;
+  const catView = document.getElementById('categoryView');
+  if (!main || !soon || !catView) return;
   if (hash === '#/' || hash === '' || hash === '#') {
     main.classList.remove('hidden');
     soon.classList.add('hidden');
+    catView.classList.add('hidden');
     return;
+  }
+  const catMatch = hash.match(/^#\/category\/([\w-]+)/);
+  if (catMatch) {
+    if (renderCategory(catMatch[1], null)) return;
+  }
+  const topicMatch = hash.match(/^#\/topic\/([\w-]+)\/([\w-]+)/);
+  if (topicMatch) {
+    if (renderCategory(topicMatch[1], topicMatch[2])) return;
   }
   const { name, phase } = routeNameAndPhase(hash);
   document.getElementById('comingSoonTitle').textContent = name;
   document.getElementById('comingSoonText').textContent =
     `القسم ده هيتفتح في المرحلة ${phase} من مركز الوعي الرقمي — تابع الصفحة الرئيسية للقسم.`;
   main.classList.add('hidden');
+  catView.classList.add('hidden');
   soon.classList.remove('hidden');
   window.scrollTo({ top: 0 });
   refreshIcons();
@@ -149,18 +213,20 @@ function bindShare() {
 
 async function init() {
   try {
-    const [categories, featured, sources, tools, meta] = await Promise.all([
+    const [categories, featured, sources, tools, meta, topics] = await Promise.all([
       loadJson('data/awareness/categories.json'),
       loadJson('data/awareness/featured.json'),
       loadJson('data/awareness/sources.json'),
       loadJson('data/awareness/tools.json'),
-      loadJson('data/awareness/meta.json')
+      loadJson('data/awareness/meta.json'),
+      loadJson('data/awareness/topics.json')
     ]);
     state.categories = categories.categories || [];
     state.featured = featured.featured || [];
     state.sources = sources.sources || [];
     state.tools = tools.tools || [];
     state.meta = meta || null;
+    state.topics = topics.topics || [];
   } catch (err) {
     // لو ملف بيانات فشل يتحمل، الصفحة تفضل شغالة بالهيرو والأرقام.
     console.warn('awareness data failed to load', err);

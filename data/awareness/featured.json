@@ -1,1 +1,46 @@
-{"featured":[{"category":"social-security","categoryName":"أمان مواقع التواصل","summary":"حتى لو حد عرف كلمة السر، مش هيقدر يدخل من غير الكود التاني اللي بيوصلك إنت.","title":"فعّل التحقق بخطوتين (2FA) — أهم خطوة"},{"category":"financial-security","categoryName":"الأمان المالي","summary":"البنك المركزي المصري حذر: مشاركة الكود ممكن تكون موافقة منك على عملية نصب.","title":"كود OTP: عمره ما يتقال لحد"},{"category":"online-scams","categoryName":"النصب والاحتيال الإلكتروني","summary":"سواء بايع أو مشتري: الفلوس والبضاعة يتسلموا يد بيد.","title":"النصب في البيع والشرا (Marketplace)"},{"category":"social-security","categoryName":"أمان مواقع التواصل","summary":"الاسترداد الرسمي ببلاش. أي حد بيقولك «أرجعلك الحساب بفلوس» غالبًا نصاب.","title":"استرداد حساب اتسرق (بالطرق الرسمية بس)"},{"category":"ai-awareness","categoryName":"الذكاء الاصطناعي والوعي","summary":"النصاب يقدر يقلد صوت قريبك من مقطع صوتي قصير.","title":"تقليد الصوت"},{"category":"family-safety","categoryName":"أمان الأطفال والأسرة","summary":"تطبيق مجاني من جوجل بيخليك تتابع موبايل ابنك وتحدد وقت الاستخدام.","title":"الرقابة الأبوية بـ Google Family Link"}]}
+{
+ "featured": [
+  {
+   "category": "social-security",
+   "categoryName": "أمان مواقع التواصل",
+   "summary": "حتى لو حد عرف كلمة السر، مش هيقدر يدخل من غير الكود التاني اللي بيوصلك إنت.",
+   "title": "فعّل التحقق بخطوتين (2FA) — أهم خطوة",
+   "topic": "social-security/2fa"
+  },
+  {
+   "category": "financial-security",
+   "categoryName": "الأمان المالي",
+   "summary": "البنك المركزي المصري حذر: مشاركة الكود ممكن تكون موافقة منك على عملية نصب.",
+   "title": "كود OTP: عمره ما يتقال لحد",
+   "topic": "financial-security/otp"
+  },
+  {
+   "category": "online-scams",
+   "categoryName": "النصب والاحتيال الإلكتروني",
+   "summary": "سواء بايع أو مشتري: الفلوس والبضاعة يتسلموا يد بيد.",
+   "title": "النصب في البيع والشرا (Marketplace)",
+   "topic": "online-scams/marketplace"
+  },
+  {
+   "category": "social-security",
+   "categoryName": "أمان مواقع التواصل",
+   "summary": "الاسترداد الرسمي ببلاش. أي حد بيقولك «أرجعلك الحساب بفلوس» غالبًا نصاب.",
+   "title": "استرداد حساب اتسرق (بالطرق الرسمية بس)",
+   "topic": "social-security/recovery"
+  },
+  {
+   "category": "ai-awareness",
+   "categoryName": "الذكاء الاصطناعي والوعي",
+   "summary": "النصاب يقدر يقلد صوت قريبك من مقطع صوتي قصير.",
+   "title": "تقليد الصوت",
+   "topic": "ai-awareness/voice"
+  },
+  {
+   "category": "family-safety",
+   "categoryName": "أمان الأطفال والأسرة",
+   "summary": "تطبيق مجاني من جوجل بيخليك تتابع موبايل ابنك وتحدد وقت الاستخدام.",
+   "title": "الرقابة الأبوية بـ Google Family Link",
+   "topic": "family-safety/family-link"
+  }
+ ]
+}
