@@ -162,6 +162,7 @@ function deepLinkedGroupId() {
   const raw = hash ? hash[1] : new URLSearchParams(location.search).get('group');
   if (!raw) return null;
   if (raw === 'jarak') return 'jarak';
+  if (raw === 'awareness') return 'awareness';
   return GROUPS.some((g) => g.id === raw) || raw === 'all' ? raw : null;
 }
 
@@ -169,6 +170,7 @@ function openDeepLinkedGroup() {
   const groupId = deepLinkedGroupId();
   if (!groupId) return;
   if (groupId === 'jarak') { location.href = 'jarak.html'; return; }
+  if (groupId === 'awareness') { location.href = 'digital-awareness.html'; return; }
   selectGroupTile(groupId);
 }
 
@@ -187,6 +189,7 @@ window.addEventListener('hashchange', () => {
   if (deepLinkedServiceId()) { openDeepLinkedService(); return; }
   const groupId = deepLinkedGroupId();
   if (groupId === 'jarak') { location.href = 'jarak.html'; return; }
+  if (groupId === 'awareness') { location.href = 'digital-awareness.html'; return; }
   if (groupId) selectGroupTile(groupId);
 });
 
@@ -295,6 +298,7 @@ function refreshUI() {
   renderOffersSection(isHome);
   renderGoldSection(isHome);
   document.getElementById('jarakSection')?.classList.toggle('hidden', !isHome);
+  document.getElementById('awarenessSection')?.classList.toggle('hidden', !isHome);
   renderBannersSection(isHome);
   renderTopRatedSection(isHome);
   renderTickerSection(isHome);

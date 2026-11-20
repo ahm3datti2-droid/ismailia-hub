@@ -763,3 +763,81 @@ a.footer-line:hover { color: #FFC400; }
 .jarak-status--cancelled, .jarak-status--rejected { color: #f87171; background: rgba(248, 113, 113, 0.12); }
 .jarak-chip { font-size: 0.7rem; font-weight: 700; color: #86efac; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); padding: 0.15rem 0.6rem; border-radius: 9999px; }
 .jarak-verified { font-size: 0.7rem; font-weight: 800; color: #FFC400; background: rgba(255, 196, 0, 0.12); padding: 0.15rem 0.6rem; border-radius: 9999px; }
+
+/* ---------- مركز الوعي الرقمي ---------- */
+.awareness-hero {
+  display: block;
+  background: linear-gradient(120deg, rgba(37, 99, 235, 0.25), rgba(255, 196, 0, 0.08)), linear-gradient(90deg, #0A2463, #0E1E4A);
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  border-radius: var(--radius-card);
+  padding: 1.1rem 1.1rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+.awareness-hero__badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.75rem; font-weight: 900; color: #0A2463;
+  background: #FFC400; border-radius: 9999px; padding: 0.2rem 0.7rem;
+}
+.awareness-hero__title { display: block; font-size: 1.25rem; font-weight: 900; color: #fff; margin-top: 0.7rem; line-height: 1.5; }
+.awareness-hero__text { display: block; font-size: 0.85rem; font-weight: 600; color: #cbd5e1; margin-top: 0.35rem; line-height: 1.8; }
+.awareness-hero__disclaimer {
+  display: flex; align-items: flex-start; gap: 0.4rem;
+  font-size: 0.72rem; font-weight: 700; color: #fbbf24;
+  background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.25);
+  border-radius: 0.9rem; padding: 0.6rem 0.7rem; margin-top: 0.9rem; line-height: 1.7;
+}
+.awareness-card {
+  display: block; background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1rem; box-shadow: var(--shadow-card); text-decoration: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.awareness-card:hover { box-shadow: var(--shadow-card-hover); border-color: rgba(255, 196, 0, 0.35); }
+.awareness-card__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem; border-radius: 0.9rem;
+  color: #fff; background: linear-gradient(135deg, #2563EB, #1E40AF);
+}
+.awareness-card__icon--gold { color: #0A2463; background: linear-gradient(135deg, #FFC400, #E0A800); }
+.awareness-card__title { display: block; font-size: 0.95rem; font-weight: 900; color: #fff; margin-top: 0.6rem; }
+.awareness-card__desc { display: block; font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-top: 0.2rem; line-height: 1.7; }
+.awareness-card__meta { display: inline-flex; margin-top: 0.55rem; font-size: 0.75rem; font-weight: 800; color: #60A5FA; }
+.awareness-featured {
+  background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1rem; box-shadow: var(--shadow-card);
+}
+.awareness-featured__cat { display: inline-block; font-size: 0.7rem; font-weight: 800; color: #FFC400; background: rgba(255, 196, 0, 0.12); border-radius: 9999px; padding: 0.15rem 0.6rem; }
+.awareness-featured__title { font-size: 0.95rem; font-weight: 900; color: #fff; margin-top: 0.5rem; line-height: 1.6; }
+.awareness-featured__summary { font-size: 0.8rem; font-weight: 600; color: #cbd5e1; margin-top: 0.25rem; line-height: 1.8; }
+.awareness-academy {
+  background: linear-gradient(120deg, rgba(255, 196, 0, 0.14), rgba(37, 99, 235, 0.12)), linear-gradient(90deg, #0A2463, #0E1E4A);
+  border: 1px solid rgba(255, 196, 0, 0.4); border-radius: var(--radius-card);
+  padding: 1.1rem; box-shadow: var(--shadow-card);
+}
+.awareness-academy__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.75rem; height: 2.75rem; border-radius: 0.9rem;
+  color: #0A2463; background: #FFC400;
+}
+.awareness-number {
+  display: block; background: linear-gradient(180deg, #182752 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-card);
+  padding: 1rem; box-shadow: var(--shadow-card); text-decoration: none;
+}
+a.awareness-number:hover { box-shadow: var(--shadow-card-hover); border-color: rgba(255, 196, 0, 0.35); }
+.awareness-number__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem; border-radius: 0.9rem;
+  color: #fff; background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+.awareness-number__name { display: block; font-size: 0.9rem; font-weight: 900; color: #fff; margin-top: 0.55rem; line-height: 1.6; }
+.awareness-number__desc { display: block; font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-top: 0.2rem; line-height: 1.7; }
+.awareness-number__num { display: block; font-size: 1.5rem; font-weight: 900; color: #FFC400; margin-top: 0.4rem; }
+.awareness-number__call { display: inline-flex; margin-top: 0.4rem; font-size: 0.75rem; font-weight: 800; color: #f87171; }
+.awareness-source {
+  display: inline-flex; align-items: center; font-size: 0.75rem; font-weight: 800; color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.12); border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: 9999px; padding: 0.4rem 0.8rem; text-decoration: none;
+}
+.awareness-source:hover { background: rgba(37, 99, 235, 0.25); color: #fff; }

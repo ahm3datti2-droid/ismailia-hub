@@ -1,1 +1,1 @@
-{"rewrites":[{"destination":"/admin.html","source":"/admin"}]}
+{"rewrites":[{"destination":"/admin.html","source":"/admin"},{"destination":"/digital-awareness.html","source":"/digital-awareness"}]}
