@@ -142,7 +142,7 @@ function renderQuizRun(el, data, levelId) {
         ? `<a href="#/topic/${esc(q.read)}" class="awareness-quiz__read">اقرأ أكتر عن الموضوع ←</a>` : '';
       why.innerHTML = `<div class="awareness-why ${correct ? 'awareness-why--good' : 'awareness-why--bad'}">
         <b>${correct ? '✅ إجابة صح!' : '❌ مش دي الإجابة الصح.'}</b>
-        <p>${esc(q.why)}</p>${readLink}</div>`;
+        <p><b>السبب:</b> ${esc(q.why)}</p>${readLink}</div>`;
       why.classList.remove('hidden');
       const next = document.getElementById('quizNext');
       next.classList.remove('hidden');

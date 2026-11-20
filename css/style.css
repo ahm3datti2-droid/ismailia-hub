@@ -863,7 +863,7 @@ a.awareness-number:hover { box-shadow: var(--shadow-card-hover); border-color: r
 }
 .awareness-topic__lead { font-size: 0.9rem; font-weight: 700; color: #cbd5e1; line-height: 1.8; margin: 0.6rem 0 0; }
 .awareness-topic h4 { font-size: 0.85rem; font-weight: 900; color: #FFC400; margin: 0.9rem 0 0.4rem; }
-.awareness-steps { margin: 0; padding-inline-start: 1.3rem; display: grid; gap: 0.45rem; }
+.awareness-steps { margin: 0; padding-inline-start: 1.3rem; display: grid; gap: 0.45rem; list-style: decimal; }
 .awareness-steps li { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; line-height: 1.8; }
 .awareness-steps li::marker { color: #FFC400; font-weight: 900; }
 .awareness-bad, .awareness-tip { border-radius: 0.9rem; padding: 0.7rem 0.8rem; margin-top: 0.8rem; }
