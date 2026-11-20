@@ -220,6 +220,12 @@ function bindShare() {
   const copyBtn = document.getElementById('copyLink');
   if (!copyBtn) return;
   copyBtn.addEventListener('click', async () => {
+    const fb = document.getElementById('copyFeedback');
+    // التأكيد يظهر فوراً قبل محاولة النسخ، عشان ميبانش متأخر.
+    if (fb) {
+      fb.textContent = 'جاري النسخ…';
+      fb.classList.remove('hidden');
+    }
     let ok = false;
     try {
       await navigator.clipboard.writeText(url);
@@ -231,10 +237,8 @@ function bindShare() {
         try { ok = document.execCommand('copy'); } catch (_) {}
       }
     }
-    const fb = document.getElementById('copyFeedback');
     if (fb) {
       fb.textContent = ok ? 'اتنسخ الرابط ✓' : 'النسخ متعذر — حدّد الرابط من الخانة وانسخه يدوياً';
-      fb.classList.remove('hidden');
       setTimeout(() => fb.classList.add('hidden'), 3000);
     }
   });
