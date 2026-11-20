@@ -6,6 +6,7 @@
 import { AWARENESS_EMERGENCY_NUMBERS } from './config.js';
 import { renderTool, TOOL_IDS } from './awareness-tools.js';
 import { renderAcademy } from './awareness-academy.js';
+import { renderAlerts, renderReport } from './awareness-alerts.js';
 
 function esc(s) {
   return String(s ?? '')
@@ -196,6 +197,20 @@ function applyRoute() {
     hideAll();
     toolView.classList.remove('hidden');
     renderAcademy(toolView, hash);
+    window.scrollTo({ top: 0 });
+    return;
+  }
+  if (hash === '#/alerts') {
+    hideAll();
+    toolView.classList.remove('hidden');
+    renderAlerts(toolView);
+    window.scrollTo({ top: 0 });
+    return;
+  }
+  if (hash === '#/report') {
+    hideAll();
+    toolView.classList.remove('hidden');
+    renderReport(toolView);
     window.scrollTo({ top: 0 });
     return;
   }

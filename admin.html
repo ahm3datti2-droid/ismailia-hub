@@ -374,6 +374,34 @@
         <div id="offersList" class="space-y-2 mt-4"></div>
       </div>
 
+      <!-- مركز الوعي الرقمي — التحذيرات -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">التحذيرات الرقمية</h3>
+        <p class="text-[11px] text-slate-400 font-semibold mb-4">بتظهر في صفحة #/alerts — انشر تحذير بس بعد ما تتأكد منه من مصدر رسمي.</p>
+        <form id="warningForm" class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="text" name="title" required placeholder="عنوان التحذير * (مثال: رسايل وهمية باسم البنك)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <select name="level" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="high">تحذير عاجل</option>
+              <option value="medium" selected>تنبيه</option>
+              <option value="info">معلومة</option>
+            </select>
+            <textarea name="body" required rows="3" placeholder="نص التحذير * — إيه اللي بيحصل وإزاي الناس تتجنبه" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white sm:col-span-2"></textarea>
+            <input type="text" name="sourceName" placeholder="اسم المصدر الرسمي (مثال: البنك المركزي المصري)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+            <input type="url" name="sourceUrl" placeholder="رابط المصدر الرسمي (https://…)" dir="ltr" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          </div>
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">نشر التحذير</button>
+        </form>
+        <div id="warningsList" class="space-y-2 mt-4"></div>
+      </div>
+
+      <!-- مركز الوعي الرقمي — بلاغات النصب -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
+        <h3 class="text-base font-extrabold text-amber-400 mb-1">بلاغات النصب <span id="reportsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
+        <p class="text-[11px] text-slate-400 font-semibold mb-4">البلاغات بتوصل هنا بس ومش بتتنشر — راجعها، ولو اتأكدت من مصدر رسمي انشر تحذير من النموذج اللي فوق من غير أي بيانات عن المُبلِّغ.</p>
+        <div id="reportsList" class="space-y-2"></div>
+      </div>
+
       <!-- البحث والفلترة -->
       <div class="flex flex-col sm:flex-row gap-2">
         <input type="text" id="adminSearch" placeholder="ابحث بالاسم أو المنطقة أو الكلمات المفتاحية..."

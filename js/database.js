@@ -1151,6 +1151,108 @@ class DatabaseService {
     await updateDoc(doc(firestoreDb, BANNERS_COLLECTION, bannerId), { active: Boolean(active) });
   }
 
+  // ===== مركز الوعي الرقمي — التحذيرات والبلاغات (المرحلة 4) =====
+  // - التحذيرات (awarenessWarnings): ينشئها الأدمن من لوحة التحكم فقط
+  //   (عنوان + نص + مستوى + مصدر رسمي)؛ العامة تقرأ المفعّل منها.
+  // - البلاغات (awarenessReports): أي زائر يبعت بلاغ من غير حساب؛
+  //   البلاغ بيوصل للأدمن بس ومش بيتنشر. الحقول المسموح بيها محدودة
+  //   في القواعد، والصورة (لو موجودة) data URL مضغوطة ≤ 700KB.
+  async getActiveAwarenessWarnings() {
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'awarenessWarnings'),
+      where('active', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getAllAwarenessWarnings() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, 'awarenessWarnings'));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async addAwarenessWarning(data) {
+    requireAdminUser();
+    if (!String(data.title || '').trim()) throw new Error('اكتب عنوان التحذير.');
+    if (!String(data.body || '').trim()) throw new Error('اكتب نص التحذير.');
+    const ref = await addDoc(collection(firestoreDb, 'awarenessWarnings'), {
+      title: String(data.title).trim().slice(0, 120),
+      body: String(data.body).trim().slice(0, 1000),
+      level: ['high', 'medium', 'info'].includes(data.level) ? data.level : 'medium',
+      sourceName: String(data.sourceName || '').trim().slice(0, 120),
+      sourceUrl: String(data.sourceUrl || '').trim().slice(0, 500),
+      active: data.active !== false,
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async setAwarenessWarningActive(warningId, active) {
+    requireAdminUser();
+    await updateDoc(doc(firestoreDb, 'awarenessWarnings', warningId), { active: Boolean(active) });
+  }
+
+  async deleteAwarenessWarning(warningId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'awarenessWarnings', warningId));
+  }
+
+  async submitAwarenessReport(data) {
+    const type = String(data.type || '').trim();
+    const details = String(data.details || '').trim();
+    if (!type) throw new Error('اختار نوع البلاغ.');
+    if (details.length < 10) throw new Error('اكتب إيه اللي حصل في سطرين على الأقل.');
+    if (details.length > 1500) throw new Error('الوصف طويل — اختصره في 1500 حرف.');
+    const screenshot = String(data.screenshot || '');
+    if (screenshot && screenshot.length > 950000) throw new Error('الصورة كبيرة — صغّرها أو ابعتها من غير صورة.');
+    const ref = await addDoc(collection(firestoreDb, 'awarenessReports'), {
+      type: type.slice(0, 60),
+      details: details.slice(0, 1500),
+      source: String(data.source || '').trim().slice(0, 300),
+      date: String(data.date || '').slice(0, 10),
+      contact: String(data.contact || '').trim().slice(0, 120),
+      screenshot,
+      status: 'new',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getAwarenessReports() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, 'awarenessReports'));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async setAwarenessReportStatus(reportId, status) {
+    requireAdminUser();
+    if (!['new', 'reviewed', 'resolved'].includes(status)) throw new Error('حالة غير معروفة.');
+    await updateDoc(doc(firestoreDb, 'awarenessReports', reportId), { status });
+  }
+
+  async deleteAwarenessReport(reportId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'awarenessReports', reportId));
+  }
+
   // ===== إحصائيات الزيارات اليومية (مجموعة dailyStats) =====
   // - مستند واحد لكل يوم (المفتاح = YYYY-MM-DD): visits + groups{groupId: n}.
   // - العدّ مرة واحدة لكل جهاز في اليوم (مفتاح في localStorage) حتى لا

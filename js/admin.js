@@ -33,6 +33,8 @@ const state = {
   goldPrices: null,
   offers: [],
   banners: [],
+  awarenessWarnings: [],
+  awarenessReports: [],
   users: [],
   usersLoadFailed: false,
   dailyStats: { visits: 0, groups: {} },
@@ -98,6 +100,10 @@ const els = {
   bannersList: document.getElementById('bannersList'),
   bannerSubmitBtn: document.getElementById('bannerSubmitBtn'),
   bannerCancelEdit: document.getElementById('bannerCancelEdit'),
+  warningForm: document.getElementById('warningForm'),
+  warningsList: document.getElementById('warningsList'),
+  reportsList: document.getElementById('reportsList'),
+  reportsCount: document.getElementById('reportsCount'),
   todayVisitsTotal: document.getElementById('todayVisitsTotal'),
   todayVisitsDate: document.getElementById('todayVisitsDate'),
   todayGroupsList: document.getElementById('todayGroupsList'),
@@ -210,6 +216,8 @@ async function loadServices() {
   await loadGoldPrices();
   await loadOffers();
   await loadBanners();
+  await loadAwarenessWarnings();
+  await loadAwarenessReports();
   await loadUsers();
   await loadDailyStats();
   renderStats();
@@ -225,6 +233,8 @@ async function loadServices() {
   renderPendingServicesQueue();
   renderOffersList();
   renderBannersList();
+  renderAwarenessWarningsList();
+  renderAwarenessReportsList();
   renderDailyStats();
   fillOfferServiceSelect();
   fillBannerServiceSelect();
@@ -719,6 +729,118 @@ function fillOfferServiceSelect() {
     .map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`)
     .join('');
   if (current) sel.value = current;
+}
+
+// مركز الوعي الرقمي — التحذيرات والبلاغات (المرحلة 4).
+// لو القواعد لسه متنشرتش، التحميل بيفشل بهدوء والقوايم بتفضل فاضية.
+async function loadAwarenessWarnings() {
+  try {
+    state.awarenessWarnings = await db.getAllAwarenessWarnings();
+  } catch (_) {
+    state.awarenessWarnings = [];
+  }
+}
+async function loadAwarenessReports() {
+  try {
+    state.awarenessReports = await db.getAwarenessReports();
+  } catch (_) {
+    state.awarenessReports = [];
+  }
+}
+
+const WARNING_LEVELS = { high: 'تحذير عاجل', medium: 'تنبيه', info: 'معلومة' };
+const REPORT_STATUSES = { new: 'جديد', reviewed: 'قيد المراجعة', resolved: 'تم التعامل معه' };
+
+function renderAwarenessWarningsList() {
+  if (!els.warningsList) return;
+  const list = state.awarenessWarnings;
+  if (!list.length) {
+    els.warningsList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد تحذيرات بعد — انشر أول تحذير من النموذج أعلاه بعد التأكد من مصدر رسمي.</p>`;
+    return;
+  }
+  els.warningsList.innerHTML = list.map((w) => `
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+        <div class="min-w-0">
+          <p class="text-xs font-extrabold text-white truncate">${esc(w.title)} <span class="text-amber-400">(${esc(WARNING_LEVELS[w.level] || w.level)})</span></p>
+          <p class="text-[11px] text-slate-400 mt-0.5">${esc(String(w.body || '').slice(0, 120))}${String(w.body || '').length > 120 ? '…' : ''}</p>
+          ${w.sourceUrl ? `<a href="${esc(w.sourceUrl)}" target="_blank" rel="noopener" class="text-[11px] text-sky-400 font-bold">${esc(w.sourceName || w.sourceUrl)}</a>` : ''}
+        </div>
+        <div class="flex gap-1.5 shrink-0">
+          <button data-toggle-warning="${esc(w.id)}" data-active="${w.active ? '0' : '1'}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">${w.active ? 'إيقاف' : 'تفعيل'}</button>
+          <button data-delete-warning="${esc(w.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+        </div>
+      </div>`).join('');
+
+  els.warningsList.querySelectorAll('[data-toggle-warning]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setAwarenessWarningActive(btn.dataset.toggleWarning, btn.dataset.active === '1');
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر تغيير حالة التحذير.');
+      }
+    });
+  });
+  els.warningsList.querySelectorAll('[data-delete-warning]').forEach((btn) => {
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
+      try {
+        await db.deleteAwarenessWarning(btn.dataset.deleteWarning);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف التحذير.');
+      }
+    }));
+  });
+}
+
+function renderAwarenessReportsList() {
+  if (!els.reportsList) return;
+  const list = state.awarenessReports;
+  if (els.reportsCount) els.reportsCount.textContent = String(list.filter((r) => r.status === 'new').length);
+  if (!list.length) {
+    els.reportsList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد بلاغات بعد.</p>`;
+    return;
+  }
+  els.reportsList.innerHTML = list.map((r) => {
+    const when = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '';
+    return `
+      <article class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs font-extrabold text-white">${esc(r.type)} <span class="text-amber-400">(${esc(REPORT_STATUSES[r.status] || r.status)})</span></p>
+          <span class="text-[11px] text-slate-500 font-bold">${esc(when)}${r.date ? ` • الواقعة: ${esc(r.date)}` : ''}</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed mt-1.5">${esc(r.details)}</p>
+        ${r.source ? `<p class="text-[11px] text-slate-400 mt-1">المصدر/الرابط: <span dir="ltr">${esc(r.source)}</span></p>` : ''}
+        ${r.contact ? `<p class="text-[11px] text-slate-400 mt-0.5">للتواصل: <span dir="ltr">${esc(r.contact)}</span></p>` : ''}
+        ${r.screenshot ? `<a href="${esc(r.screenshot)}" target="_blank" rel="noopener"><img src="${esc(r.screenshot)}" alt="سكرين شوت مرفق" class="w-full max-h-48 object-contain bg-white rounded-xl mt-2"></a>` : ''}
+        <div class="flex gap-1.5 mt-3">
+          ${r.status !== 'reviewed' ? `<button data-report-status="${esc(r.id)}" data-status="reviewed" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-extrabold transition">قيد المراجعة</button>` : ''}
+          ${r.status !== 'resolved' ? `<button data-report-status="${esc(r.id)}" data-status="resolved" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">تم التعامل معه</button>` : ''}
+          <button data-delete-report="${esc(r.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+        </div>
+      </article>`;
+  }).join('');
+
+  els.reportsList.querySelectorAll('[data-report-status]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setAwarenessReportStatus(btn.dataset.reportStatus, btn.dataset.status);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر تغيير حالة البلاغ.');
+      }
+    });
+  });
+  els.reportsList.querySelectorAll('[data-delete-report]').forEach((btn) => {
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
+      try {
+        await db.deleteAwarenessReport(btn.dataset.deleteReport);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف البلاغ.');
+      }
+    }));
+  });
 }
 
 // شاشة العرض — إذا فشل التحميل (مثلاً قواعد Firestore لم
@@ -1415,6 +1537,26 @@ function bindEvents() {
       alert('تمت إضافة العرض بنجاح.');
     } catch (err) {
       alert(err.message || 'تعذر إضافة العرض.');
+    }
+  });
+
+  els.warningForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await db.addAwarenessWarning({
+        title: fd.get('title'),
+        body: fd.get('body'),
+        level: fd.get('level'),
+        sourceName: fd.get('sourceName'),
+        sourceUrl: fd.get('sourceUrl'),
+        active: true
+      });
+      els.warningForm.reset();
+      await loadServices();
+      alert('تم نشر التحذير بنجاح.');
+    } catch (err) {
+      alert(err.message || 'تعذر نشر التحذير.');
     }
   });
 
