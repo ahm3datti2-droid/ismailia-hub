@@ -5,6 +5,7 @@
 // للمراحل الجاية — أي مسار لسه متبناش بيعرض صفحة «قريباً».
 import { AWARENESS_EMERGENCY_NUMBERS } from './config.js';
 import { renderTool, TOOL_IDS } from './awareness-tools.js';
+import { renderAcademy } from './awareness-academy.js';
 
 function esc(s) {
   return String(s ?? '')
@@ -189,6 +190,14 @@ function applyRoute() {
   const topicMatch = hash.match(/^#\/topic\/([\w-]+)\/([\w-]+)/);
   if (topicMatch) {
     if (renderCategory(topicMatch[1], topicMatch[2])) return;
+  }
+  const academyMatch = hash.match(/^#\/academy(\/[\w/-]*)?$/);
+  if (academyMatch) {
+    hideAll();
+    toolView.classList.remove('hidden');
+    renderAcademy(toolView, hash);
+    window.scrollTo({ top: 0 });
+    return;
   }
   const toolMatch = hash.match(/^#\/([\w-]+)/);
   if (toolMatch && TOOL_IDS.includes(toolMatch[1])) {
