@@ -48,7 +48,33 @@ async function loadAcademy() {
   const r = await fetch('data/awareness/academy.json');
   if (!r.ok) throw new Error('تعذر تحميل الأكاديمية');
   cache = await r.json();
+  migrateLegacyAnswers(cache);
   return cache;
+}
+
+// ترحيل بيانات قديمة: النسخة الأولى (commit cb829a8) كانت بتحفظ الإجابة
+// كـ boolean (صح/غلط) بدل رقم الاختيار، فبعد الإصلاح بقت تتقرأ 0 صح
+// والشارة بتضيع. نحوّل true → رقم الإجابة الصح، false → أول اختيار غلط.
+function migrateLegacyAnswers(data) {
+  const st = academyState();
+  let changed = false;
+  for (const course of data.courses) {
+    const saved = st.courses[course.slug];
+    if (!saved) continue;
+    for (const l of course.lessons) {
+      const ls = saved.lessons[l.id];
+      if (!ls || !Array.isArray(ls.answers)) continue;
+      ls.answers = ls.answers.map((a, i) => {
+        if (typeof a === 'boolean') {
+          changed = true;
+          if (a === true) return l.quiz[i].correct;
+          return (l.quiz[i].correct + 1) % l.quiz[i].options.length;
+        }
+        return a;
+      });
+    }
+  }
+  if (changed) saveState(st);
 }
 
 function academyState() {
