@@ -204,24 +204,33 @@ function applyRoute() {
 }
 
 function bindShare() {
+  const url = location.origin + '/digital-awareness';
+  const urlInput = document.getElementById('shareUrlInput');
+  if (urlInput) {
+    urlInput.value = url;
+    // دوسة على الرابط تحدده كله عشان النسخ اليدوي (ضغطة طويلة على الموبايل).
+    urlInput.addEventListener('click', () => urlInput.select());
+    urlInput.addEventListener('focus', () => urlInput.select());
+  }
   const copyBtn = document.getElementById('copyLink');
   if (!copyBtn) return;
   copyBtn.addEventListener('click', async () => {
-    const url = location.origin + '/digital-awareness';
+    let ok = false;
     try {
       await navigator.clipboard.writeText(url);
+      ok = true;
     } catch (_) {
-      const ta = document.createElement('textarea');
-      ta.value = url;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch (_) {}
-      ta.remove();
+      // بديل للمتصفحات اللي الحافظة فيها مقفولة: نحدد نص الرابط وننسخه.
+      if (urlInput) {
+        urlInput.select();
+        try { ok = document.execCommand('copy'); } catch (_) {}
+      }
     }
     const fb = document.getElementById('copyFeedback');
     if (fb) {
+      fb.textContent = ok ? 'اتنسخ الرابط ✓' : 'النسخ متعذر — حدّد الرابط من الخانة وانسخه يدوياً';
       fb.classList.remove('hidden');
-      setTimeout(() => fb.classList.add('hidden'), 2500);
+      setTimeout(() => fb.classList.add('hidden'), 3000);
     }
   });
 }
