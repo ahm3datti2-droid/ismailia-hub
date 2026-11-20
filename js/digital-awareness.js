@@ -79,9 +79,14 @@ function renderAll() {
     `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="awareness-source">${esc(s.name)}</a>`).join('');
   if (state.meta) {
     const lr = document.getElementById('lastReview');
-    if (lr) lr.textContent = state.meta.lastReviewLabel || state.meta.lastReview;
+    if (lr && state.meta.lastReviewLabel) lr.textContent = state.meta.lastReviewLabel;
     const rb = document.getElementById('reviewedBy');
-    if (rb) rb.textContent = state.meta.reviewedBy || '';
+    if (rb && state.meta.reviewedBy) rb.textContent = state.meta.reviewedBy;
+    // الأكاديمية (المرحلة 5) مخفية افتراضياً؛ تظهر بس لما features.academy تبقى true.
+    const teaser = document.getElementById('academyTeaser');
+    if (teaser && state.meta.features && state.meta.features.academy === true) {
+      teaser.classList.remove('hidden');
+    }
     const sn = document.getElementById('sourcesNote');
     if (sn) sn.textContent = state.meta.sourcesNote || '';
     const wa = document.getElementById('shareWhatsApp');
