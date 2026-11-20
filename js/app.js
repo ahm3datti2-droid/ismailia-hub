@@ -170,7 +170,7 @@ function openDeepLinkedGroup() {
   const groupId = deepLinkedGroupId();
   if (!groupId) return;
   if (groupId === 'jarak') { location.href = 'jarak.html'; return; }
-  if (groupId === 'awareness') { location.href = 'digital-awareness.html'; return; }
+  if (groupId === 'awareness') { location.href = '/digital-awareness'; return; }
   selectGroupTile(groupId);
 }
 
@@ -189,7 +189,7 @@ window.addEventListener('hashchange', () => {
   if (deepLinkedServiceId()) { openDeepLinkedService(); return; }
   const groupId = deepLinkedGroupId();
   if (groupId === 'jarak') { location.href = 'jarak.html'; return; }
-  if (groupId === 'awareness') { location.href = 'digital-awareness.html'; return; }
+  if (groupId === 'awareness') { location.href = '/digital-awareness'; return; }
   if (groupId) selectGroupTile(groupId);
 });
 
