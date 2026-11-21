@@ -11,7 +11,7 @@ export const FIREBASE_CONFIG = {
 // الدخول يتم عبر Firebase Auth فقط — لا يوجد أي رقم سري في الكود.
 export const ADMIN_EMAIL = "ahm3d.atti2@gmail.com";
 
-// الأقسام الرئيسية (11 قسماً) — كل قسم فيه تصنيفات فرعية.
+// الأقسام الرئيسية (14 قسماً) — كل قسم فيه تصنيفات فرعية.
 // الخدمة في Firestore تحمل حقلين: category = معرّف القسم الرئيسي،
 // وsubcategory = معرّف التصنيف الفرعي (قد يكون فارغاً للخدمات القديمة).
 export const GROUPS = [
@@ -80,7 +80,8 @@ export const GROUPS = [
     { id: 'ceramics', name: 'سيراميك وبورسلين ورخام' },
     { id: 'contracting', name: 'مقاولات وتشطيبات وديكور' },
     { id: 'workshops', name: 'ورش نجارة وألوميتال' },
-    { id: 'technicians', name: 'فنيين وصنايعية' }
+    { id: 'technicians', name: 'فنيين وصنايعية' },
+    { id: 'security', name: 'أمن وحراسة وأنظمة مراقبة ومصاعد' }
   ]},
   { id: 'automotive', name: 'السيارات والنقل', icon: 'car', subs: [
     { id: 'showrooms', name: 'معارض سيارات' },
@@ -95,7 +96,8 @@ export const GROUPS = [
     { id: 'mobile-shops', name: 'موبايلات وإكسسوارات' },
     { id: 'mobile-repair', name: 'صيانة موبايلات وكمبيوتر' },
     { id: 'computers', name: 'كمبيوتر ولاب توب وكاميرات' },
-    { id: 'telecom', name: 'فروع اتصالات ودفع إلكتروني' }
+    { id: 'telecom', name: 'فروع اتصالات ودفع إلكتروني' },
+    { id: 'software', name: 'برمجيات وتصميم' }
   ]},
   { id: 'professional', name: 'الخدمات المهنية والمالية', icon: 'briefcase', subs: [
     { id: 'banks', name: 'بنوك وصراف آلي' },
@@ -113,6 +115,14 @@ export const GROUPS = [
     { id: 'flowers', name: 'زهور وهدايا' },
     { id: 'pets', name: 'عيادات بيطرية ومستلزمات حيوانات' },
     { id: 'laundry', name: 'مغاسل ملابس (دراي كلين)' }
+  ]},
+  { id: 'factories', name: 'مصانع وشركات', icon: 'factory', subs: [
+    { id: 'food-industry', name: 'صناعات غذائية' },
+    { id: 'industry', name: 'صناعات أخرى' }
+  ]},
+  { id: 'government', name: 'خدمات حكومية', icon: 'landmark', subs: [
+    { id: 'postal', name: 'بريد' },
+    { id: 'supply', name: 'تموين' }
   ]}
 ];
 
