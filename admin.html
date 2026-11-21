@@ -31,6 +31,12 @@
   </script>
   <script defer src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-tab-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;background:#0f172a;border:1px solid #1e293b;color:#94a3b8;font-size:11px;font-weight:800;transition:background .15s,color .15s,border-color .15s;cursor:pointer}
+    .admin-tab-btn:hover{border-color:#f59e0b;color:#e2e8f0}
+    .admin-tab-btn.active{background:#f59e0b;border-color:#f59e0b;color:#020617}
+    .admin-tab-badge{position:absolute;top:-6px;inset-inline-start:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center}
+  </style>
 </head>
 <body class="pb-12 select-none">
 
@@ -110,9 +116,6 @@
           مسجل دخول كأدمن: <span id="adminEmailLabel" class="text-amber-400 font-bold" dir="ltr"></span>
         </p>
         <div class="flex gap-2">
-          <button id="btnSeed" class="bg-sky-600/20 border border-sky-500/30 text-sky-400 px-3 py-2 rounded-xl text-xs font-bold hover:bg-sky-600 hover:text-white transition">
-            نشر الخدمات الافتراضية
-          </button>
           <button id="btnNewService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1">
             <i data-lucide="plus" class="w-4 h-4"></i>
             إضافة خدمة
@@ -121,6 +124,45 @@
       </div>
       <p id="seedNote" class="text-[11px] text-slate-500"></p>
 
+      <!-- شريط أيقونات الأقسام: كل قسم يفتح بالضغط على أيقونته -->
+      <div id="adminTabs" class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
+        <button type="button" class="admin-tab-btn active" data-tab="services">
+          <i data-lucide="store" class="w-6 h-6"></i><span>الخدمات</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="review">
+          <i data-lucide="inbox" class="w-6 h-6"></i><span>المراجعة</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-review">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="users">
+          <i data-lucide="users" class="w-6 h-6"></i><span>المستخدمون</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-users">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="jarak">
+          <i data-lucide="handshake" class="w-6 h-6"></i><span>جارك</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-jarak">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="ads">
+          <i data-lucide="megaphone" class="w-6 h-6"></i><span>العروض والإعلانات</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-ads">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="awareness">
+          <i data-lucide="shield-alert" class="w-6 h-6"></i><span>الوعي الرقمي</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-awareness">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="market">
+          <i data-lucide="shopping-bag" class="w-6 h-6"></i><span>السوق والوظايف</span>
+          <span class="admin-tab-badge hidden" id="tabBadge-market">0</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="gold">
+          <i data-lucide="coins" class="w-6 h-6"></i><span>الذهب</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="home">
+          <i data-lucide="bar-chart-3" class="w-6 h-6"></i><span>الإحصائيات</span>
+        </button>
+      </div>
+
+
+      <div id="tab-home" class="admin-tab-panel space-y-5 hidden" data-tab-panel="home">
       <!-- الإحصائيات -->
       <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
       <div>
@@ -144,13 +186,17 @@
         </div>
         <div id="todayGroupsList" class="space-y-2"></div>
       </div>
+      </div><!-- /tab-home -->
 
+      <div id="tab-users" class="admin-tab-panel space-y-5 hidden" data-tab-panel="users">
       <!-- المستخدمون المسجلون -->
       <div>
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">المستخدمون المسجلون <span id="usersCount" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
         <div id="usersList" class="space-y-2"></div>
       </div>
+      </div><!-- /tab-users -->
 
+      <div id="tab-review" class="admin-tab-panel space-y-5 hidden" data-tab-panel="review">
       <!-- التقييمات بانتظار المراجعة -->
       <div>
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">التقييمات بانتظار المراجعة <span id="pendingReviewsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
@@ -174,7 +220,9 @@
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">طلبات عروض من أصحاب الأنشطة <span id="pendingOfferRequestsCount" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
         <div id="pendingOfferRequestsList" class="space-y-3"></div>
       </div>
+      </div><!-- /tab-review -->
 
+      <div id="tab-jarak" class="admin-tab-panel space-y-5 hidden" data-tab-panel="jarak">
       <!-- جارك: مزودون بانتظار الاعتماد -->
       <div>
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">جارك — مزودون بانتظار الاعتماد <span id="pendingJarakProvidersCount" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
@@ -198,7 +246,9 @@
         <h3 class="text-sm font-extrabold text-slate-200 mb-2">جارك — تقييمات بانتظار المراجعة <span id="pendingJarakReviewsCount" class="text-xs font-bold text-violet-400 bg-violet-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
         <div id="pendingJarakReviewsList" class="space-y-3"></div>
       </div>
+      </div><!-- /tab-jarak -->
 
+      <div id="tab-gold" class="admin-tab-panel space-y-5 hidden" data-tab-panel="gold">
       <!-- سعر الذهب اليوم -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 flex items-center gap-2 mb-1">
@@ -223,7 +273,22 @@
         </form>
         <p id="goldStatus" class="text-xs text-slate-300 font-semibold mt-3"></p>
       </div>
+      </div><!-- /tab-gold -->
 
+      <div id="tab-services" class="admin-tab-panel space-y-5" data-tab-panel="services">
+      <!-- البحث والفلترة -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input type="text" id="adminSearch" placeholder="ابحث بالاسم أو المنطقة أو الكلمات المفتاحية..."
+          class="flex-1 bg-slate-900/90 border border-slate-800 rounded-2xl py-3 px-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400">
+        <select id="adminCategoryFilter" class="bg-slate-900 border border-slate-800 rounded-2xl px-3 py-3 text-xs font-bold text-white focus:outline-none">
+          <option value="all">كل التصنيفات</option>
+        </select>
+      </div>
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-extrabold text-slate-200">قائمة الخدمات</h3>
+        <span id="adminResultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0 خدمة</span>
+      </div>
+      <div id="adminServicesList" class="space-y-3"></div>
       <!-- نموذج الإضافة / التعديل -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 id="formTitle" class="text-base font-extrabold text-amber-400 mb-4">إضافة خدمة جديدة</h3>
@@ -305,7 +370,14 @@
         </div>
         <p id="verifyAllStatus" class="text-xs text-slate-300 font-semibold mt-3"></p>
       </div>
+      <div>
+        <button id="btnSeed" class="bg-sky-600/20 border border-sky-500/30 text-sky-400 px-3 py-2 rounded-xl text-xs font-bold hover:bg-sky-600 hover:text-white transition">
+          نشر الخدمات الافتراضية
+        </button>
+      </div>
+      </div><!-- /tab-services -->
 
+      <div id="tab-ads" class="admin-tab-panel space-y-5 hidden" data-tab-panel="ads">
       <!-- شاشة العرض: إعلانات متحركة في أول الموقع -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 mb-1">شاشة العرض (إعلانات الرئيسية)</h3>
@@ -374,7 +446,9 @@
         </form>
         <div id="offersList" class="space-y-2 mt-4"></div>
       </div>
+      </div><!-- /tab-ads -->
 
+      <div id="tab-awareness" class="admin-tab-panel space-y-5 hidden" data-tab-panel="awareness">
       <!-- مركز الوعي الرقمي — التحذيرات -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 mb-1">التحذيرات الرقمية</h3>
@@ -402,7 +476,9 @@
         <p class="text-[11px] text-slate-400 font-semibold mb-4">البلاغات بتوصل هنا بس ومش بتتنشر — راجعها، ولو اتأكدت من مصدر رسمي انشر تحذير من النموذج اللي فوق من غير أي بيانات عن المُبلِّغ.</p>
         <div id="reportsList" class="space-y-2"></div>
       </div>
+      </div><!-- /tab-awareness -->
 
+      <div id="tab-market" class="admin-tab-panel space-y-5 hidden" data-tab-panel="market">
       <!-- سوق مستعمل — مراجعة الإعلانات -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5">
         <h3 class="text-base font-extrabold text-amber-400 mb-1">إعلانات السوق <span id="classifiedsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0</span></h3>
@@ -416,20 +492,8 @@
         <p class="text-[11px] text-slate-400 font-semibold mb-4">الوظايف بتظهر للعامة بس بعد الموافقة — راجع البيانات قبل النشر.</p>
         <div id="jobsList" class="space-y-2"></div>
       </div>
+      </div><!-- /tab-market -->
 
-      <!-- البحث والفلترة -->
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input type="text" id="adminSearch" placeholder="ابحث بالاسم أو المنطقة أو الكلمات المفتاحية..."
-          class="flex-1 bg-slate-900/90 border border-slate-800 rounded-2xl py-3 px-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400">
-        <select id="adminCategoryFilter" class="bg-slate-900 border border-slate-800 rounded-2xl px-3 py-3 text-xs font-bold text-white focus:outline-none">
-          <option value="all">كل التصنيفات</option>
-        </select>
-      </div>
-      <div class="flex justify-between items-center">
-        <h3 class="text-sm font-extrabold text-slate-200">قائمة الخدمات</h3>
-        <span id="adminResultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full">0 خدمة</span>
-      </div>
-      <div id="adminServicesList" class="space-y-3"></div>
     </section>
   </main>
 

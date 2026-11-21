@@ -151,6 +151,54 @@ function showSection(which) {
   els.loginSection.classList.toggle('hidden', which !== 'login');
   els.deniedSection.classList.toggle('hidden', which !== 'denied');
   els.dashboardSection.classList.toggle('hidden', which !== 'dashboard');
+  if (which === 'dashboard') switchAdminTab(currentAdminTab(), { scroll: false });
+}
+
+// تبويبات اللوحة: كل قسم داخل أيقونة، والضغط عليها يفتح قسمها فقط.
+// الاختيار محفوظ على الجهاز — اللوحة تفتح على آخر تبويب استخدمه الأدمن.
+const ADMIN_TAB_KEY = 'ism_admin_tab';
+const ADMIN_TABS = ['services', 'review', 'users', 'jarak', 'ads', 'awareness', 'market', 'gold', 'home'];
+
+function switchAdminTab(tabId, { scroll = true } = {}) {
+  if (!ADMIN_TABS.includes(tabId)) tabId = 'services';
+  document.querySelectorAll('[data-tab-panel]').forEach((p) => {
+    p.classList.toggle('hidden', p.dataset.tabPanel !== tabId);
+  });
+  document.querySelectorAll('#adminTabs .admin-tab-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  try { localStorage.setItem(ADMIN_TAB_KEY, tabId); } catch (_) {}
+  if (scroll) {
+    const bar = document.getElementById('adminTabs');
+    if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function currentAdminTab() {
+  try {
+    const saved = localStorage.getItem(ADMIN_TAB_KEY);
+    if (ADMIN_TABS.includes(saved)) return saved;
+  } catch (_) {}
+  return 'services';
+}
+
+// أرقام حمراء على الأيقونات: مجموع العناصر بانتظار المراجعة في كل قسم.
+function updateTabBadges() {
+  const num = (id) => {
+    const el = document.getElementById(id);
+    return el ? (parseInt(String(el.textContent).replace(/[^0-9]/g, ''), 10) || 0) : 0;
+  };
+  const set = (tab, n) => {
+    const b = document.getElementById('tabBadge-' + tab);
+    if (!b) return;
+    b.textContent = String(n);
+    b.classList.toggle('hidden', n <= 0);
+  };
+  set('review', num('pendingReviewsCount') + num('pendingServicesCount') + num('pendingEditsCount') + num('pendingOfferRequestsCount'));
+  set('users', num('usersCount'));
+  set('jarak', num('pendingJarakProvidersCount') + num('pendingJarakRequestsCount') + num('pendingJarakReviewsCount'));
+  set('awareness', num('reportsCount'));
+  set('market', num('classifiedsCount') + num('jobsCount'));
 }
 
 function arabicAuthError(err) {
@@ -251,6 +299,7 @@ async function loadServices() {
   fillOfferServiceSelect();
   fillBannerServiceSelect();
   updateSeedButton();
+  updateTabBadges();
 }
 
 // زيارات اليوم — إذا فشل التحميل (مثلاً قواعد Firestore لم
@@ -1578,7 +1627,11 @@ function bindEvents() {
 
   document.getElementById('btnNewService').addEventListener('click', () => {
     resetForm();
+    switchAdminTab('services', { scroll: false });
     els.serviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.querySelectorAll('#adminTabs .admin-tab-btn').forEach((b) => {
+    b.addEventListener('click', () => switchAdminTab(b.dataset.tab));
   });
   document.getElementById('btnCancelEdit').addEventListener('click', resetForm);
 
