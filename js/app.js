@@ -17,6 +17,8 @@ const state = {
   showAll: false, // "كل الخدمات": عرض كل الأنشطة في قائمة واحدة (يختلف عن الرئيسية/بلاطات الأقسام)
   onlyEmergency: false,
   onlyFavorites: false,
+  onlyOpenNow: false,
+  only24h: false,
   isAdmin: false,
   currentUser: null,
   profile: null,
@@ -97,6 +99,8 @@ function selectGroupTile(groupId) {
   state.activeSubcategory = 'all';
   state.onlyEmergency = false;
   state.onlyFavorites = false;
+  state.onlyOpenNow = false;
+  state.only24h = false;
   syncGroupHash();
   db.logGroupView(groupId);
   refreshUI();
@@ -112,6 +116,8 @@ function resetToHome() {
   state.showAll = false;
   state.onlyEmergency = false;
   state.onlyFavorites = false;
+  state.onlyOpenNow = false;
+  state.only24h = false;
   els.searchInput.value = '';
   const heroSearch = document.getElementById('heroSearchInput');
   if (heroSearch) heroSearch.value = '';
@@ -246,6 +252,16 @@ function bindEvents() {
     refreshUI();
   });
 
+  // فلاتر سريعة: فاتحة دلوقتي / 24 ساعة.
+  document.getElementById('chipOpenNow')?.addEventListener('click', () => {
+    state.onlyOpenNow = !state.onlyOpenNow;
+    refreshUI();
+  });
+  document.getElementById('chip24h')?.addEventListener('click', () => {
+    state.only24h = !state.only24h;
+    refreshUI();
+  });
+
   document.getElementById('btnAddService').addEventListener('click', openAddServiceModal);
   document.getElementById('footerAddService')?.addEventListener('click', openAddServiceModal);
   // روابط الأقسام السريعة في التذييل.
@@ -267,9 +283,20 @@ function bindEvents() {
 function updateSectionTitle() {
   if (state.onlyEmergency) els.sectionTitle.textContent = 'خدمات الطوارئ و 24 ساعة';
   else if (state.onlyFavorites) els.sectionTitle.textContent = 'الخدمات المحفوظة';
+  else if (state.onlyOpenNow) els.sectionTitle.textContent = 'الفاتحة دلوقتي';
+  else if (state.only24h) els.sectionTitle.textContent = 'خدمات 24 ساعة';
   else if (state.searchQuery) els.sectionTitle.textContent = 'نتائج البحث';
   else if (state.activeCategory !== 'all') els.sectionTitle.textContent = categoryInfo(state.activeCategory).name;
   else els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
+  // خطوط الصيدليات الساخنة: بس عند تصفح قسم الصيدليات.
+  const hotlines = document.getElementById('pharmacyHotlines');
+  if (hotlines) hotlines.classList.toggle('hidden', !(state.activeCategory === 'health' && state.activeSubcategory === 'pharmacies'));
+}
+
+// مزامنة شكل زراري "فاتحة دلوقتي" و"24 ساعة" مع الحالة.
+function syncQuickChips() {
+  document.getElementById('chipOpenNow')?.classList.toggle('quick-chip--on', state.onlyOpenNow);
+  document.getElementById('chip24h')?.classList.toggle('quick-chip--on', state.only24h);
 }
 
 function refreshUI() {
@@ -279,6 +306,8 @@ function refreshUI() {
     state.activeSubcategory = 'all';
     state.onlyEmergency = false;
     state.onlyFavorites = false;
+    state.onlyOpenNow = false;
+    state.only24h = false;
     syncGroupHash();
     db.logGroupView(catId);
     refreshUI();
@@ -289,10 +318,12 @@ function refreshUI() {
     refreshUI();
   });
 
+  syncQuickChips();
+
   // الصفحة الرئيسية: بلا أي فلتر أو بحث تعرض بلاطات الأقسام فقط،
   // وأي اختيار أو بحث أو فلتر يعرض قائمة الخدمات بدلها.
   const isHome = state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
-    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites;
+    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites && !state.onlyOpenNow && !state.only24h;
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
@@ -317,13 +348,15 @@ function refreshUI() {
     const matchArea = state.selectedArea === 'all' || srv.area === state.selectedArea;
     const matchEmerg = !state.onlyEmergency || srv.isEmergency;
     const matchFav = !state.onlyFavorites || state.favorites.includes(srv.id);
+    const matchOpen = !state.onlyOpenNow || getOpenStatus(srv.openHour, srv.closeHour).isOpen;
+    const match24 = !state.only24h || (srv.openHour === 0 && srv.closeHour === 24);
     const matchQuery = !state.searchQuery ||
       srv.name.toLowerCase().includes(state.searchQuery) ||
       srv.area.toLowerCase().includes(state.searchQuery) ||
       srv.tags.toLowerCase().includes(state.searchQuery) ||
       srv.address.toLowerCase().includes(state.searchQuery);
 
-    return matchCat && matchSub && matchArea && matchEmerg && matchFav && matchQuery;
+    return matchCat && matchSub && matchArea && matchEmerg && matchFav && matchQuery && matchOpen && match24;
   });
 
   els.resultsCount.textContent = `${filtered.length} خدمة`;

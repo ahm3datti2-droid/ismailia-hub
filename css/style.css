@@ -739,6 +739,14 @@ a.footer-line:hover { color: #FFC400; }
 .train-dir-btn { font-size: 0.75rem; font-weight: 800; padding: 0.45rem 0.8rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #cbd5e1; }
 .train-dir-btn--on { background: #FFC400; border-color: #FFC400; color: #0A2463; }
 .trains-table { overflow-x: auto; }
+/* فلاتر سريعة في شريط الفلاتر: فاتحة دلوقتي / 24 ساعة. */
+.quick-chip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.75rem; font-weight: 800; color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.45rem 0.8rem; border-radius: 9999px; white-space: nowrap; transition: all 0.15s;
+}
+.quick-chip--on { background: #FFC400; border-color: #FFC400; color: #0A2463; }
 .gold-price {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);

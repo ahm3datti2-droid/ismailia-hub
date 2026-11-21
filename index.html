@@ -168,6 +168,11 @@
       <div id="categoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-3"></div>
       <!-- التصنيفات الفرعية (تظهر عند اختيار قسم رئيسي) -->
       <div id="subcategoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-2"></div>
+      <!-- فلاتر سريعة: فاتح دلوقتي / 24 ساعة -->
+      <div class="flex gap-2 overflow-x-auto no-scrollbar pt-2">
+        <button id="chipOpenNow" class="quick-chip"><i data-lucide="clock" class="w-4 h-4"></i> فاتحة دلوقتي</button>
+        <button id="chip24h" class="quick-chip"><i data-lucide="moon-star" class="w-4 h-4"></i> 24 ساعة</button>
+      </div>
       <!-- فلتر المناطق -->
       <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-2">
         <div class="flex items-center gap-2 text-xs shrink-0">
@@ -312,6 +317,8 @@
           كل الأقسام
         </button>
       </div>
+      <!-- خطوط ساخنة للصيدليات: تظهر بس عند تصفح قسم الصيدليات -->
+      <p id="pharmacyHotlines" class="hidden text-xs font-bold text-slate-300 bg-slate-900/60 border border-slate-800/80 rounded-xl px-3.5 py-2 mb-3">خطوط ساخنة للصيدليات: العزبي <a href="tel:19600" class="text-amber-400" dir="ltr">19600</a> · سيف <a href="tel:19199" class="text-amber-400" dir="ltr">19199</a> · الإسعاف <a href="tel:16682" class="text-amber-400" dir="ltr">16682</a></p>
 
       <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الشاشات الواسعة -->
       <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
