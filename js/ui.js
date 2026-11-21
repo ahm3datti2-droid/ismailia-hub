@@ -220,6 +220,17 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     lucide.createIcons();
     return;
   }
+  // شارة "الأعلى تقييماً": أفضل 3 خدمات في القايمة المعروضة حالياً
+  // (تقييم 4+ وبتقييمات حقيقية) — نسبية، لأن مفيش خدمة في الدليل
+  // واصلة 4.5+ فحدّ ثابت كان هيخلي الشارة ماتظهرش أبداً.
+  const topRatedIds = new Set(
+    services
+      .filter((s) => (s.reviewsCount > 1 || s.rating !== 5) && Number(s.rating || 0) >= 4)
+      .slice()
+      .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviewsCount || 0) - Number(a.reviewsCount || 0)))
+      .slice(0, 3)
+      .map((s) => s.id)
+  );
   container.innerHTML = services.map(srv => {
     const status = getOpenStatus(srv.openHour, srv.closeHour);
     const isFav = favorites.includes(srv.id);
@@ -227,8 +238,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     const subName = subcategoryName(srv.category, srv.subcategory);
     const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
     const waNumber = toWhatsAppNumber(srv.whatsapp || srv.phone);
-    // شارة "الأعلى تقييماً": تقييم 4.5+ من 3 تقييمات حقيقية أو أكثر.
-    const isTopRated = Number(srv.rating || 0) >= 4.5 && Number(srv.reviewsCount || 0) >= 3;
+    const isTopRated = services.length >= 4 && topRatedIds.has(srv.id);
 
     return `
       <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">
