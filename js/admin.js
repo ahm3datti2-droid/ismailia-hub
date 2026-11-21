@@ -211,23 +211,27 @@ async function loadServices() {
     state.services = [];
     state.remoteCount = 0;
   }
-  await loadPendingReviews();
-  await loadPendingServices();
-  await loadPendingEdits();
-  await loadPendingOfferRequests();
-  await loadPendingJarakProviders();
-  await loadPendingJarakRequests();
-  await loadLiveJarakRequests();
-  await loadPendingJarakReviews();
-  await loadGoldPrices();
-  await loadOffers();
-  await loadBanners();
-  await loadAwarenessWarnings();
-  await loadAwarenessReports();
-  await loadClassifieds();
-  await loadJobs();
-  await loadUsers();
-  await loadDailyStats();
+  // كل أقسام اللوحة مستقلة — تحميلها متوازياً بدلاً من واحداً تلو الآخر
+  // (كانت 18 استعلاماً متتالياً، كل واحد ينتظر سابقه).
+  await Promise.allSettled([
+    loadPendingReviews(),
+    loadPendingServices(),
+    loadPendingEdits(),
+    loadPendingOfferRequests(),
+    loadPendingJarakProviders(),
+    loadPendingJarakRequests(),
+    loadLiveJarakRequests(),
+    loadPendingJarakReviews(),
+    loadGoldPrices(),
+    loadOffers(),
+    loadBanners(),
+    loadAwarenessWarnings(),
+    loadAwarenessReports(),
+    loadClassifieds(),
+    loadJobs(),
+    loadUsers(),
+    loadDailyStats()
+  ]);
   renderStats();
   renderList();
   renderUsersList();

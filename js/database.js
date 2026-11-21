@@ -16,6 +16,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  getCountFromServer,
   setDoc,
   addDoc,
   updateDoc,
@@ -137,10 +138,12 @@ class DatabaseService {
   }
 
   // عدد المستندات الموجودة فعلاً في Firestore (بدون البديل المحلي).
+  // استعلام عدّ تجميعي — لا ينزّل المستندات (النسخة القديمة كانت تنزّل
+  // كل الخدمات مرة ثانية ~950KB لمجرد العدّ).
   async countRemoteServices() {
     try {
-      const snap = await getDocs(collection(firestoreDb, SERVICES_COLLECTION));
-      return snap.size;
+      const snap = await getCountFromServer(collection(firestoreDb, SERVICES_COLLECTION));
+      return snap.data().count;
     } catch (_) {
       return 0;
     }

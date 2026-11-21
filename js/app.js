@@ -127,20 +127,66 @@ function resetToHome() {
 }
 
 async function loadServices() {
+  // 1) عرض نسخة مخزنة فوراً (إن وجدت) حتى لا تبقى الصفحة فارغة أثناء انتظار الشبكة،
+  // ثم تحديثها في الخلفية من Firestore.
+  const cached = readServicesCache();
+  if (cached) {
+    state.services = cached;
+    refreshUI();
+    if (!openDeepLinkedService()) openDeepLinkedGroup();
+  }
   try {
-    state.services = await db.getAllServices();
-    try { state.offers = await db.getActiveOffers(); } catch (_) { state.offers = []; }
-    try { state.banners = await db.getActiveBanners(); } catch (_) { state.banners = []; }
-    try { state.gold = await db.getGoldPrices(); } catch (_) { state.gold = null; }
+    const [services, offers, banners, gold] = await Promise.all([
+      db.getAllServices(),
+      db.getActiveOffers().catch(() => []),
+      db.getActiveBanners().catch(() => []),
+      db.getGoldPrices().catch(() => null)
+    ]);
+    state.services = services;
+    state.offers = offers;
+    state.banners = banners;
+    state.gold = gold;
+    writeServicesCache(services);
     refreshUI();
     if (!openDeepLinkedService()) openDeepLinkedGroup();
   } catch (err) {
+    if (cached) return; // النسخة المخزنة معروضة أصلاً — لا نكسر الصفحة.
     console.error('تعذر تحميل الخدمات:', err);
     renderErrorState(els.servicesGrid, () => {
       renderSkeleton(els.servicesGrid);
       loadServices();
     });
   }
+}
+
+// تخزين مؤقت للخدمات في localStorage: الزيارات التالية تفتح فوراً،
+// والتحديث من Firestore يتم في الخلفية عند كل تحميل.
+// (الصور المحفوظة كبيانات داخل المستندات تُستثنى من التخزين لأنها ضخمة
+// وتُحمَّل من مسارات /images/... بعد ترحيلها.)
+const SERVICES_CACHE_KEY = 'ism_services_cache_v2';
+function readServicesCache() {
+  try {
+    const raw = localStorage.getItem(SERVICES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.services) || !parsed.services.length) return null;
+    return parsed.services;
+  } catch (_) {
+    return null;
+  }
+}
+function writeServicesCache(services) {
+  try {
+    const slim = services.map((s) => {
+      const c = { ...s };
+      if (typeof c.imageUrl === 'string' && c.imageUrl.startsWith('data:')) c.imageUrl = '';
+      return c;
+    });
+    localStorage.setItem(SERVICES_CACHE_KEY, JSON.stringify({ v: 2, at: Date.now(), services: slim }));
+  } catch (_) { /* التخزين تحسين إضافي — امتلاؤه لا يكسر الصفحة */ }
+}
+function clearServicesCache() {
+  try { localStorage.removeItem(SERVICES_CACHE_KEY); } catch (_) {}
 }
 
 // رابط خاص لكل خدمة: #service-<id> أو ?service=<id> يفتح تفاصيل الخدمة مباشرة عند فتح الرابط.
@@ -676,6 +722,7 @@ async function handleDeleteService(id, btn) {
       await db.deleteService(id);
       closeModal();
       state.services = await db.getAllServices();
+      writeServicesCache(state.services);
       refreshUI();
     } catch (err) {
       alert(err.message || 'تعذر حذف الخدمة. حاول مرة أخرى.');
@@ -1382,6 +1429,7 @@ function openAddServiceModal() {
         return;
       }
       state.services = await db.getAllServices();
+      writeServicesCache(state.services);
       closeModal();
       refreshUI();
       return;
