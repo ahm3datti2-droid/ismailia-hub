@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سوق ووظايف | دليل خدمات الإسماعيلية</title>
+  <meta name="description" content="سوق مستعمل ووظايف في الإسماعيلية — بيع واشتري واشتغل، إعلانات بمراجعة الأدمن قبل النشر.">
+  <meta name="theme-color" content="#0A2463">
+  <meta property="og:title" content="سوق ووظايف | دليل خدمات الإسماعيلية">
+  <meta property="og:description" content="بيع واشتري واشتغل في الإسماعيلية — إعلانات بمراجعة الأدمن قبل النشر.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ismailiahub.com/market">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        amber: { 300: '#FFE45C', 400: '#FFC400', 500: '#FFC400', 600: '#E0A800' },
+        brand: { yellow: '#FFC400', blue: '#2563EB', deep: '#0A2463', light: '#60A5FA' }
+      } } }
+    };
+  </script>
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pb-12 select-none">
+
+  <header class="sticky top-0 z-40 glass-header px-4 pt-4 pb-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 rounded-2xl shadow-lg shadow-blue-900/40">
+        <div>
+          <h1 class="text-lg font-black text-white leading-tight">سوق ووظايف</h1>
+          <p class="text-[11px] text-amber-400 font-semibold">بيع واشتري… واشتغل في الإسماعيلية</p>
+        </div>
+      </div>
+      <a href="index.html" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
+        <i data-lucide="home" class="w-4 h-4"></i> الرئيسية
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-5">
+    <div class="jarak-hero mb-5">
+      <span class="jarak-hero__badge"><i data-lucide="store" class="w-4 h-4"></i> سوق الإسماعيلية</span>
+      <span class="jarak-hero__title">بيع واشتري… واشتغل في الإسماعيلية</span>
+      <span class="jarak-hero__text">سوق مستعمل ووظايف من أهل الإسماعيلية. كل إعلان بيتراجع من الأدمن قبل ما يتنشر، والنشر مجاني.</span>
+    </div>
+
+    <!-- التبويبات -->
+    <div class="grid grid-cols-2 gap-2 mb-5">
+      <button id="tabClassifieds" class="py-3 rounded-xl text-sm font-extrabold transition bg-amber-500 text-slate-950">🛒 سوق مستعمل</button>
+      <button id="tabJobs" class="py-3 rounded-xl text-sm font-extrabold transition bg-slate-800 text-slate-300">💼 وظايف</button>
+    </div>
+
+    <!-- ===== سوق مستعمل ===== -->
+    <section id="classifiedsSection">
+      <div id="classifiedCats" class="flex gap-2 overflow-x-auto no-scrollbar mb-4"></div>
+      <div id="classifiedsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+      <p id="classifiedsEmpty" class="hidden text-center text-sm text-slate-400 font-bold py-8">لا توجد إعلانات معتمدة بعد — كن أول من يعلن.</p>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 mt-6">
+        <h2 class="text-base font-extrabold text-white flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-5 h-5 text-amber-400"></i> أضف إعلان بيع</h2>
+        <p class="text-xs text-slate-400 font-semibold mt-1 mb-4">الإعلان بيتراجع من الأدمن قبل النشر (عادة خلال يوم). النشر مجاني.</p>
+        <p id="classifiedError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
+        <p id="classifiedSuccess" class="hidden text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-3">وصل إعلانك ✓ — هيتراجع من الأدمن وهيتنشر لو البيانات سليمة.</p>
+        <form id="classifiedForm" class="space-y-3 text-xs">
+          <input type="text" name="marketWebsite" autocomplete="off" tabindex="-1" aria-hidden="true" class="hidden">
+          <input type="text" name="title" required maxlength="100" placeholder="عنوان الإعلان — مثال: آيفون 13 بحالة ممتازة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <div class="grid grid-cols-2 gap-2">
+            <select name="category" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="cars">سيارات</option>
+              <option value="phones">موبايلات وأجهزة</option>
+              <option value="furniture">أثاث ومنزل</option>
+              <option value="clothing">ملابس</option>
+              <option value="other" selected>أخرى</option>
+            </select>
+            <input type="number" name="price" min="0" placeholder="السعر (ج.م) — اختياري" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          </div>
+          <textarea name="description" required minlength="10" maxlength="1000" rows="3" placeholder="وصف الإعلان: الحالة، الموديل، أي عيوب… (10 أحرف على الأقل)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+            <select name="area" id="classifiedArea" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1.5">صورة الإعلان (اختياري — من موبايلك)</label>
+            <input type="file" id="classifiedPhoto" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs">
+            <img id="classifiedPhotoPreview" class="hidden mt-2 rounded-xl max-h-48 object-cover" alt="">
+          </div>
+          <p class="text-[11px] text-slate-500 font-semibold">نصيحة أمان: قابل البايع في مكان عام، وعاين الحاجة بنفسك قبل ما تدفع — وماتدفعش أي مقدم قبل المعاينة.</p>
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">ابعت الإعلان</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== وظايف ===== -->
+    <section id="jobsSection" class="hidden">
+      <div id="jobsList" class="grid grid-cols-1 gap-4"></div>
+      <p id="jobsEmpty" class="hidden text-center text-sm text-slate-400 font-bold py-8">لا توجد وظايف معتمدة بعد — كن أول من يعلن.</p>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 mt-6">
+        <h2 class="text-base font-extrabold text-white flex items-center gap-1.5"><i data-lucide="briefcase" class="w-5 h-5 text-amber-400"></i> أضف وظيفة</h2>
+        <p class="text-xs text-slate-400 font-semibold mt-1 mb-4">الوظيفة بتتراجع من الأدمن قبل النشر (عادة خلال يوم). النشر مجاني.</p>
+        <p id="jobError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
+        <p id="jobSuccess" class="hidden text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-3">وصلت الوظيفة ✓ — هتتراجع من الأدمن وهتتنشر لو البيانات سليمة.</p>
+        <form id="jobForm" class="space-y-3 text-xs">
+          <input type="text" name="marketWebsite" autocomplete="off" tabindex="-1" aria-hidden="true" class="hidden">
+          <input type="text" name="title" required maxlength="100" placeholder="عنوان الوظيفة — مثال: سائق دليفري" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <input type="text" name="company" required maxlength="100" placeholder="اسم الشركة أو الجهة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          <div class="grid grid-cols-2 gap-2">
+            <select name="jobType" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+              <option value="full">دوام كامل</option>
+              <option value="part">دوام جزئي</option>
+              <option value="shift">ورديات</option>
+              <option value="remote">عن بُعد</option>
+            </select>
+            <input type="text" name="salary" maxlength="60" placeholder="الراتب (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+          </div>
+          <textarea name="description" required minlength="10" maxlength="1000" rows="3" placeholder="وصف الوظيفة: المهام، الشروط، مواعيد العمل… (10 أحرف على الأقل)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل للتواصل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
+            <select name="area" id="jobArea" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
+          </div>
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">ابعت الوظيفة</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/market.js"></script>
+</body>
+</html>

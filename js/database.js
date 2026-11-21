@@ -1253,6 +1253,118 @@ class DatabaseService {
     await deleteDoc(doc(firestoreDb, 'awarenessReports', reportId));
   }
 
+  // ===== سوق مستعمل + وظايف (مجموعتا classifieds و jobs) =====
+  // - النشر العام: الإعلانات المعتمدة فقط (status == 'approved').
+  // - الإرسال: من غير حساب (مثل بلاغات الوعي) — يتحفظ كـ pending لحد
+  //   ما الأدمن يوافق أو يحذف. الصورة (للسوق فقط) data URL مصغّرة ≤ 700KB.
+  async getApprovedClassifieds() {
+    const snap = await getDocs(query(collection(firestoreDb, 'classifieds'), where('status', '==', 'approved'), orderBy('createdAt', 'desc')));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
+  async getApprovedJobs() {
+    const snap = await getDocs(query(collection(firestoreDb, 'jobs'), where('status', '==', 'approved'), orderBy('createdAt', 'desc')));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
+  async submitClassified(data) {
+    const title = String(data.title || '').trim();
+    const description = String(data.description || '').trim();
+    const phone = String(data.phone || '').trim();
+    if (title.length < 3) throw new Error('اكتب عنوان الإعلان.');
+    if (title.length > 100) throw new Error('العنوان طويل — اختصره في 100 حرف.');
+    if (description.length < 10) throw new Error('اكتب وصف الإعلان في سطرين على الأقل.');
+    if (description.length > 1000) throw new Error('الوصف طويل — اختصره في 1000 حرف.');
+    if (!/^01[0-9]{9}$/.test(phone.replace(/[\s-]/g, ''))) throw new Error('اكتب رقم موبايل صحيح (11 رقم يبدأ بـ 01).');
+    const price = Number(data.price);
+    if (data.price !== '' && data.price != null && !(price >= 0)) throw new Error('السعر غير صحيح.');
+    const photo = String(data.photo || '');
+    if (photo && photo.length > 950000) throw new Error('الصورة كبيرة — جرّب صورة أصغر.');
+    const ref = await addDoc(collection(firestoreDb, 'classifieds'), {
+      title: title.slice(0, 100),
+      description: description.slice(0, 1000),
+      price: (data.price === '' || data.price == null) ? null : price,
+      category: String(data.category || 'other').slice(0, 30),
+      phone: phone.replace(/[\s-]/g, ''),
+      area: String(data.area || '').trim().slice(0, 60),
+      photo,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async submitJob(data) {
+    const title = String(data.title || '').trim();
+    const company = String(data.company || '').trim();
+    const description = String(data.description || '').trim();
+    const phone = String(data.phone || '').trim();
+    if (title.length < 3) throw new Error('اكتب عنوان الوظيفة.');
+    if (title.length > 100) throw new Error('العنوان طويل — اختصره في 100 حرف.');
+    if (company.length < 2) throw new Error('اكتب اسم الشركة أو الجهة.');
+    if (description.length < 10) throw new Error('اكتب وصف الوظيفة في سطرين على الأقل.');
+    if (description.length > 1000) throw new Error('الوصف طويل — اختصره في 1000 حرف.');
+    if (!/^01[0-9]{9}$/.test(phone.replace(/[\s-]/g, ''))) throw new Error('اكتب رقم موبايل صحيح (11 رقم يبدأ بـ 01).');
+    const ref = await addDoc(collection(firestoreDb, 'jobs'), {
+      title: title.slice(0, 100),
+      company: company.slice(0, 100),
+      description: description.slice(0, 1000),
+      salary: String(data.salary || '').trim().slice(0, 60),
+      jobType: String(data.jobType || 'full').slice(0, 20),
+      phone: phone.replace(/[\s-]/g, ''),
+      area: String(data.area || '').trim().slice(0, 60),
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return ref.id;
+  }
+
+  async getAllClassifieds() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, 'classifieds'));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async getAllJobs() {
+    requireAdminUser();
+    const snap = await getDocs(collection(firestoreDb, 'jobs'));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async setClassifiedStatus(id, status) {
+    requireAdminUser();
+    if (!['pending', 'approved'].includes(status)) throw new Error('حالة غير معروفة.');
+    await updateDoc(doc(firestoreDb, 'classifieds', id), { status });
+  }
+
+  async setJobStatus(id, status) {
+    requireAdminUser();
+    if (!['pending', 'approved'].includes(status)) throw new Error('حالة غير معروفة.');
+    await updateDoc(doc(firestoreDb, 'jobs', id), { status });
+  }
+
+  async deleteClassified(id) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'classifieds', id));
+  }
+
+  async deleteJob(id) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jobs', id));
+  }
+
   // ===== إحصائيات الزيارات اليومية (مجموعة dailyStats) =====
   // - مستند واحد لكل يوم (المفتاح = YYYY-MM-DD): visits + groups{groupId: n}.
   // - العدّ مرة واحدة لكل جهاز في اليوم (مفتاح في localStorage) حتى لا

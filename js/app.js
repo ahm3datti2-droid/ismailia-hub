@@ -332,6 +332,7 @@ function refreshUI() {
   renderDailyServicesSection(isHome);
   document.getElementById('jarakSection')?.classList.toggle('hidden', !isHome);
   document.getElementById('awarenessSection')?.classList.toggle('hidden', !isHome);
+  document.getElementById('marketSection')?.classList.toggle('hidden', !isHome);
   renderBannersSection(isHome);
   renderTopRatedSection(isHome);
   renderTickerSection(isHome);

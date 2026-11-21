@@ -35,6 +35,8 @@ const state = {
   banners: [],
   awarenessWarnings: [],
   awarenessReports: [],
+  classifieds: [],
+  jobs: [],
   users: [],
   usersLoadFailed: false,
   dailyStats: { visits: 0, groups: {} },
@@ -104,6 +106,10 @@ const els = {
   warningsList: document.getElementById('warningsList'),
   reportsList: document.getElementById('reportsList'),
   reportsCount: document.getElementById('reportsCount'),
+  classifiedsList: document.getElementById('classifiedsList'),
+  classifiedsCount: document.getElementById('classifiedsCount'),
+  jobsList: document.getElementById('jobsList'),
+  jobsCount: document.getElementById('jobsCount'),
   todayVisitsTotal: document.getElementById('todayVisitsTotal'),
   todayVisitsDate: document.getElementById('todayVisitsDate'),
   todayGroupsList: document.getElementById('todayGroupsList'),
@@ -218,6 +224,8 @@ async function loadServices() {
   await loadBanners();
   await loadAwarenessWarnings();
   await loadAwarenessReports();
+  await loadClassifieds();
+  await loadJobs();
   await loadUsers();
   await loadDailyStats();
   renderStats();
@@ -746,6 +754,116 @@ async function loadAwarenessReports() {
   } catch (_) {
     state.awarenessReports = [];
   }
+}
+
+async function loadClassifieds() {
+  try {
+    state.classifieds = await db.getAllClassifieds();
+  } catch (_) {
+    state.classifieds = [];
+  }
+  renderClassifiedsList();
+}
+async function loadJobs() {
+  try {
+    state.jobs = await db.getAllJobs();
+  } catch (_) {
+    state.jobs = [];
+  }
+  renderJobsList();
+}
+
+function renderClassifiedsList() {
+  if (!els.classifiedsList) return;
+  const list = state.classifieds;
+  if (els.classifiedsCount) els.classifiedsCount.textContent = String(list.filter((c) => c.status === 'pending').length);
+  if (!list.length) {
+    els.classifiedsList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد إعلانات بعد.</p>`;
+    return;
+  }
+  els.classifiedsList.innerHTML = list.map((c) => {
+    const when = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '';
+    return `
+      <article class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs font-extrabold text-white">${esc(c.title)} <span class="text-amber-400">(${c.status === 'approved' ? 'منشور' : 'بانتظار المراجعة'})</span></p>
+          <span class="text-[11px] text-slate-500 font-bold">${esc(when)}${c.area ? ` • ${esc(c.area)}` : ''}</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed mt-1.5">${esc(c.description)}</p>
+        <p class="text-[11px] text-slate-400 mt-1">السعر: ${c.price != null && c.price !== '' ? esc(Number(c.price).toLocaleString('en-US')) + ' ج.م' : 'غير محدد'} • للتواصل: <a href="tel:${esc(c.phone)}" dir="ltr" class="text-amber-400">${esc(c.phone)}</a></p>
+        ${c.photo ? `<img src="${esc(c.photo)}" alt="صورة الإعلان" class="w-full max-h-48 object-contain bg-white rounded-xl mt-2">` : ''}
+        <div class="flex gap-1.5 mt-3">
+          ${c.status !== 'approved' ? `<button data-approve-classified="${esc(c.id)}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">نشر</button>` : ''}
+          <button data-delete-classified="${esc(c.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+        </div>
+      </article>`;
+  }).join('');
+  els.classifiedsList.querySelectorAll('[data-approve-classified]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setClassifiedStatus(btn.dataset.approveClassified, 'approved');
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر نشر الإعلان.');
+      }
+    });
+  });
+  els.classifiedsList.querySelectorAll('[data-delete-classified]').forEach((btn) => {
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
+      try {
+        await db.deleteClassified(btn.dataset.deleteClassified);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف الإعلان.');
+      }
+    }));
+  });
+}
+
+function renderJobsList() {
+  if (!els.jobsList) return;
+  const list = state.jobs;
+  if (els.jobsCount) els.jobsCount.textContent = String(list.filter((j) => j.status === 'pending').length);
+  if (!list.length) {
+    els.jobsList.innerHTML = `<p class="text-xs text-slate-400 font-semibold">لا توجد وظايف بعد.</p>`;
+    return;
+  }
+  els.jobsList.innerHTML = list.map((j) => {
+    const when = j.createdAt?.toDate ? j.createdAt.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '';
+    return `
+      <article class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs font-extrabold text-white">${esc(j.title)} — ${esc(j.company)} <span class="text-amber-400">(${j.status === 'approved' ? 'منشورة' : 'بانتظار المراجعة'})</span></p>
+          <span class="text-[11px] text-slate-500 font-bold">${esc(when)}${j.area ? ` • ${esc(j.area)}` : ''}</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed mt-1.5">${esc(j.description)}</p>
+        <p class="text-[11px] text-slate-400 mt-1">${j.salary ? `الراتب: ${esc(j.salary)} • ` : ''}للتواصل: <a href="tel:${esc(j.phone)}" dir="ltr" class="text-amber-400">${esc(j.phone)}</a></p>
+        <div class="flex gap-1.5 mt-3">
+          ${j.status !== 'approved' ? `<button data-approve-job="${esc(j.id)}" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">نشر</button>` : ''}
+          <button data-delete-job="${esc(j.id)}" class="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-extrabold transition">حذف</button>
+        </div>
+      </article>`;
+  }).join('');
+  els.jobsList.querySelectorAll('[data-approve-job]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await db.setJobStatus(btn.dataset.approveJob, 'approved');
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر نشر الوظيفة.');
+      }
+    });
+  });
+  els.jobsList.querySelectorAll('[data-delete-job]').forEach((btn) => {
+    btn.addEventListener('click', () => armDeleteConfirm(btn, async () => {
+      try {
+        await db.deleteJob(btn.dataset.deleteJob);
+        await loadServices();
+      } catch (err) {
+        alert(err.message || 'تعذر حذف الوظيفة.');
+      }
+    }));
+  });
 }
 
 const WARNING_LEVELS = { high: 'تحذير عاجل', medium: 'تنبيه', info: 'معلومة' };
