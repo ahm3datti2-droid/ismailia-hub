@@ -40,6 +40,7 @@ export const SERVICE_LOCATIONS = {
   "6byFQeRfCGPLEBhRCh4g": { "lat": 30.60438, "lng": 32.27708 },
   "6g0cQsc1Svsa789kWibi": { "lat": 30.60872, "lng": 32.3018 },
   "6xneryZj666N84dLRq55": { "lat": 30.59242, "lng": 32.27582 },
+  "74i5KErjT80nf50leXyz": { "lat": 30.58857, "lng": 32.27006 },
   "7GGfQM1yqD9jWiYM5QjM": { "lat": 30.59242, "lng": 32.27582 },
   "7T9qbQZLJAN0smjj65FB": { "lat": 30.60438, "lng": 32.27708 },
   "7eC7evhw3VbtLGsldOv6": { "lat": 30.59242, "lng": 32.27582 },
