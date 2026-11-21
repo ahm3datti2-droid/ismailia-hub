@@ -22,6 +22,7 @@ let activeTab = 'classifieds';
 let activeCat = 'all';
 let classifieds = [];
 let jobs = [];
+let loadError = false;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -66,6 +67,7 @@ function renderClassifieds() {
   if (!list) return;
   const items = classifieds.filter((c) => activeCat === 'all' || c.category === activeCat);
   empty.classList.toggle('hidden', items.length > 0);
+  if (loadError && items.length === 0) empty.textContent = 'تعذّر تحميل الإعلانات — جرّب تحديث الصفحة.';
   list.innerHTML = items.map((c) => {
     const wa = toWhatsAppNumber(c.phone);
     const waMsg = encodeURIComponent(`مرحباً، شفت إعلانك «${c.title}» في سوق دليل الإسماعيلية.`);
@@ -103,6 +105,7 @@ function renderJobs() {
   const empty = document.getElementById('jobsEmpty');
   if (!list) return;
   empty.classList.toggle('hidden', jobs.length > 0);
+  if (loadError && jobs.length === 0) empty.textContent = 'تعذّر تحميل الوظايف — جرّب تحديث الصفحة.';
   list.innerHTML = jobs.map((j) => {
     const wa = toWhatsAppNumber(j.phone);
     const waMsg = encodeURIComponent(`مرحباً، شفت وظيفة «${j.title}» في دليل الإسماعيلية وعايز أقدم.`);
@@ -165,10 +168,18 @@ function hideErr(el) { el?.classList.add('hidden'); }
 async function loadAll() {
   try {
     classifieds = await db.getApprovedClassifieds();
-  } catch (_) { classifieds = []; }
+  } catch (err) {
+    classifieds = [];
+    loadError = true;
+    console.error('load classifieds failed', err);
+  }
   try {
     jobs = await db.getApprovedJobs();
-  } catch (_) { jobs = []; }
+  } catch (err) {
+    jobs = [];
+    loadError = true;
+    console.error('load jobs failed', err);
+  }
   renderCats();
   renderClassifieds();
   renderJobs();

@@ -1258,13 +1258,25 @@ class DatabaseService {
   // - الإرسال: من غير حساب (مثل بلاغات الوعي) — يتحفظ كـ pending لحد
   //   ما الأدمن يوافق أو يحذف. الصورة (للسوق فقط) data URL مصغّرة ≤ 700KB.
   async getApprovedClassifieds() {
-    const snap = await getDocs(query(collection(firestoreDb, 'classifieds'), where('status', '==', 'approved'), orderBy('createdAt', 'desc')));
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const snap = await getDocs(query(collection(firestoreDb, 'classifieds'), where('status', '==', 'approved')));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
   }
 
   async getApprovedJobs() {
-    const snap = await getDocs(query(collection(firestoreDb, 'jobs'), where('status', '==', 'approved'), orderBy('createdAt', 'desc')));
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const snap = await getDocs(query(collection(firestoreDb, 'jobs'), where('status', '==', 'approved')));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
   }
 
   async submitClassified(data) {
