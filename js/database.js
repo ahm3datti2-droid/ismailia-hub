@@ -656,6 +656,27 @@ class DatabaseService {
     return true;
   }
 
+  async getApprovedJarakProviders() {
+    requireAdminUser();
+    const snap = await getDocs(query(
+      collection(firestoreDb, 'jarakProviders'),
+      where('isApproved', '==', true)
+    ));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => {
+      const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    return list;
+  }
+
+  async deleteJarakProvider(userId) {
+    requireAdminUser();
+    await deleteDoc(doc(firestoreDb, 'jarakProviders', userId));
+    return true;
+  }
+
   async rejectJarakProvider(userId) {
     requireAdminUser();
     await deleteDoc(doc(firestoreDb, 'jarakProviders', userId));

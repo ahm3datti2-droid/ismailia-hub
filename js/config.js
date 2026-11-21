@@ -90,6 +90,7 @@ export const GROUPS = [
     { id: 'tires', name: 'إطارات وبطاريات' },
     { id: 'car-wash', name: 'مغاسل سيارات وعناية' },
     { id: 'rental', name: 'تأجير سيارات' },
+    { id: 'winches', name: 'أوناش إنقاذ' },
     { id: 'fuel', name: 'محطات وقود' }
   ]},
   { id: 'tech', name: 'التكنولوجيا والاتصالات', icon: 'smartphone', subs: [

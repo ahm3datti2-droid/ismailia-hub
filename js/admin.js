@@ -27,6 +27,7 @@ const state = {
   pendingEdits: [],
   pendingOfferRequests: [],
   pendingJarakProviders: [],
+  approvedJarakProviders: [],
   pendingJarakRequests: [],
   liveJarakRequests: [],
   pendingJarakReviews: [],
@@ -81,6 +82,8 @@ const els = {
   pendingOfferRequestsCount: document.getElementById('pendingOfferRequestsCount'),
   pendingJarakProvidersList: document.getElementById('pendingJarakProvidersList'),
   pendingJarakProvidersCount: document.getElementById('pendingJarakProvidersCount'),
+  approvedJarakProvidersList: document.getElementById('approvedJarakProvidersList'),
+  approvedJarakProvidersCount: document.getElementById('approvedJarakProvidersCount'),
   pendingJarakRequestsList: document.getElementById('pendingJarakRequestsList'),
   pendingJarakRequestsCount: document.getElementById('pendingJarakRequestsCount'),
   liveJarakRequestsList: document.getElementById('liveJarakRequestsList'),
@@ -267,6 +270,7 @@ async function loadServices() {
     loadPendingEdits(),
     loadPendingOfferRequests(),
     loadPendingJarakProviders(),
+    loadApprovedJarakProviders(),
     loadPendingJarakRequests(),
     loadLiveJarakRequests(),
     loadPendingJarakReviews(),
@@ -286,6 +290,7 @@ async function loadServices() {
   renderPendingEdits();
   renderPendingOfferRequests();
   renderPendingJarakProviders();
+  renderApprovedJarakProviders();
   renderPendingJarakRequests();
   renderLiveJarakRequests();
   renderPendingJarakReviews();
@@ -533,6 +538,9 @@ function renderPendingOfferRequests() {
 async function loadPendingJarakProviders() {
   try { state.pendingJarakProviders = await db.getPendingJarakProviders(); } catch (_) { state.pendingJarakProviders = []; }
 }
+async function loadApprovedJarakProviders() {
+  try { state.approvedJarakProviders = await db.getApprovedJarakProviders(); } catch (_) { state.approvedJarakProviders = []; }
+}
 async function loadPendingJarakRequests() {
   try { state.pendingJarakRequests = await db.getPendingJarakRequests(); } catch (_) { state.pendingJarakRequests = []; }
 }
@@ -574,6 +582,28 @@ function renderPendingJarakProviders() {
   els.pendingJarakProvidersList.querySelectorAll('[data-reject-jarak-provider]').forEach((b) =>
     b.addEventListener('click', () => armDeleteConfirm(b, async () => {
       try { await db.rejectJarakProvider(b.dataset.rejectJarakProvider); await loadServices(); } catch (err) { alert(err.message || 'تعذر الرفض.'); }
+    })));
+}
+
+// جارك — المزودون المعتمدون (إشراف وحذف؛ كان لا يوجد حذف من اللوحة).
+function renderApprovedJarakProviders() {
+  if (!els.approvedJarakProvidersList) return;
+  els.approvedJarakProvidersCount.textContent = String(state.approvedJarakProviders.length);
+  if (!state.approvedJarakProviders.length) {
+    els.approvedJarakProvidersList.innerHTML = emptyQueueHtml('لا يوجد مزودون معتمدون');
+    return;
+  }
+  els.approvedJarakProvidersList.innerHTML = state.approvedJarakProviders.map((p) => `
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+      <p class="text-xs font-extrabold text-white">${esc(p.name)}</p>
+      <p class="text-[11px] text-slate-300 font-semibold mt-1">${esc((p.categories || []).join('، '))} • ${esc(p.area || '')} • <span dir="ltr">${esc(p.phone || '')}</span>${p.isAvailable === false ? ' • <span class="text-slate-400">غير متاح</span>' : ''}</p>
+      <div class="flex gap-2 mt-3">
+        <button data-delete-jarak-provider="${esc(p.id)}" class="text-[11px] font-extrabold text-rose-400 bg-rose-500/10 px-3 py-2 rounded-full">حذف المزود</button>
+      </div>
+    </div>`).join('');
+  els.approvedJarakProvidersList.querySelectorAll('[data-delete-jarak-provider]').forEach((b) =>
+    b.addEventListener('click', () => armDeleteConfirm(b, async () => {
+      try { await db.deleteJarakProvider(b.dataset.deleteJarakProvider); await loadServices(); } catch (err) { alert(err.message || 'تعذر الحذف.'); }
     })));
 }
 
