@@ -395,27 +395,61 @@ function renderTickerSection(isHome) {
   renderTicker(track, state.services, (id) => openServiceDetails(id));
 }
 
-// سعر الذهب اليوم: يظهر على الرئيسية فقط عند وجود أسعار محفوظة.
-function renderGoldSection(isHome) {
+// سعر الذهب اليوم: تلقائي من AlyawmGold (سعر عالمي محوّل للجنيه —
+// استرشادي، قد يختلف عن سعر الصاغة بـ 2–4%) مع fallback للأسعار
+// اليدوية من Firestore لو الـ API وقع. النتيجة بتتخزن ساعة على الجهاز.
+const GOLD_API_URL = 'https://alyawmgold.com/api/v1/spot/latest?country=EG';
+const GOLD_CACHE_KEY = 'ism_gold_spot';
+const GOLD_CACHE_MS = 60 * 60 * 1000;
+async function fetchSpotGold() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(GOLD_CACHE_KEY) || 'null');
+    if (cached && Date.now() - cached.ts < GOLD_CACHE_MS && cached.prices && cached.prices.price21) return cached.prices;
+  } catch (_) {}
+  try {
+    const r = await fetch(GOLD_API_URL);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const est = j.localGoldEstimate || (j.metals && j.metals.gold && j.metals.gold.karats);
+    if (!est) return null;
+    const prices = {
+      price24: Math.round(Number(est.karat24) || 0),
+      price21: Math.round(Number(est.karat21) || 0),
+      price18: Math.round(Number(est.karat18) || 0),
+      pound: Math.round((Number(est.karat21) || 0) * 8)
+    };
+    if (!prices.price21) return null;
+    try { localStorage.setItem(GOLD_CACHE_KEY, JSON.stringify({ ts: Date.now(), prices })); } catch (_) {}
+    return prices;
+  } catch (_) { return null; }
+}
+
+async function renderGoldSection(isHome) {
   const section = document.getElementById('goldSection');
   if (!section) return;
+  section.classList.toggle('hidden', !isHome);
+  if (!isHome) return;
   const g = state.gold;
-  const hasPrices = g && (Number(g.price21) > 0 || Number(g.price24) > 0);
-  section.classList.toggle('hidden', !isHome || !hasPrices);
-  if (!isHome || !hasPrices) return;
+  const hasManual = g && (Number(g.price21) > 0 || Number(g.price24) > 0);
   const fmt = (v) => Number(v) > 0 ? Number(v).toLocaleString('en-US') + ' ج.م' : '—';
-  document.getElementById('goldPrice24').textContent = fmt(g.price24);
-  document.getElementById('goldPrice21').textContent = fmt(g.price21);
-  document.getElementById('goldPrice18').textContent = fmt(g.price18);
-  document.getElementById('goldPricePound').textContent = fmt(g.pound);
   const label = document.getElementById('goldUpdatedLabel');
+  const paint = (p, note) => {
+    document.getElementById('goldPrice24').textContent = fmt(p.price24);
+    document.getElementById('goldPrice21').textContent = fmt(p.price21);
+    document.getElementById('goldPrice18').textContent = fmt(p.price18);
+    document.getElementById('goldPricePound').textContent = fmt(p.pound);
+    if (label) label.textContent = note;
+  };
+  let manualNote = '';
   try {
-    const ms = g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
-    label.textContent = ms
-      ? 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })
-      : '';
-  } catch (_) {
-    label.textContent = '';
+    const ms = g && g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
+    manualNote = ms ? 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  } catch (_) { manualNote = ''; }
+  if (hasManual) paint(g, manualNote);
+  else paint({ price24: 0, price21: 0, price18: 0, pound: 0 }, '');
+  const spot = await fetchSpotGold();
+  if (spot) {
+    paint(spot, 'سعر استرشادي — محدّث ' + new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' }) + ' · قد يختلف عن سعر الصاغة');
   }
 }
 
