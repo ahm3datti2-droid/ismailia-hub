@@ -298,6 +298,7 @@ function refreshUI() {
   renderOffersSection(isHome);
   renderGoldSection(isHome);
   renderDailyTipSection(isHome);
+  renderDailyServicesSection(isHome);
   document.getElementById('jarakSection')?.classList.toggle('hidden', !isHome);
   document.getElementById('awarenessSection')?.classList.toggle('hidden', !isHome);
   renderBannersSection(isHome);
@@ -480,6 +481,124 @@ async function renderDailyTipSection(isHome) {
   } catch (_) {
     section.classList.add('hidden');
   }
+}
+
+// خدمات يومية: مواقيت الصلاة (Aladhan، طريقة الهيئة المصرية العامة
+// للمساحة method=5، بإحداثيات الإسماعيلية) + مواعيد القطارات
+// (data/trains.json — جدول ثابت بمراجعة 21 نوفمبر 2026 + تنبيه).
+// المواقيت بتتخزن لليوم على الجهاز، ولو الـ API وقع بتظهر رسالة.
+let dailyServicesLoaded = false;
+let trainsData = null;
+let trainsDir = 'ismailia-cairo';
+async function renderDailyServicesSection(isHome) {
+  const section = document.getElementById('dailyServicesSection');
+  if (!section) return;
+  section.classList.toggle('hidden', !isHome);
+  if (!isHome || dailyServicesLoaded) return;
+  dailyServicesLoaded = true;
+  renderPrayerTimes();
+  renderTrainsTable();
+  document.getElementById('trainDirIsmCai')?.addEventListener('click', () => {
+    trainsDir = 'ismailia-cairo';
+    document.getElementById('trainDirIsmCai')?.classList.add('train-dir-btn--on');
+    document.getElementById('trainDirCaiIsm')?.classList.remove('train-dir-btn--on');
+    renderTrainsTable();
+  });
+  document.getElementById('trainDirCaiIsm')?.addEventListener('click', () => {
+    trainsDir = 'cairo-ismailia';
+    document.getElementById('trainDirCaiIsm')?.classList.add('train-dir-btn--on');
+    document.getElementById('trainDirIsmCai')?.classList.remove('train-dir-btn--on');
+    renderTrainsTable();
+  });
+}
+
+function prayerDayKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+async function renderPrayerTimes() {
+  const box = document.getElementById('prayerTimes');
+  if (!box) return;
+  const today = new Date();
+  const key = `ism_prayer_${prayerDayKey(today)}`;
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
+  if (!data) {
+    try {
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const r = await fetch(`https://api.aladhan.com/v1/timings/${dd}-${mm}-${today.getFullYear()}?latitude=30.5965&longitude=32.2715&method=5`);
+      if (!r.ok) throw new Error('prayer fetch failed');
+      const j = await r.json();
+      data = j.data;
+      try { localStorage.setItem(key, JSON.stringify(data)); } catch (_) {}
+    } catch (_) {
+      box.innerHTML = `<p class="text-xs text-slate-400 font-semibold">تعذر تحميل مواقيت اليوم — جرّب تاني بعد شوية.</p>`;
+      return;
+    }
+  }
+  if (!data || !data.timings) {
+    box.innerHTML = `<p class="text-xs text-slate-400 font-semibold">تعذر تحميل مواقيت اليوم — جرّب تاني بعد شوية.</p>`;
+    return;
+  }
+  const t = data.timings;
+  const hijri = data.date && data.date.hijri ? `${data.date.hijri.day} ${data.date.hijri.month.ar} ${data.date.hijri.year}` : '';
+  const hijriEl = document.getElementById('hijriDateLabel');
+  if (hijriEl && hijri) hijriEl.textContent = hijri + ' هـ';
+  const prayers = [
+    { name: 'الفجر', time: t.Fajr },
+    { name: 'الشروق', time: t.Sunrise },
+    { name: 'الظهر', time: t.Dhuhr },
+    { name: 'العصر', time: t.Asr },
+    { name: 'المغرب', time: t.Maghrib },
+    { name: 'العشاء', time: t.Isha }
+  ];
+  const nowMin = today.getHours() * 60 + today.getMinutes();
+  const toMin = (s) => { const [h, m] = String(s || '0:0').split(':').map(Number); return h * 60 + m; };
+  let nextIdx = prayers.findIndex((p) => toMin(p.time) > nowMin);
+  if (nextIdx < 0) nextIdx = 0;
+  box.innerHTML = prayers.map((p, i) => `
+    <div class="prayer-time ${i === nextIdx ? 'prayer-time--next' : ''}">
+      <span class="prayer-time__name">${p.name}${i === nextIdx ? ' · القادمة' : ''}</span>
+      <span class="prayer-time__value" dir="ltr">${String(p.time).slice(0, 5)}</span>
+    </div>`).join('');
+}
+
+async function renderTrainsTable() {
+  const box = document.getElementById('trainsTable');
+  const note = document.getElementById('trainsNote');
+  if (!box) return;
+  if (!trainsData) {
+    try {
+      const r = await fetch('data/trains.json');
+      if (!r.ok) throw new Error('trains fetch failed');
+      trainsData = await r.json();
+    } catch (_) {
+      box.innerHTML = `<p class="text-xs text-slate-400 font-semibold">تعذر تحميل المواعيد — جرّب تاني بعد شوية.</p>`;
+      return;
+    }
+  }
+  const dir = (trainsData.directions || []).find((d) => d.id === trainsDir) || trainsData.directions[0];
+  if (!dir) return;
+  box.innerHTML = `<table class="w-full text-xs">
+    <thead><tr class="text-slate-400">
+      <th class="text-right py-1.5 font-bold">القطار</th>
+      <th class="text-right py-1.5 font-bold">النوع</th>
+      <th class="text-right py-1.5 font-bold">مغادرة</th>
+      <th class="text-right py-1.5 font-bold">وصول</th>
+      <th class="text-right py-1.5 font-bold">المدة</th>
+      <th class="text-right py-1.5 font-bold">الأجرة</th>
+    </tr></thead>
+    <tbody>${dir.trains.map((tr) => `
+      <tr class="border-t border-slate-800/80">
+        <td class="py-1.5 font-extrabold text-white" dir="ltr">${tr.no}</td>
+        <td class="py-1.5 text-slate-300">${tr.type}</td>
+        <td class="py-1.5 font-extrabold text-amber-400" dir="ltr">${tr.dep}</td>
+        <td class="py-1.5 text-slate-300" dir="ltr">${tr.arr}${tr.nextDay ? ' (+1)' : ''}</td>
+        <td class="py-1.5 text-slate-300" dir="ltr">${tr.dur}</td>
+        <td class="py-1.5 text-slate-300">${tr.fare} ج.م</td>
+      </tr>`).join('')}</tbody>
+  </table>`;
+  if (note) note.textContent = `${trainsData.note || ''} آخر مراجعة: ${trainsData.lastReviewLabel || ''}.`;
 }
 
 function renderOffersSection(isHome) {

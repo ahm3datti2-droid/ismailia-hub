@@ -204,6 +204,34 @@
       </div>
     </section>
 
+    <!-- خدمات يومية: مواقيت الصلاة + مواعيد القطارات -->
+    <section id="dailyServicesSection" class="hidden mb-5">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
+          <i data-lucide="sun" class="w-5 h-5 text-amber-400"></i>
+          خدمات يومية
+        </h2>
+        <span id="hijriDateLabel" class="text-xs font-bold text-slate-400"></span>
+      </div>
+      <div class="daily-services">
+        <div class="daily-services__block">
+          <h3 class="daily-services__title"><i data-lucide="moon-star" class="w-4 h-4 text-amber-400"></i> مواقيت الصلاة — الإسماعيلية</h3>
+          <div id="prayerTimes" class="prayer-times"><p class="text-xs text-slate-400 font-semibold">جارٍ تحميل المواقيت…</p></div>
+          <p class="text-[11px] text-slate-500 font-semibold mt-2">المصدر: Aladhan — الهيئة المصرية العامة للمساحة. الأوقات بتتحدث كل يوم تلقائياً.</p>
+        </div>
+        <div class="daily-services__block">
+          <h3 class="daily-services__title"><i data-lucide="train-front" class="w-4 h-4 text-amber-400"></i> مواعيد القطارات</h3>
+          <div class="flex gap-2 mb-3">
+            <button id="trainDirIsmCai" class="train-dir-btn train-dir-btn--on">الإسماعيلية ← القاهرة</button>
+            <button id="trainDirCaiIsm" class="train-dir-btn">القاهرة ← الإسماعيلية</button>
+          </div>
+          <div id="trainsTable" class="trains-table"><p class="text-xs text-slate-400 font-semibold">جارٍ تحميل المواعيد…</p></div>
+          <p id="trainsNote" class="text-[11px] text-slate-500 font-semibold mt-2"></p>
+          <a href="https://obs.enr.gov.eg" target="_blank" rel="noopener" class="daily-services__link">احجز من موقع الهيئة ←</a>
+        </div>
+      </div>
+    </section>
+
     <!-- عروض اليوم: تظهر على الرئيسية فقط عند وجود عروض سارية -->
     <section id="offersSection" class="hidden mb-5">
       <div class="flex justify-between items-center mb-3">

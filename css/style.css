@@ -720,6 +720,25 @@ a.footer-line:hover { color: #FFC400; }
 .daily-tip__title { display: block; font-size: 0.95rem; font-weight: 900; color: #fff; line-height: 1.4; margin-top: 0.15rem; }
 .daily-tip__text { display: block; font-size: 0.8rem; font-weight: 600; color: #cbd5e1; line-height: 1.6; margin-top: 0.25rem; }
 .daily-tip__link { display: block; font-size: 0.75rem; font-weight: 800; color: #60A5FA; margin-top: 0.4rem; }
+/* خدمات يومية: مواقيت الصلاة + مواعيد القطارات. */
+.daily-services { display: grid; gap: 0.75rem; }
+@media (min-width: 640px) { .daily-services { grid-template-columns: 1fr 1fr; } }
+.daily-services__block {
+  background: linear-gradient(120deg, rgba(255, 196, 0, 0.10), rgba(255, 196, 0, 0.03)), linear-gradient(90deg, #0A2463, #123a8f);
+  border: 1px solid rgba(255, 196, 0, 0.25);
+  border-radius: 1.25rem; padding: 1rem 1.1rem;
+}
+.daily-services__title { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 900; color: #fff; margin-bottom: 0.6rem; }
+.daily-services__link { display: block; font-size: 0.75rem; font-weight: 800; color: #60A5FA; margin-top: 0.5rem; }
+.prayer-times { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.prayer-time { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 0.9rem; padding: 0.5rem 0.6rem; text-align: center; }
+.prayer-time--next { background: rgba(255, 196, 0, 0.18); border-color: rgba(255, 196, 0, 0.55); }
+.prayer-time__name { display: block; font-size: 0.7rem; font-weight: 700; color: #cbd5e1; }
+.prayer-time--next .prayer-time__name { color: #FFC400; }
+.prayer-time__value { display: block; font-size: 1rem; font-weight: 900; color: #fff; margin-top: 0.1rem; }
+.train-dir-btn { font-size: 0.75rem; font-weight: 800; padding: 0.45rem 0.8rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #cbd5e1; }
+.train-dir-btn--on { background: #FFC400; border-color: #FFC400; color: #0A2463; }
+.trains-table { overflow-x: auto; }
 .gold-price {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);
