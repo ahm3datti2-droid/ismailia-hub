@@ -297,6 +297,7 @@ function refreshUI() {
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
   renderGoldSection(isHome);
+  renderDailyTipSection(isHome);
   document.getElementById('jarakSection')?.classList.toggle('hidden', !isHome);
   document.getElementById('awarenessSection')?.classList.toggle('hidden', !isHome);
   renderBannersSection(isHome);
@@ -394,7 +395,6 @@ function renderTickerSection(isHome) {
   renderTicker(track, state.services, (id) => openServiceDetails(id));
 }
 
-// قسم العروض في الصفحة الرئيسية — يظهر فقط على الرئيسية وعند وجود عروض سارية.
 // سعر الذهب اليوم: يظهر على الرئيسية فقط عند وجود أسعار محفوظة.
 function renderGoldSection(isHome) {
   const section = document.getElementById('goldSection');
@@ -416,6 +416,35 @@ function renderGoldSection(isHome) {
       : '';
   } catch (_) {
     label.textContent = '';
+  }
+}
+
+// نصيحة اليوم — نصيحة رقمية مختلفة كل يوم من مواضيع مركز الوعي
+// الرقمي (data/awareness/topics.json)، بتتغير حسب يوم السنة، واللينك
+// بيودي على صفحة الموضوع. لو التحميل فشل، القسم بيفضل مخفي.
+let dailyTipLoaded = false;
+async function renderDailyTipSection(isHome) {
+  const section = document.getElementById('dailyTipSection');
+  if (!section) return;
+  section.classList.toggle('hidden', !isHome);
+  if (!isHome || dailyTipLoaded) return;
+  dailyTipLoaded = true;
+  try {
+    const r = await fetch('data/awareness/topics.json');
+    if (!r.ok) throw new Error('topics fetch failed');
+    const data = await r.json();
+    const topics = data.topics || [];
+    if (!topics.length) return;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now - start) / 86400000);
+    const topic = topics[dayOfYear % topics.length];
+    document.getElementById('dailyTipTitle').textContent = topic.title;
+    document.getElementById('dailyTipText').textContent = topic.lead;
+    document.getElementById('dailyTipCard').href = `/digital-awareness#/topic/${topic.category}/${topic.id}`;
+    section.classList.remove('hidden');
+  } catch (_) {
+    section.classList.add('hidden');
   }
 }
 

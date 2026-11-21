@@ -227,6 +227,8 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     const subName = subcategoryName(srv.category, srv.subcategory);
     const waMsg = encodeURIComponent(`مرحباً ${srv.name}، وصلت لحضرتك عبر دليل خدمات الإسماعيلية.`);
     const waNumber = toWhatsAppNumber(srv.whatsapp || srv.phone);
+    // شارة "الأعلى تقييماً": تقييم 4.5+ من 3 تقييمات حقيقية أو أكثر.
+    const isTopRated = Number(srv.rating || 0) >= 4.5 && Number(srv.reviewsCount || 0) >= 3;
 
     return `
       <article class="service-card ${srv.isEmergency ? 'service-card--emergency' : ''} relative">
@@ -262,6 +264,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
                   ${srv.rating} (${srv.reviewsCount})
                 </span>
               ` : '<span>جديد</span>'}
+              ${isTopRated ? '<span class="service-top-badge">⭐ الأعلى تقييماً</span>' : ''}
               <span class="service-meta__dot" aria-hidden="true">•</span>
               <span class="inline-flex items-center gap-1.5 ${status.isOpen ? 'text-emerald-400' : 'text-rose-400'}"><span class="open-dot ${status.isOpen ? 'open-dot--open' : 'open-dot--closed'}"></span>${status.text}</span>
               <span class="service-meta__dot" aria-hidden="true">•</span>
