@@ -756,6 +756,16 @@ function openServiceDetails(id) {
         </a>
       ` : ''}
 
+      ${srv.facebook ? `
+        <a href="${srv.facebook}" target="_blank" rel="noopener" class="detail-row">
+          <span class="detail-row__icon"><i data-lucide="facebook"></i></span>
+          <span class="flex-1 min-w-0">
+            <span class="detail-row__title">فيسبوك</span>
+            <span class="detail-row__sub" dir="ltr" style="text-align:right">${srv.facebook.replace(/^https?:\/\//, '')}</span>
+          </span>
+        </a>
+      ` : ''}
+
       ${tags.length ? `
         <div class="flex flex-wrap gap-1.5 mt-3">
           ${tags.map((t) => `<span class="tag-chip">${t}</span>`).join('')}
@@ -790,6 +800,12 @@ function openServiceDetails(id) {
           <a href="tel:${srv.phone}" class="detail-action detail-action--call">
             <i data-lucide="phone-call"></i>
             اتصال مباشر
+          </a>
+        ` : ''}
+        ${srv.facebook ? `
+          <a href="${srv.facebook}" target="_blank" rel="noopener" class="detail-action detail-action--fb">
+            <i data-lucide="facebook"></i>
+            فيسبوك
           </a>
         ` : ''}
         <a href="${mapHref}" target="_blank" rel="noopener" class="detail-action detail-action--map">

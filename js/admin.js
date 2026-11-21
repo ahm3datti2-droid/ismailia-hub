@@ -1291,6 +1291,7 @@ function readForm() {
     phone: String(fd.get('phone') || '').trim(),
     ownerPhone: normalizeOwnerPhoneInput(fd.get('ownerPhone')),
     whatsapp: String(fd.get('whatsapp') || '').trim(),
+    facebook: String(fd.get('facebook') || '').trim(),
     mapUrl: String(fd.get('mapUrl') || '').trim(),
     // الصورة المختارة من الجهاز (Data URL) تتقدم على حقل الرابط النصي.
     imageUrl: state.servicePhotoDataUrl || String(fd.get('imageUrl') || '').trim(),
@@ -1322,6 +1323,7 @@ function fillForm(srv) {
   f.phone.value = srv.phone || '';
   f.ownerPhone.value = srv.ownerPhone || srv.submitterPhone || '';
   f.whatsapp.value = srv.whatsapp || '';
+  f.facebook.value = srv.facebook || '';
   f.mapUrl.value = srv.mapUrl || '';
   // صورة محفوظة كبيانات داخل المستند (من جهاز) تُعرض في المعاينة
   // وتُحفَظ كما هي عند الحفظ؛ أما الرابط/المسار فيبقى في الحقل النصي.
@@ -1401,9 +1403,9 @@ async function handlePhotoPicked(kind, file) {
 
 // استيراد جماعي من ملف JSON: كل عنصر فيه name وphone وaddress وarea
 // وtarget_group وtarget_subcategory وimageUrl (مسار /images/... بعد رفع الصور).
-// - تُتخطى العناصر بلا اسم/تليفون أو بتصنيف غير موجود.
-// - تُتخطى المكررة بنفس رقم الهاتف (مقارنة بالأرقام فقط) سواء كانت
-//   موجودة في الدليل أصلاً أو تكررت داخل الملف نفسه.
+// - تُتخطى العناصر بلا اسم أو بلا تليفون ولا حساب فيسبوك، أو بتصنيف غير موجود.
+// - تُتخطى المكررة بنفس رقم الهاتف (مقارنة بالأرقام فقط) أو نفس حساب فيسبوك
+//   سواء كانت موجودة في الدليل أصلاً أو تكررت داخل الملف نفسه.
 // - كل خدمة تُحفظ موثقة (verified) بتقييم 5 — نفس افتراضيات النموذج.
 async function handleBulkImport(file) {
   if (!file) { alert('اختر ملف JSON أولاً.'); return; }
@@ -1421,18 +1423,23 @@ async function handleBulkImport(file) {
   }
   const groupIds = new Map(GROUPS.map((g) => [g.id, new Set(g.subs.map((s) => s.id))]));
   const existingPhones = new Set(state.services.map((s) => String(s.phone || '').replace(/\D/g, '')));
+  const existingFb = new Set(state.services.map((s) => String(s.facebook || '').trim().toLowerCase()).filter(Boolean));
   const seenPhones = new Set();
+  const seenFb = new Set();
   let added = 0, skippedDup = 0, skippedBad = 0;
   els.bulkImportBtn.disabled = true;
   for (let i = 0; i < items.length; i++) {
     const it = items[i] || {};
     const name = String(it.name || '').trim();
     const phone = String(it.phone || '').trim();
+    const facebook = String(it.facebook || '').trim();
     const digits = phone.replace(/\D/g, '');
+    const fbKey = facebook.toLowerCase();
     const validCat = groupIds.has(it.target_group) && groupIds.get(it.target_group).has(it.target_subcategory);
-    if (!name || !phone || !validCat) { skippedBad++; continue; }
-    if (existingPhones.has(digits) || seenPhones.has(digits)) { skippedDup++; continue; }
-    seenPhones.add(digits);
+    if (!name || (!phone && !facebook) || !validCat) { skippedBad++; continue; }
+    if ((digits && (existingPhones.has(digits) || seenPhones.has(digits))) || (fbKey && (existingFb.has(fbKey) || seenFb.has(fbKey)))) { skippedDup++; continue; }
+    if (digits) seenPhones.add(digits);
+    if (fbKey) seenFb.add(fbKey);
     setStatus(`جارٍ الاستيراد… ${i + 1}/${items.length} (أُضيف ${added} حتى الآن)`);
     try {
       await db.addService({
@@ -1443,6 +1450,7 @@ async function handleBulkImport(file) {
         address: String(it.address || ''),
         phone,
         whatsapp: '',
+        facebook,
         imageUrl: String(it.imageUrl || ''),
         tags: '',
         isEmergency: false,
@@ -1451,7 +1459,8 @@ async function handleBulkImport(file) {
         verified: true,
         rating: 5
       });
-      existingPhones.add(digits);
+      if (digits) existingPhones.add(digits);
+      if (fbKey) existingFb.add(fbKey);
       added++;
     } catch (_) {
       skippedBad++;
@@ -1613,8 +1622,8 @@ function bindEvents() {
   els.serviceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = readForm();
-    if (!data.name || !data.phone) {
-      alert('الاسم ورقم الهاتف حقول إلزامية.');
+    if (!data.name || (!data.phone && !data.facebook)) {
+      alert('الاسم إلزامي، ولازم رقم هاتف أو حساب فيسبوك على الأقل.');
       return;
     }
     try {

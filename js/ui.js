@@ -284,16 +284,27 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
         </div>
 
         <div class="service-actions">
+          ${waNumber ? `
           <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener"
             class="service-btn service-btn--wa">
             <i data-lucide="message-circle" class="w-4 h-4"></i>
             واتساب
           </a>
+          ` : ''}
+          ${srv.phone ? `
           <a href="tel:${srv.phone}"
             class="service-btn service-btn--call">
             <i data-lucide="phone" class="w-4 h-4"></i>
             اتصال
           </a>
+          ` : ''}
+          ${srv.facebook ? `
+          <a href="${srv.facebook}" target="_blank" rel="noopener"
+            class="service-btn service-btn--fb">
+            <i data-lucide="facebook" class="w-4 h-4"></i>
+            فيسبوك
+          </a>
+          ` : ''}
           <button data-open-details="${srv.id}"
             class="service-btn service-btn--details">
             التفاصيل
