@@ -83,6 +83,7 @@ function normaliseService(id, data) {
     address: data.address || '',
     phone: data.phone || '',
     whatsapp: data.whatsapp || '',
+    facebook: data.facebook || '',
     mapUrl: data.mapUrl || '',
     imageUrl: data.imageUrl || '',
     openHour: Number(data.openHour ?? 9),
