@@ -14,7 +14,8 @@ const CLASS_CATS = {
   other: 'أخرى'
 };
 const JOB_TYPES = { full: 'دوام كامل', part: 'دوام جزئي', shift: 'ورديات', remote: 'عن بُعد' };
-const RATE_KEY = 'ism_market_last';
+const RATE_KEY_CLASSIFIED = 'ism_market_classified_last';
+const RATE_KEY_JOB = 'ism_market_job_last';
 const RATE_MS = 10 * 60 * 1000;
 
 let activeTab = 'classifieds';
@@ -144,15 +145,15 @@ function setTab(tab) {
   tj.className = 'py-3 rounded-xl text-sm font-extrabold transition ' + (tab === 'jobs' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300');
 }
 
-function checkRateLimit() {
+function checkRateLimit(key) {
   try {
-    const last = Number(localStorage.getItem(RATE_KEY) || 0);
+    const last = Number(localStorage.getItem(key) || 0);
     if (last && Date.now() - last < RATE_MS) return false;
   } catch (_) {}
   return true;
 }
-function markSent() {
-  try { localStorage.setItem(RATE_KEY, String(Date.now())); } catch (_) {}
+function markSent(key) {
+  try { localStorage.setItem(key, String(Date.now())); } catch (_) {}
 }
 function showErr(el, msg) {
   if (!el) return;
@@ -205,7 +206,7 @@ function bind() {
       e.target.reset();
       return;
     }
-    if (!checkRateLimit()) {
+    if (!checkRateLimit(RATE_KEY_CLASSIFIED)) {
       showErr(errEl, 'بعت إعلان من شوية — استنى 10 دقايق قبل ما تبعت تاني.');
       return;
     }
@@ -215,7 +216,7 @@ function bind() {
         description: fd.get('description'), phone: fd.get('phone'), area: fd.get('area'),
         photo: classifiedPhotoData
       });
-      markSent();
+      markSent(RATE_KEY_CLASSIFIED);
       okEl?.classList.remove('hidden');
       e.target.reset();
       classifiedPhotoData = '';
@@ -236,7 +237,7 @@ function bind() {
       e.target.reset();
       return;
     }
-    if (!checkRateLimit()) {
+    if (!checkRateLimit(RATE_KEY_JOB)) {
       showErr(errEl, 'بعت وظيفة من شوية — استنى 10 دقايق قبل ما تبعت تاني.');
       return;
     }
@@ -246,7 +247,7 @@ function bind() {
         salary: fd.get('salary'), description: fd.get('description'),
         phone: fd.get('phone'), area: fd.get('area')
       });
-      markSent();
+      markSent(RATE_KEY_JOB);
       okEl?.classList.remove('hidden');
       e.target.reset();
     } catch (err) {
