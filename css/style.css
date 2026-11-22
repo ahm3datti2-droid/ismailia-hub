@@ -356,9 +356,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 /* ---------- صفحة تفاصيل الخدمة (داخل النافذة المنبثقة) ---------- */
 #modalContent.detail-sheet {
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   max-width: 34rem;
   max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+/* منطقة التمرير داخل نافذة التفاصيل — شريط الأزرار خارجها فيبقى ثابتاً */
+.detail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   scrollbar-width: thin;
 }
 .detail-photo {
@@ -1076,11 +1084,13 @@ body.header-compact .filter-bar { top: 2.75rem !important; }
 }
 .section-head__link:hover { background: #FFC400; color: #0A2463; }
 
-/* ---------- 8) شريط أزرار التفاصيل: صف واحد ثابت أسفل النافذة ---------- */
+/* ---------- 8) شريط أزرار التفاصيل: صف واحد ثابت أسفل النافذة ----------
+   الشريط خارج منطقة التمرير (.detail-scroll) فيبقى ظاهراً دائماً.
+   (position: sticky مع bottom لا يثبّت عند التمرير لتحت — جرّبناه وفشل حياً.) */
 .detail-actions-bar {
-  position: sticky; bottom: 0; z-index: 3;
+  flex-shrink: 0;
   display: flex; gap: 0.5rem;
-  margin-top: 1.25rem; padding: 0.75rem 0 0.25rem;
+  padding: 0.75rem 1.25rem;
   background: #0F172A;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1153,6 +1163,11 @@ body.theme-light .detail-row__title { color: #64748B; }
 body.theme-light .detail-row__sub { color: #0F172A; }
 body.theme-light .detail-photo { border-bottom-color: #E2E8F0; }
 body.theme-light .detail-actions-bar { background: #fff; border-top-color: #E2E8F0; }
+/* شريط "جديد في الدليل": على الخلفية الفاتحة التدرجات الشفافة بتبقى باهتة،
+   فيبقى شريط كحلي ثابت عشان نصه يفضل مقروءاً. */
+body.theme-light .ticker { background: linear-gradient(90deg, #0A2463, #123a8f); border-bottom-color: rgba(255, 196, 0, 0.25); }
+body.theme-light .ticker-item { color: #E2E8F0; }
+body.theme-light .ticker-item:hover { color: #FFC400; }
 body.theme-light .awareness-featured { background: #fff; border-color: #E2E8F0; }
 body.theme-light .awareness-featured__title { color: #0F172A; }
 body.theme-light .awareness-featured__summary { color: #475569; }

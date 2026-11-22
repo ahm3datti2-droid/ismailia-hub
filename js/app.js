@@ -789,6 +789,7 @@ function openServiceDetails(id) {
 
   els.modalContent.classList.add('detail-sheet');
   els.modalContent.innerHTML = `
+    <div class="detail-scroll">
     <div class="detail-photo">
       ${srv.imageUrl
         ? `<img src="${srv.imageUrl}" alt="${srv.name}" referrerpolicy="no-referrer" onerror="this.remove()">`
@@ -874,35 +875,6 @@ function openServiceDetails(id) {
         </div>
       ` : ''}
 
-      <div class="detail-actions-bar">
-        ${waNumber ? `
-          <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener" class="detail-action detail-action--wa">
-            <i data-lucide="message-circle"></i>
-            واتساب
-          </a>
-        ` : ''}
-        ${srv.phone ? `
-          <a href="tel:${srv.phone}" class="detail-action detail-action--call">
-            <i data-lucide="phone-call"></i>
-            اتصال مباشر
-          </a>
-        ` : ''}
-        ${srv.facebook ? `
-          <a href="${srv.facebook}" target="_blank" rel="noopener" class="detail-action detail-action--fb">
-            <i data-lucide="facebook"></i>
-            فيسبوك
-          </a>
-        ` : ''}
-        <a href="${mapHref}" target="_blank" rel="noopener" class="detail-action detail-action--map">
-          <i data-lucide="navigation"></i>
-          الموقع على الخريطة
-        </a>
-        <button id="detailShareBtn" class="detail-action detail-action--share">
-          <i data-lucide="share-2"></i>
-          <span id="detailShareLabel">مشاركة الرابط</span>
-        </button>
-      </div>
-
       <button id="detailFavBtn" class="detail-action detail-action--share w-full mt-2.5">
         <i data-lucide="bookmark" class="${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
         ${isFav ? 'محفوظة ✓' : 'حفظ في المحفوظات'}
@@ -933,6 +905,35 @@ function openServiceDetails(id) {
       <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-200">
         <p class="text-xs text-slate-500 font-bold">جاري تحميل التقييمات…</p>
       </div>
+    </div>
+    </div>
+    <div class="detail-actions-bar">
+      ${waNumber ? `
+        <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener" class="detail-action detail-action--wa">
+          <i data-lucide="message-circle"></i>
+          واتساب
+        </a>
+      ` : ''}
+      ${srv.phone ? `
+        <a href="tel:${srv.phone}" class="detail-action detail-action--call">
+          <i data-lucide="phone-call"></i>
+          اتصال مباشر
+        </a>
+      ` : ''}
+      ${srv.facebook ? `
+        <a href="${srv.facebook}" target="_blank" rel="noopener" class="detail-action detail-action--fb">
+          <i data-lucide="facebook"></i>
+          فيسبوك
+        </a>
+      ` : ''}
+      <a href="${mapHref}" target="_blank" rel="noopener" class="detail-action detail-action--map">
+        <i data-lucide="navigation"></i>
+        الموقع على الخريطة
+      </a>
+      <button id="detailShareBtn" class="detail-action detail-action--share">
+        <i data-lucide="share-2"></i>
+        <span id="detailShareLabel">مشاركة الرابط</span>
+      </button>
     </div>
   `;
   showModal();
