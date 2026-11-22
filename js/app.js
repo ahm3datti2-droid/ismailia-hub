@@ -19,6 +19,8 @@ const state = {
   onlyFavorites: false,
   onlyOpenNow: false,
   only24h: false,
+  onlyTopRated: false, // "الأعلى تقييماً": عرض أفضل الخدمات تقييماً مرتبة تنازلياً
+  loaded: false, // true بعد أول تحميل ناجح للخدمات (من الكاش أو Firestore) — قبلها تظهر "…" بدل 0
   isAdmin: false,
   currentUser: null,
   profile: null,
@@ -84,8 +86,8 @@ async function initApp() {
   bindEvents();
   // تسجيل زيارة اليوم (مرة واحدة لكل جهاز في اليوم) — لا يوقف التحميل.
   db.logVisit();
-  // بلاطات الأقسام تظهر فوراً (بعدّادات صفر مؤقتاً) حتى تحميل Firestore.
-  renderGroupTiles(els.groupsGrid, GROUPS, {}, 0, selectGroupTile);
+  // بلاطات الأقسام تظهر فوراً (بعدّادات "…" حتى تحميل Firestore).
+  renderGroupTiles(els.groupsGrid, GROUPS, null, null, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
   renderSkeleton(els.servicesGrid);
   await loadServices();
@@ -101,8 +103,23 @@ function selectGroupTile(groupId) {
   state.onlyFavorites = false;
   state.onlyOpenNow = false;
   state.only24h = false;
+  state.onlyTopRated = false;
   syncGroupHash();
   db.logGroupView(groupId);
+  refreshUI();
+  els.servicesSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// "شوف الكل" في قسم الأعلى تقييماً: قائمة أفضل الخدمات تقييماً مرتبة تنازلياً.
+function showTopRated() {
+  state.activeCategory = 'all';
+  state.activeSubcategory = 'all';
+  state.onlyEmergency = false;
+  state.onlyFavorites = false;
+  state.onlyOpenNow = false;
+  state.only24h = false;
+  state.onlyTopRated = true;
+  state.showAll = false;
   refreshUI();
   els.servicesSection.scrollIntoView({ behavior: 'smooth' });
 }
@@ -118,6 +135,7 @@ function resetToHome() {
   state.onlyFavorites = false;
   state.onlyOpenNow = false;
   state.only24h = false;
+  state.onlyTopRated = false;
   els.searchInput.value = '';
   const heroSearch = document.getElementById('heroSearchInput');
   if (heroSearch) heroSearch.value = '';
@@ -132,6 +150,7 @@ async function loadServices() {
   const cached = readServicesCache();
   if (cached) {
     state.services = cached;
+    state.loaded = true;
     refreshUI();
     if (!openDeepLinkedService()) openDeepLinkedGroup();
   }
@@ -146,6 +165,7 @@ async function loadServices() {
     state.offers = offers;
     state.banners = banners;
     state.gold = gold;
+    state.loaded = true;
     writeServicesCache(services);
     refreshUI();
     if (!openDeepLinkedService()) openDeepLinkedGroup();
@@ -281,6 +301,16 @@ function bindEvents() {
     resetToHome();
     els.groupsSection.scrollIntoView({ behavior: 'smooth' });
   });
+  // "عرض كل الخدمات" في عنوان الأقسام + "شوف الكل" في الأعلى تقييماً.
+  document.getElementById('btnShowAllServices')?.addEventListener('click', () => selectGroupTile('all'));
+  document.getElementById('btnShowTopRated')?.addEventListener('click', showTopRated);
+  // الهيدر يصغر عند التمرير (ويختفي سطره الفرعي) — والبحث يفضل ظاهراً في شريط الفلاتر.
+  const headerEl = document.querySelector('.site-header');
+  if (headerEl) {
+    const onScroll = () => document.body.classList.toggle('header-compact', window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 
   document.getElementById('btnEmergency').addEventListener('click', openEmergencyModal);
 
@@ -331,6 +361,7 @@ function updateSectionTitle() {
   else if (state.onlyFavorites) els.sectionTitle.textContent = 'الخدمات المحفوظة';
   else if (state.onlyOpenNow) els.sectionTitle.textContent = 'الفاتحة دلوقتي';
   else if (state.only24h) els.sectionTitle.textContent = 'خدمات 24 ساعة';
+  else if (state.onlyTopRated) els.sectionTitle.textContent = 'الأعلى تقييماً';
   else if (state.searchQuery) els.sectionTitle.textContent = 'نتائج البحث';
   else if (state.activeCategory !== 'all') els.sectionTitle.textContent = categoryInfo(state.activeCategory).name;
   else els.sectionTitle.textContent = 'أبرز الخدمات في الإسماعيلية';
@@ -354,6 +385,7 @@ function refreshUI() {
     state.onlyFavorites = false;
     state.onlyOpenNow = false;
     state.only24h = false;
+    state.onlyTopRated = false;
     syncGroupHash();
     db.logGroupView(catId);
     refreshUI();
@@ -369,7 +401,7 @@ function refreshUI() {
   // الصفحة الرئيسية: بلا أي فلتر أو بحث تعرض بلاطات الأقسام فقط،
   // وأي اختيار أو بحث أو فلتر يعرض قائمة الخدمات بدلها.
   const isHome = state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
-    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites && !state.onlyOpenNow && !state.only24h;
+    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites && !state.onlyOpenNow && !state.only24h && !state.onlyTopRated;
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
@@ -397,18 +429,24 @@ function refreshUI() {
     const matchFav = !state.onlyFavorites || state.favorites.includes(srv.id);
     const matchOpen = !state.onlyOpenNow || getOpenStatus(srv.openHour, srv.closeHour).isOpen;
     const match24 = !state.only24h || (srv.openHour === 0 && srv.closeHour === 24);
+    const matchTop = !state.onlyTopRated || ((Number(srv.rating || 0) >= 4) && (srv.reviewsCount > 1 || srv.rating !== 5));
     const matchQuery = !state.searchQuery ||
       srv.name.toLowerCase().includes(state.searchQuery) ||
       srv.area.toLowerCase().includes(state.searchQuery) ||
       srv.tags.toLowerCase().includes(state.searchQuery) ||
       srv.address.toLowerCase().includes(state.searchQuery);
 
-    return matchCat && matchSub && matchArea && matchEmerg && matchFav && matchQuery && matchOpen && match24;
+    return matchCat && matchSub && matchArea && matchEmerg && matchFav && matchQuery && matchOpen && match24 && matchTop;
   });
+  // قائمة "الأعلى تقييماً": مرتبة تنازلياً بالتقييم ثم عدد المراجعات.
+  if (state.onlyTopRated) {
+    filtered.sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviewsCount || 0) - Number(a.reviewsCount || 0)));
+  }
 
-  els.resultsCount.textContent = `${filtered.length} خدمة`;
+  // العدّادات تظهر "…" حتى أول تحميل ناجح — لا 0 وهمي أثناء التحميل.
+  els.resultsCount.textContent = state.loaded ? `${filtered.length} خدمة` : '…';
   // إحصاءات الهيرو الحية: عدد الخدمات الكلي + عدد الأقسام والمناطق.
-  if (els.heroCount) els.heroCount.textContent = state.services.length;
+  if (els.heroCount) els.heroCount.textContent = state.loaded ? state.services.length : '—';
   if (els.heroGroups) els.heroGroups.textContent = GROUPS.length;
   if (els.heroAreas) els.heroAreas.textContent = AREAS.length;
 
@@ -771,8 +809,8 @@ function openServiceDetails(id) {
         </span>
       </div>
 
-      <h3 class="text-xl font-black text-white leading-snug">${srv.name}</h3>
-      <p class="text-xs text-amber-400 font-bold mt-1.5 flex items-center gap-1.5">
+      <h3 class="text-xl font-black text-slate-900 leading-snug">${srv.name}</h3>
+      <p class="text-xs text-amber-600 font-bold mt-1.5 flex items-center gap-1.5">
         <i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>
         ${subName ? `${cat.name} • ${subName}` : cat.name}
       </p>
@@ -820,23 +858,23 @@ function openServiceDetails(id) {
       ` : ''}
 
       ${srv.menu && srv.menu.length ? `
-        <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3.5 mt-4">
-          <h4 class="text-xs font-bold text-amber-400 mb-2.5 flex items-center gap-1.5">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 mt-4">
+          <h4 class="text-xs font-bold text-amber-700 mb-2.5 flex items-center gap-1.5">
             <i data-lucide="list" class="w-4 h-4"></i>
             قائمة الأسعار / الخدمات الشائعة
           </h4>
           <div class="space-y-2">
             ${srv.menu.map(m => `
-              <div class="flex justify-between text-xs border-b border-slate-800/80 pb-1.5 last:border-0 last:pb-0">
-                <span class="text-slate-300">${m.item}</span>
-                <span class="font-bold text-amber-400">${m.price}</span>
+              <div class="flex justify-between text-xs border-b border-slate-200 pb-1.5 last:border-0 last:pb-0">
+                <span class="text-slate-700">${m.item}</span>
+                <span class="font-bold text-amber-600">${m.price}</span>
               </div>
             `).join('')}
           </div>
         </div>
       ` : ''}
 
-      <div class="grid grid-cols-2 gap-2.5 mt-5">
+      <div class="detail-actions-bar">
         ${waNumber ? `
           <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" rel="noopener" class="detail-action detail-action--wa">
             <i data-lucide="message-circle"></i>
@@ -878,22 +916,22 @@ function openServiceDetails(id) {
 
       <div id="serviceOffersBox"></div>
 
-      <div class="mt-5 pt-4 border-t border-slate-800">
-        <h4 class="text-sm font-extrabold text-white mb-2 flex items-center gap-1.5">
-          <i data-lucide="qr-code" class="w-4 h-4 text-amber-400"></i>
+      <div class="mt-5 pt-4 border-t border-slate-200">
+        <h4 class="text-sm font-extrabold text-slate-900 mb-2 flex items-center gap-1.5">
+          <i data-lucide="qr-code" class="w-4 h-4 text-amber-600"></i>
           كود QR الخاص بهذه الخدمة
         </h4>
         <div class="flex items-center gap-4">
           <div id="qrBox" class="qr-box"></div>
           <div class="min-w-0">
-            <p class="text-xs text-slate-300 leading-relaxed font-semibold">امسح الكود بأي موبايل لفتح صفحة الخدمة مباشرة — اطبعه والزقه على باب المحل.</p>
-            <button id="qrDownloadBtn" class="mt-2.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition">تحميل الكود (PNG)</button>
+            <p class="text-xs text-slate-600 leading-relaxed font-semibold">امسح الكود بأي موبايل لفتح صفحة الخدمة مباشرة — اطبعه والزقه على باب المحل.</p>
+            <button id="qrDownloadBtn" class="mt-2.5 bg-slate-900 hover:bg-slate-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition">تحميل الكود (PNG)</button>
           </div>
         </div>
       </div>
 
-      <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-800">
-        <p class="text-xs text-slate-400 font-bold">جاري تحميل التقييمات…</p>
+      <div id="reviewsSection" class="mt-5 pt-4 border-t border-slate-200">
+        <p class="text-xs text-slate-500 font-bold">جاري تحميل التقييمات…</p>
       </div>
     </div>
   `;
@@ -956,19 +994,19 @@ function renderServiceOffers(serviceId) {
   const offers = state.offers.filter((o) => o.serviceId === serviceId);
   if (!offers.length) { box.innerHTML = ''; return; }
   box.innerHTML = `
-    <div class="mt-5 pt-4 border-t border-slate-800">
-      <h4 class="text-sm font-extrabold text-white mb-2 flex items-center gap-1.5">
-        <i data-lucide="badge-percent" class="w-4 h-4 text-amber-400"></i>
+    <div class="mt-5 pt-4 border-t border-slate-200">
+      <h4 class="text-sm font-extrabold text-slate-900 mb-2 flex items-center gap-1.5">
+        <i data-lucide="badge-percent" class="w-4 h-4 text-amber-600"></i>
         عروض هذه الخدمة
       </h4>
       <div class="space-y-2">
         ${offers.map((o) => `
           <div class="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-3">
-            <p class="text-xs font-extrabold text-white flex flex-wrap items-center gap-2">
+            <p class="text-xs font-extrabold text-slate-900 flex flex-wrap items-center gap-2">
               ${o.discount ? `<span class="offer-card__discount">${escHtml(o.discount)}</span>` : ''} ${escHtml(o.title)}
             </p>
-            ${o.details ? `<p class="text-xs text-slate-300 mt-1 leading-relaxed">${escHtml(o.details)}</p>` : ''}
-            ${o.validUntil ? `<p class="text-[11px] text-amber-400 font-bold mt-1.5">ساري حتى ${escHtml(o.validUntil)}</p>` : ''}
+            ${o.details ? `<p class="text-xs text-slate-600 mt-1 leading-relaxed">${escHtml(o.details)}</p>` : ''}
+            ${o.validUntil ? `<p class="text-[11px] text-amber-600 font-bold mt-1.5">ساري حتى ${escHtml(o.validUntil)}</p>` : ''}
           </div>`).join('')}
       </div>
     </div>`;
@@ -1022,29 +1060,29 @@ async function loadDetailReviews(serviceId) {
       pill.innerHTML = `<i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i> ${avg} (${reviews.length} تقييم)`;
     } else {
       pill.textContent = 'لا توجد تقييمات بعد';
-      pill.className = 'text-[11px] font-bold text-slate-400';
+      pill.className = 'text-[11px] font-bold text-slate-500';
     }
   }
   box.innerHTML = `
-    <h4 class="text-sm font-extrabold text-white mb-1 flex items-center gap-1.5">
-      <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
+    <h4 class="text-sm font-extrabold text-slate-900 mb-1 flex items-center gap-1.5">
+      <i data-lucide="star" class="w-4 h-4 text-amber-600"></i>
       التقييمات ${reviews.length ? `(${reviews.length})` : ''}
-      ${avg ? `<span class="text-amber-400 text-xs font-black">${avg} من 5</span>` : ''}
+      ${avg ? `<span class="text-amber-600 text-xs font-black">${avg} من 5</span>` : ''}
     </h4>
     ${reviews.length ? `
       <div class="space-y-2.5 mt-3">
         ${reviews.map(r => `
-          <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
             <div class="flex items-center justify-between gap-2 mb-1">
-              <span class="text-xs font-extrabold text-white">${escHtml(r.userName || 'مستخدم')}</span>
+              <span class="text-xs font-extrabold text-slate-900">${escHtml(r.userName || 'مستخدم')}</span>
               <span class="text-sm leading-none" dir="ltr">${starsHtml(r.rating)}</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">${escHtml(r.text)}</p>
+            <p class="text-xs text-slate-600 leading-relaxed">${escHtml(r.text)}</p>
             ${reviewDateText(r.createdAt) ? `<p class="text-[10px] text-slate-500 mt-1.5">${reviewDateText(r.createdAt)}</p>` : ''}
           </div>
         `).join('')}
       </div>
-    ` : `<p class="text-xs text-slate-400 font-semibold mt-2">لا توجد تقييمات بعد — كن أول من يقيّم هذه الخدمة.</p>`}
+    ` : `<p class="text-xs text-slate-500 font-semibold mt-2">لا توجد تقييمات بعد — كن أول من يقيّم هذه الخدمة.</p>`}
     <div id="reviewFormBox" class="mt-4"></div>
   `;
   lucide.createIcons();
@@ -1056,8 +1094,8 @@ function renderReviewForm(serviceId, mine) {
   if (!box) return;
   if (mine) {
     box.innerHTML = mine.approved
-      ? `<p class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">تم نشر تقييمك لهذه الخدمة ✓ (${mine.rating} من 5)</p>`
-      : `<p class="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">تم إرسال تقييمك وهو بانتظار مراجعة الإدارة قبل النشر.</p>`;
+      ? `<p class="text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">تم نشر تقييمك لهذه الخدمة ✓ (${mine.rating} من 5)</p>`
+      : `<p class="text-xs font-bold text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">تم إرسال تقييمك وهو بانتظار مراجعة الإدارة قبل النشر.</p>`;
     return;
   }
   if (!state.currentUser) {
@@ -1073,19 +1111,19 @@ function renderReviewForm(serviceId, mine) {
   }
   let selected = 5;
   box.innerHTML = `
-    <p class="text-xs font-extrabold text-white mb-2">قيّم هذه الخدمة</p>
+    <p class="text-xs font-extrabold text-slate-900 mb-2">قيّم هذه الخدمة</p>
     <div id="reviewStars" class="flex gap-1 mb-2.5" dir="rtl">
-      ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="text-2xl leading-none ${n <= selected ? 'text-amber-400' : 'text-slate-600'} transition active:scale-110" aria-label="${n} نجوم">★</button>`).join('')}
+      ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="text-2xl leading-none ${n <= selected ? 'text-amber-400' : 'text-slate-400'} transition active:scale-110" aria-label="${n} نجوم">★</button>`).join('')}
     </div>
-    <textarea id="reviewText" rows="2" maxlength="500" placeholder="اكتب رأيك في الخدمة (اختياري لكنه يساعد غيرك)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs mb-2.5"></textarea>
-    <p id="reviewError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-2.5"></p>
+    <textarea id="reviewText" rows="2" maxlength="500" placeholder="اكتب رأيك في الخدمة (اختياري لكنه يساعد غيرك)..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900 text-xs mb-2.5"></textarea>
+    <p id="reviewError" class="hidden text-xs font-bold text-rose-600 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-2.5"></p>
     <button id="reviewSubmitBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition">إرسال التقييم</button>
     <p class="text-[10px] text-slate-500 mt-2">تقييمك يظهر بعد مراجعة الإدارة.</p>
   `;
   const paintStars = () => {
     box.querySelectorAll('[data-star]').forEach(b => {
       b.classList.toggle('text-amber-400', Number(b.dataset.star) <= selected);
-      b.classList.toggle('text-slate-600', Number(b.dataset.star) > selected);
+      b.classList.toggle('text-slate-400', Number(b.dataset.star) > selected);
     });
   };
   box.querySelectorAll('[data-star]').forEach(b => {
@@ -1119,39 +1157,39 @@ function openEmergencyModal() {
   const emergencyServices = state.services.filter((s) => s.isEmergency);
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-rose-400 flex items-center gap-2">
+      <h3 class="text-lg font-extrabold text-rose-600 flex items-center gap-2">
         <i data-lucide="siren" class="w-5 h-5"></i> طوارئ الإسماعيلية
       </h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <p class="text-xs text-slate-400 font-semibold mb-3">أرقام الطوارئ العامة — دوس على الرقم للاتصال مباشرة:</p>
+    <p class="text-xs text-slate-500 font-semibold mb-3">أرقام الطوارئ العامة — دوس على الرقم للاتصال مباشرة:</p>
     <div class="grid grid-cols-2 gap-2.5 mb-5">
       ${EMERGENCY_NUMBERS.map((n) => `
         <a href="tel:${n.number}" class="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-3.5 flex items-center gap-3">
-          <span class="w-9 h-9 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0"><i data-lucide="${n.icon}" class="w-5 h-5"></i></span>
+          <span class="w-9 h-9 rounded-xl bg-rose-500/15 text-rose-600 flex items-center justify-center shrink-0"><i data-lucide="${n.icon}" class="w-5 h-5"></i></span>
           <span class="min-w-0">
-            <span class="block text-xs font-bold text-slate-300">${n.name}</span>
-            <span class="block text-lg font-black text-white" dir="ltr">${n.number}</span>
+            <span class="block text-xs font-bold text-slate-600">${n.name}</span>
+            <span class="block text-lg font-black text-slate-900" dir="ltr">${n.number}</span>
           </span>
         </a>`).join('')}
     </div>
     <div class="flex justify-between items-center mb-2">
-      <h4 class="text-sm font-extrabold text-white">خدمات طوارئ و 24 ساعة في الدليل</h4>
-      <span class="text-xs font-bold text-slate-400">${emergencyServices.length} خدمة</span>
+      <h4 class="text-sm font-extrabold text-slate-900">خدمات طوارئ و 24 ساعة في الدليل</h4>
+      <span class="text-xs font-bold text-slate-500">${emergencyServices.length} خدمة</span>
     </div>
     ${emergencyServices.length ? `
       <div class="space-y-2 max-h-64 overflow-y-auto no-scrollbar">
         ${emergencyServices.slice(0, 30).map((s) => `
-          <button data-emg-service="${s.id}" class="w-full text-right bg-slate-950/70 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+          <button data-emg-service="${s.id}" class="w-full text-right bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
             <span class="min-w-0">
-              <span class="block text-xs font-extrabold text-white truncate">${escHtml(s.name)}</span>
-              <span class="block text-[11px] text-slate-400 mt-0.5 truncate">${escHtml(s.area)}${s.address ? ' • ' + escHtml(s.address) : ''}</span>
+              <span class="block text-xs font-extrabold text-slate-900 truncate">${escHtml(s.name)}</span>
+              <span class="block text-[11px] text-slate-500 mt-0.5 truncate">${escHtml(s.area)}${s.address ? ' • ' + escHtml(s.address) : ''}</span>
             </span>
-            ${s.phone ? `<span class="text-xs font-black text-emerald-400 shrink-0" dir="ltr">${escHtml(s.phone)}</span>` : ''}
+            ${s.phone ? `<span class="text-xs font-black text-emerald-600 shrink-0" dir="ltr">${escHtml(s.phone)}</span>` : ''}
           </button>`).join('')}
       </div>
-      <button id="btnAllEmergency" class="w-full mt-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">عرض كل خدمات الطوارئ في القائمة</button>
-    ` : `<p class="text-xs text-slate-400 font-semibold">لا توجد خدمات طوارئ مسجلة حالياً.</p>`}
+      <button id="btnAllEmergency" class="w-full mt-3 bg-rose-500/10 border border-rose-500/30 text-rose-600 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">عرض كل خدمات الطوارئ في القائمة</button>
+    ` : `<p class="text-xs text-slate-500 font-semibold">لا توجد خدمات طوارئ مسجلة حالياً.</p>`}
   `;
   showModal();
   els.modalContent.querySelectorAll('[data-emg-service]').forEach((b) => {
@@ -1221,19 +1259,19 @@ function initMap() {
 function openTransportModal() {
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-amber-400 flex items-center gap-2">
+      <h3 class="text-lg font-extrabold text-amber-600 flex items-center gap-2">
         <i data-lucide="bus" class="w-5 h-5"></i> دليل مواصلات الإسماعيلية
       </h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
     <div class="space-y-2.5 max-h-80 overflow-y-auto no-scrollbar">
       ${TRANSPORT_ROUTES.map(r => `
-        <div class="bg-slate-950/70 border border-slate-800 p-3 rounded-2xl flex justify-between items-center">
+        <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex justify-between items-center">
           <div>
-            <p class="text-xs font-bold text-white">${r.from} ⇄ ${r.to}</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">${r.line} • ${r.time}</p>
+            <p class="text-xs font-bold text-slate-900">${r.from} ⇄ ${r.to}</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">${r.line} • ${r.time}</p>
           </div>
-          <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-extrabold">${r.fare}</span>
+          <span class="bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-extrabold">${r.fare}</span>
         </div>
       `).join('')}
     </div>
@@ -1245,59 +1283,59 @@ function openTransportModal() {
 function openContactModal() {
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-amber-400 flex items-center gap-2">
+      <h3 class="text-lg font-extrabold text-amber-600 flex items-center gap-2">
         <i data-lucide="messages-square" class="w-5 h-5"></i> تواصل معنا
       </h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <p class="text-xs text-slate-400 font-semibold mb-4 leading-relaxed">لإضافة خدمتك للدليل، أو تصحيح بيانات خدمة موجودة، أو الاستفسار عن الإعلانات — تواصل مع إدارة الدليل:</p>
+    <p class="text-xs text-slate-500 font-semibold mb-4 leading-relaxed">لإضافة خدمتك للدليل، أو تصحيح بيانات خدمة موجودة، أو الاستفسار عن الإعلانات — تواصل مع إدارة الدليل:</p>
     <div class="space-y-2.5">
-      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0"><i data-lucide="user-round" class="w-5 h-5"></i></div>
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0"><i data-lucide="user-round" class="w-5 h-5"></i></div>
         <div>
-          <p class="text-[11px] text-slate-400 font-bold">مسؤول الموقع</p>
-          <p class="text-sm text-white font-extrabold">Ahmed Attia</p>
+          <p class="text-[11px] text-slate-500 font-bold">مسؤول الموقع</p>
+          <p class="text-sm text-slate-900 font-extrabold">Ahmed Attia</p>
         </div>
       </div>
-      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0"><i data-lucide="building-2" class="w-5 h-5"></i></div>
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0"><i data-lucide="building-2" class="w-5 h-5"></i></div>
         <div>
-          <p class="text-[11px] text-slate-400 font-bold">الشركة المؤسسة</p>
-          <p class="text-sm text-white font-extrabold">Nexora</p>
+          <p class="text-[11px] text-slate-500 font-bold">الشركة المؤسسة</p>
+          <p class="text-sm text-slate-900 font-extrabold">Nexora</p>
         </div>
       </div>
-      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3">
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
           <div>
-            <p class="text-[11px] text-slate-400 font-bold">رقم مسؤول الموقع</p>
-            <p class="text-sm text-white font-extrabold" dir="ltr">01121341717</p>
+            <p class="text-[11px] text-slate-500 font-bold">رقم مسؤول الموقع</p>
+            <p class="text-sm text-slate-900 font-extrabold" dir="ltr">01121341717</p>
           </div>
         </div>
         <div class="flex gap-2 shrink-0">
           <a href="https://wa.me/201121341717" target="_blank" rel="noopener" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
-          <a href="tel:01121341717" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
+          <a href="tel:01121341717" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
         </div>
       </div>
-      <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3">
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-5 h-5"></i></div>
           <div>
-            <p class="text-[11px] text-slate-400 font-bold">رقم إضافي للتواصل</p>
-            <p class="text-sm text-white font-extrabold" dir="ltr">01117543009</p>
+            <p class="text-[11px] text-slate-500 font-bold">رقم إضافي للتواصل</p>
+            <p class="text-sm text-slate-900 font-extrabold" dir="ltr">01117543009</p>
           </div>
         </div>
         <div class="flex gap-2 shrink-0">
           <a href="https://wa.me/201117543009" target="_blank" rel="noopener" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="message-circle" class="w-4 h-4"></i> واتساب</a>
-          <a href="tel:01117543009" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
+          <a href="tel:01117543009" class="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"><i data-lucide="phone-call" class="w-4 h-4"></i> اتصال</a>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <a href="https://www.facebook.com/share/1HtWFUyNba/" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-sky-600/20 border border-sky-500/30 text-sky-400 py-3 rounded-xl text-xs font-bold">
+        <a href="https://www.facebook.com/share/1HtWFUyNba/" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-sky-600/20 border border-sky-500/30 text-sky-600 py-3 rounded-xl text-xs font-bold">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
           فيسبوك
         </a>
-        <a href="https://www.instagram.com/nexoraa_egypt" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-pink-600/20 border border-pink-500/30 text-pink-400 py-3 rounded-xl text-xs font-bold">
+        <a href="https://www.instagram.com/nexoraa_egypt" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 bg-pink-600/20 border border-pink-500/30 text-pink-600 py-3 rounded-xl text-xs font-bold">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
           إنستجرام
         </a>
@@ -1310,40 +1348,40 @@ function openContactModal() {
 function openAddServiceModal() {
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-amber-400">إضافة خدمة جديدة للدليل</h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-lg font-extrabold text-amber-600">إضافة خدمة جديدة للدليل</h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    ${state.isAdmin ? '' : `<p class="text-xs text-slate-300 font-semibold bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 mb-3 leading-relaxed">طلبك يصل لإدارة الدليل ويراجَع قبل النشر — ارفع صورة محلك من جهازك بالأسفل، أو الصق رابط صورة مباشر.</p>`}
+    ${state.isAdmin ? '' : `<p class="text-xs text-slate-600 font-semibold bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 mb-3 leading-relaxed">طلبك يصل لإدارة الدليل ويراجَع قبل النشر — ارفع صورة محلك من جهازك بالأسفل، أو الصق رابط صورة مباشر.</p>`}
     <form id="addServiceForm" class="space-y-3 text-xs">
-      <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="text" name="name" required placeholder="اسم النشاط التجاري / العيادة" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
       <div class="grid grid-cols-2 gap-2">
-        <select name="category" id="addGroupSelect" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+        <select name="category" id="addGroupSelect" class="bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
           ${GROUPS.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
         </select>
-        <select name="subcategory" id="addSubSelect" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"></select>
+        <select name="subcategory" id="addSubSelect" class="bg-white border border-slate-300 rounded-xl p-3 text-slate-900"></select>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <select name="area" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+        <select name="area" class="bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
           ${AREAS.map(a => `<option value="${a}">${a}</option>`).join('')}
         </select>
       </div>
-      <input type="text" name="address" placeholder="العنوان التفصيلي (اختياري إن لم يكن مؤكداً)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="text" name="address" placeholder="العنوان التفصيلي (اختياري إن لم يكن مؤكداً)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
       <div class="grid grid-cols-2 gap-2">
-        <input type="tel" name="phone" required placeholder="رقم الهاتف" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-        <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+        <input type="tel" name="phone" required placeholder="رقم الهاتف" class="bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
+        <input type="tel" name="whatsapp" placeholder="واتساب (2010...)" class="bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
       </div>
-      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-        <p class="font-bold text-slate-200 mb-2">صورة المحل</p>
+      <div class="bg-white border border-slate-300 rounded-xl p-3">
+        <p class="font-bold text-slate-700 mb-2">صورة المحل</p>
         <label for="addPhotoInput" class="flex items-center justify-center gap-2 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl cursor-pointer transition">
           <i data-lucide="image-plus" class="w-4 h-4"></i> اختر صورة من جهازك
         </label>
         <input type="file" id="addPhotoInput" accept="image/*" class="hidden">
         <img id="addPhotoPreview" class="hidden w-full max-h-44 object-contain bg-white rounded-xl mt-2" alt="معاينة صورة المحل">
-        <button type="button" id="addPhotoRemove" class="hidden mt-2 text-red-400 font-bold">إزالة الصورة</button>
-        <input type="url" name="imageUrl" placeholder="أو الصق رابط صورة مباشر (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white mt-2" dir="ltr">
+        <button type="button" id="addPhotoRemove" class="hidden mt-2 text-rose-600 font-bold">إزالة الصورة</button>
+        <input type="url" name="imageUrl" placeholder="أو الصق رابط صورة مباشر (اختياري)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900 mt-2" dir="ltr">
       </div>
-      <input type="text" name="tags" placeholder="كلمات مفتاحية (مثال: دليفري، كشف، صيانة)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-      <label class="flex items-center gap-2 text-slate-300 py-1">
+      <input type="text" name="tags" placeholder="كلمات مفتاحية (مثال: دليفري، كشف، صيانة)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
+      <label class="flex items-center gap-2 text-slate-600 py-1">
         <input type="checkbox" name="isEmergency" class="accent-amber-500"> متاح طوارئ / 24 ساعة
       </label>
       <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">${state.isAdmin ? 'حفظ ونشر الخدمة فوراً' : 'إرسال الطلب للمراجعة'}</button>
@@ -1475,27 +1513,27 @@ function updateAccountButton() {
 function openAuthModal(mode = 'login') {
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-amber-400">حسابك في دليل الإسماعيلية</h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-lg font-extrabold text-amber-600">حسابك في دليل الإسماعيلية</h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
     <div class="grid grid-cols-2 gap-2 mb-4">
-      <button id="tabLogin" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'login' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">تسجيل الدخول</button>
-      <button id="tabSignup" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'signup' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">إنشاء حساب</button>
+      <button id="tabLogin" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'login' ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'}">تسجيل الدخول</button>
+      <button id="tabSignup" class="py-2.5 rounded-xl text-xs font-extrabold transition ${mode === 'signup' ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-600'}">إنشاء حساب</button>
     </div>
-    <p id="authError" class="hidden text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
+    <p id="authError" class="hidden text-xs font-bold text-rose-600 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-3"></p>
 
     <form id="loginForm" class="space-y-3 text-xs ${mode === 'signup' ? 'hidden' : ''}">
-      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
-      <input type="password" name="password" required placeholder="كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900 text-right">
+      <input type="password" name="password" required placeholder="كلمة السر" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
       <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">دخول</button>
     </form>
 
     <form id="signupForm" class="space-y-3 text-xs ${mode === 'login' ? 'hidden' : ''}">
-      <input type="text" name="name" required placeholder="الاسم بالكامل" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-right">
-      <input type="email" name="email" placeholder="البريد الإلكتروني (اختياري)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-      <input type="password" name="password" required minlength="6" placeholder="كلمة السر (6 أحرف على الأقل)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
-      <input type="password" name="confirmPassword" required minlength="6" placeholder="تأكيد كلمة السر" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white">
+      <input type="text" name="name" required placeholder="الاسم بالكامل" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
+      <input type="tel" name="phone" required dir="ltr" placeholder="رقم الموبايل (01xxxxxxxxx)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900 text-right">
+      <input type="email" name="email" placeholder="البريد الإلكتروني (اختياري)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
+      <input type="password" name="password" required minlength="6" placeholder="كلمة السر (6 أحرف على الأقل)" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
+      <input type="password" name="confirmPassword" required minlength="6" placeholder="تأكيد كلمة السر" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-slate-900">
       <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition">إنشاء الحساب</button>
     </form>
   `;
@@ -1558,17 +1596,17 @@ function openProfileModal() {
   const p = state.profile;
   els.modalContent.innerHTML = `
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-extrabold text-amber-400">حسابي</h3>
-      <button id="closeModalBtn" class="p-1.5 bg-slate-800 rounded-full text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-lg font-extrabold text-amber-600">حسابي</h3>
+      <button id="closeModalBtn" class="p-1.5 bg-slate-100 rounded-full text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 mb-4 space-y-2 text-xs">
-      <p class="text-white font-extrabold text-sm">${p ? p.name : (state.isAdmin ? 'الأدمن' : 'مستخدم')}</p>
-      ${p && p.phone ? `<p class="text-slate-300">📱 ${p.phone}</p>` : ''}
-      ${p && p.email ? `<p class="text-slate-300">✉️ ${p.email}</p>` : ''}
-      ${state.isAdmin ? '<p class="text-amber-400 font-bold">حساب إدارة الدليل</p>' : ''}
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4 space-y-2 text-xs">
+      <p class="text-slate-900 font-extrabold text-sm">${p ? p.name : (state.isAdmin ? 'الأدمن' : 'مستخدم')}</p>
+      ${p && p.phone ? `<p class="text-slate-600">📱 ${p.phone}</p>` : ''}
+      ${p && p.email ? `<p class="text-slate-600">✉️ ${p.email}</p>` : ''}
+      ${state.isAdmin ? '<p class="text-amber-600 font-bold">حساب إدارة الدليل</p>' : ''}
     </div>
     <a href="owner.html" class="block text-center w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition mb-2">لوحة صاحب النشاط</a>
-    <button id="btnLogout" class="w-full bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">تسجيل الخروج</button>
+    <button id="btnLogout" class="w-full bg-rose-500/10 border border-rose-500/30 text-rose-600 hover:bg-rose-500 hover:text-white font-extrabold py-3 rounded-xl text-xs transition">تسجيل الخروج</button>
   `;
   showModal();
   document.getElementById('btnLogout').addEventListener('click', async () => {

@@ -26,7 +26,7 @@ export function armDeleteConfirm(btn, action) {
 
 export function getOpenStatus(openHour, closeHour) {
   if (openHour === 0 && closeHour === 24) {
-    return { isOpen: true, text: 'مفتوح 24 ساعة', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+    return { isOpen: true, text: 'مفتوح 24 ساعة', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' };
   }
   const now = new Date().getHours();
   const isOpen = closeHour < openHour
@@ -34,8 +34,8 @@ export function getOpenStatus(openHour, closeHour) {
     : (now >= openHour && now < closeHour);
 
   return isOpen
-    ? { isOpen: true, text: 'مفتوح الآن', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' }
-    : { isOpen: false, text: `مغلق (يفتح ${openHour}:00)`, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' };
+    ? { isOpen: true, text: 'مفتوح الآن', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' }
+    : { isOpen: false, text: `مغلق (يفتح ${openHour}:00)`, color: 'text-rose-600 bg-rose-500/10 border-rose-500/20' };
 }
 
 export function categoryInfo(id) {
@@ -54,7 +54,7 @@ export function renderCategories(container, activeCat, onSelect) {
       <button data-cat="${cat.id}" aria-pressed="${active}" class="cat-btn flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
         active
           ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 scale-[1.02]'
-          : 'bg-slate-900/90 text-slate-300 border border-slate-800 hover:border-slate-700'
+          : 'bg-white text-slate-600 border border-slate-200 shadow-sm hover:border-slate-300'
       }">
         <i data-lucide="${cat.icon}" class="w-4 h-4"></i>
         <span>${cat.name}</span>
@@ -81,8 +81,8 @@ export function renderSubcategories(container, groupId, activeSub, onSelect) {
     return `
       <button data-sub="${sub.id}" aria-pressed="${active}" class="sub-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
         active
-          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-          : 'bg-slate-900/70 text-slate-400 border border-slate-800 hover:border-slate-600'
+          ? 'bg-amber-500/20 text-amber-700 border border-amber-500/40'
+          : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'
       }">
         <span>${sub.name}</span>
       </button>
@@ -95,17 +95,18 @@ export function renderSubcategories(container, groupId, activeSub, onSelect) {
 }
 
 /* بلاطات الأقسام في الصفحة الرئيسية: الأقسام الـ 11 + بلاطة "كل الخدمات".
-   كل بلاطة تعرض أيقونة القسم واسمه وعدد خدماته، والضغط عليها يفتح خدماته. */
+   كل بلاطة تعرض أيقونة القسم واسمه وعدد خدماته، والضغط عليها يفتح خدماته.
+   counts === null تعني "لسه بيحمّل" فيعرض "…" بدل صفر مؤقت. */
 export function renderGroupTiles(container, groups, counts, total, onSelect) {
   const tiles = [
-    ...groups.map(g => ({ id: g.id, name: g.name, icon: g.icon, count: counts[g.id] || 0 })),
+    ...groups.map(g => ({ id: g.id, name: g.name, icon: g.icon, count: counts ? (counts[g.id] || 0) : null })),
     { id: 'all', name: 'كل الخدمات', icon: 'layout-grid', count: total }
   ];
   container.innerHTML = tiles.map(t => `
     <button data-group="${t.id}" class="group-tile ${t.id === 'all' ? 'group-tile--all' : ''}">
       <span class="group-tile__icon"><i data-lucide="${t.icon}"></i></span>
       <span class="group-tile__name">${t.name}</span>
-      <span class="group-tile__count">${t.count} خدمة</span>
+      <span class="group-tile__count">${t.count === null ? '…' : t.count + ' خدمة'}</span>
     </button>
   `).join('');
   container.querySelectorAll('[data-group]').forEach(el => {
@@ -138,9 +139,9 @@ export function renderSkeleton(container, count = 6) {
 export function renderErrorState(container, onRetry) {
   container.innerHTML = `
     <div class="error-state">
-      <div class="state-icon"><i data-lucide="wifi-off" class="text-rose-400"></i></div>
-      <p class="text-white text-sm font-extrabold mb-1">تعذر تحميل الخدمات</p>
-      <p class="text-slate-400 text-xs font-semibold mb-4">تحقق من اتصالك بالإنترنت وحاول مرة أخرى.</p>
+      <div class="state-icon"><i data-lucide="wifi-off" class="text-rose-500"></i></div>
+      <p class="text-slate-900 text-sm font-extrabold mb-1">تعذر تحميل الخدمات</p>
+      <p class="text-slate-500 text-xs font-semibold mb-4">تحقق من اتصالك بالإنترنت وحاول مرة أخرى.</p>
       <button data-retry class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
         إعادة المحاولة
       </button>
@@ -209,8 +210,8 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
     container.innerHTML = `
       <div class="empty-state">
         <div class="state-icon"><i data-lucide="search-x" class="text-slate-500"></i></div>
-        <p class="text-white text-sm font-extrabold mb-1">لا توجد خدمات مطابقة لبحثك</p>
-        <p class="text-slate-400 text-xs font-semibold mb-4">جرّب كلمة بحث مختلفة أو غيّر التصنيف والمنطقة.</p>
+        <p class="text-slate-900 text-sm font-extrabold mb-1">لا توجد خدمات مطابقة لبحثك</p>
+        <p class="text-slate-500 text-xs font-semibold mb-4">جرّب كلمة بحث مختلفة أو غيّر التصنيف والمنطقة.</p>
         <button data-clear-filters class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">
           مسح كل الفلاتر
         </button>
@@ -276,7 +277,7 @@ export function renderServiceCards(container, services, favorites, isAdmin, hand
               ` : '<span>جديد</span>'}
               ${isTopRated ? '<span class="service-top-badge">⭐ الأعلى تقييماً</span>' : ''}
               <span class="service-meta__dot" aria-hidden="true">•</span>
-              <span class="inline-flex items-center gap-1.5 ${status.isOpen ? 'text-emerald-400' : 'text-rose-400'}"><span class="open-dot ${status.isOpen ? 'open-dot--open' : 'open-dot--closed'}"></span>${status.text}</span>
+              <span class="inline-flex items-center gap-1.5 ${status.isOpen ? 'text-emerald-600' : 'text-rose-600'}"><span class="open-dot ${status.isOpen ? 'open-dot--open' : 'open-dot--closed'}"></span>${status.text}</span>
               <span class="service-meta__dot" aria-hidden="true">•</span>
               <span class="service-meta__area"><i data-lucide="map-pin" class="w-3 h-3"></i>${srv.area}</span>
             </p>

@@ -66,7 +66,7 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="pb-24 md:pb-8 select-none">
+<body class="theme-light pb-24 md:pb-8 select-none">
 
   <!-- الهيدر الثابت: الشعار + حسابي + أضف خدمتك — يبقى ظاهراً أثناء التمرير -->
   <header class="site-header sticky top-0 z-50 px-4">
@@ -76,18 +76,18 @@
           <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-lg shadow-blue-900/40 shrink-0">
           <div class="min-w-0">
             <h1 class="text-base sm:text-lg font-black text-white leading-tight truncate">خدمات الإسماعيلية</h1>
-            <p class="hidden sm:block text-[11px] text-amber-400 font-semibold">المنصة الشاملة لأهالي المحافظة</p>
+            <p class="site-header__subtitle hidden sm:block text-[11px] text-amber-400 font-semibold">المنصة الشاملة لأهالي المحافظة</p>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button id="btnAccount" class="bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition active:scale-95" title="حسابي" aria-label="حسابي">
+          <button id="btnAccount" class="header-icon-btn px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition active:scale-95" title="حسابي" aria-label="حسابي">
             <i data-lucide="user-round" class="w-4 h-4"></i>
             <span id="accountLabel" class="hidden sm:inline">حسابي</span>
           </button>
-          <a href="admin.html" id="btnAdminToggle" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="لوحة تحكم الإدارة" aria-label="لوحة تحكم الإدارة">
+          <a href="admin.html" id="btnAdminToggle" class="header-icon-btn p-2 rounded-xl" title="لوحة تحكم الإدارة" aria-label="لوحة تحكم الإدارة">
             <i data-lucide="shield-check" class="w-4 h-4"></i>
           </a>
-          <a href="/digital-awareness" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400" title="مركز الوعي الرقمي" aria-label="مركز الوعي الرقمي">
+          <a href="/digital-awareness" class="header-icon-btn p-2 rounded-xl" title="مركز الوعي الرقمي" aria-label="مركز الوعي الرقمي">
             <i data-lucide="shield" class="w-4 h-4"></i>
           </a>
           <button id="btnAddService" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95">
@@ -112,27 +112,27 @@
   <!-- شريط التنقل: ثابت أسفل الشاشة على الموبايل (position: fixed — انظر .bottom-nav-js)، وشريط علوي عادي على الديسكتوب -->
   <nav class="bottom-nav-js fixed bottom-0 left-0 right-0 z-50 glass-nav px-6 py-2.5 md:static md:z-auto md:bg-transparent md:border-0 md:backdrop-blur-none md:px-4 md:py-1">
     <div class="max-w-6xl mx-auto flex justify-between md:justify-center md:gap-8 items-center">
-      <button id="btnHome" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-amber-400">
+      <button id="btnHome" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-amber-600">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-compass w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/></svg>
         <span class="text-[9px] md:text-xs font-bold whitespace-nowrap">الرئيسية</span>
       </button>
-      <button id="btnEmergency" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-rose-400 transition">
+      <button id="btnEmergency" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-500 hover:text-rose-500 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-siren w-5 h-5"><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="m4.929 4.929.707.707"/><path d="M12 12v6"/></svg>
         <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">طوارئ 24/7</span>
       </button>
-      <button id="btnMap" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
+      <button id="btnMap" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-500 hover:text-slate-900 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map w-5 h-5"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>
         <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">الخريطة</span>
       </button>
-      <button id="btnTransport" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
+      <button id="btnTransport" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-500 hover:text-slate-900 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bus w-5 h-5"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
         <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">المواصلات</span>
       </button>
-      <button id="btnSaved" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-white transition">
+      <button id="btnSaved" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-500 hover:text-slate-900 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bookmark w-5 h-5"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/></svg>
         <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">المحفوظات</span>
       </button>
-      <button id="btnContact" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-400 hover:text-amber-400 transition">
+      <button id="btnContact" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-1.5 text-slate-500 hover:text-amber-600 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-messages-square w-5 h-5"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>
         <span class="text-[9px] md:text-xs font-semibold whitespace-nowrap">تواصل معنا</span>
       </button>
@@ -152,32 +152,14 @@
       <div class="hero-panel relative overflow-hidden rounded-3xl border border-slate-800/80 px-5 py-4 sm:px-8 sm:py-5">
         <div class="hero-glow absolute inset-0 pointer-events-none" aria-hidden="true"></div>
         <div class="relative text-center">
-          <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-full mb-2.5">
-            <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
-            الدليل الرسمي لمحافظة الإسماعيلية
-          </span>
-          <h2 class="text-lg sm:text-[1.7rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
-          <p class="hidden sm:block text-sm text-slate-400 font-semibold mt-1.5 max-w-xl mx-auto leading-relaxed text-balance">عيادات وأطباء، مطاعم وكافيهات، صيانة، دليفري، موبايلات وملابس — أرقام وعناوين موثقة وصور حقيقية.</p>
+          <h2 class="text-xl sm:text-[1.9rem] font-black text-white leading-snug text-balance">كل خدمات الإسماعيلية في مكان واحد</h2>
           <!-- البحث داخل الهيرو -->
           <div class="relative max-w-xl mx-auto mt-4">
             <input type="search" id="heroSearchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة..." autocomplete="off"
-              class="hero-search w-full bg-slate-950/70 border border-slate-700 rounded-2xl py-3 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
-            <i data-lucide="search" class="w-4 h-4 text-amber-400 absolute right-4 top-3.5 pointer-events-none"></i>
+              class="hero-search w-full bg-slate-950/70 border border-slate-700 rounded-2xl py-3.5 pr-12 pl-4 text-[15px] text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
+            <i data-lucide="search" class="w-5 h-5 text-amber-400 absolute right-4 top-4 pointer-events-none"></i>
           </div>
-          <div class="flex flex-wrap justify-center gap-2.5 mt-4">
-            <div class="hero-stat">
-              <span class="hero-stat__num" id="heroCount">0</span>
-              <span class="hero-stat__label">خدمة موثقة</span>
-            </div>
-            <div class="hero-stat">
-              <span class="hero-stat__num" id="heroGroups">11</span>
-              <span class="hero-stat__label">قسماً رئيسياً</span>
-            </div>
-            <div class="hero-stat">
-              <span class="hero-stat__num" id="heroAreas">8</span>
-              <span class="hero-stat__label">منطقة ومركز</span>
-            </div>
-          </div>
+          <p class="mt-3 text-xs font-bold text-slate-300"><span id="heroCount">—</span> خدمة موثقة في الإسماعيلية</p>
         </div>
       </div>
     </div>
@@ -189,8 +171,8 @@
       <!-- البحث الذكي -->
       <div class="relative">
         <input type="search" id="searchInput" placeholder="ابحث عن دكتور، مطعم، صيانة، أو منطقة..." autocomplete="off"
-          class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-2.5 pr-11 pl-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none"></i>
+          class="w-full bg-white border border-slate-200 rounded-2xl py-2.5 pr-11 pl-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:outline-none focus:border-amber-400 transition">
+        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute right-4 top-3.5 pointer-events-none"></i>
       </div>
       <!-- التصنيفات -->
       <div id="categoriesContainer" class="chips-fade flex gap-2 overflow-x-auto no-scrollbar pt-3"></div>
@@ -202,15 +184,15 @@
         <button id="chip24h" class="quick-chip"><i data-lucide="moon-star" class="w-4 h-4"></i> 24 ساعة</button>
       </div>
       <!-- فلتر المناطق -->
-      <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl px-3.5 py-2 mt-2">
+      <div class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 mt-2">
         <div class="flex items-center gap-2 text-xs shrink-0">
-          <i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i>
-          <span class="text-slate-400 font-semibold">المنطقة / المركز:</span>
+          <i data-lucide="map-pin" class="w-4 h-4 text-amber-600"></i>
+          <span class="text-slate-500 font-semibold">المنطقة / المركز:</span>
         </div>
-        <select id="areaFilter" class="bg-transparent text-xs font-bold text-white focus:outline-none min-w-0 flex-1" aria-label="فلتر المنطقة">
-          <option value="all" class="bg-slate-900">كل محافظة الإسماعيلية</option>
+        <select id="areaFilter" class="bg-transparent text-xs font-bold text-slate-900 focus:outline-none min-w-0 flex-1" aria-label="فلتر المنطقة">
+          <option value="all" class="bg-white">كل محافظة الإسماعيلية</option>
         </select>
-        <span id="resultsCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">0 خدمة</span>
+        <span id="resultsCount" class="text-xs font-bold text-amber-700 bg-amber-400/20 px-2.5 py-1 rounded-full whitespace-nowrap shrink-0">…</span>
       </div>
     </div>
   </div>
@@ -240,11 +222,11 @@
     <!-- خدمات يومية: مواقيت الصلاة + مواعيد القطارات -->
     <section id="dailyServicesSection" class="hidden mb-5">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
-          <i data-lucide="sun" class="w-5 h-5 text-amber-400"></i>
+        <h2 class="section-title text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
           خدمات يومية
         </h2>
-        <span id="hijriDateLabel" class="text-xs font-bold text-slate-400"></span>
+        <span id="hijriDateLabel" class="text-xs font-bold text-slate-500"></span>
       </div>
       <div class="daily-services">
         <div class="daily-services__block">
@@ -268,11 +250,11 @@
     <!-- عروض اليوم: تظهر على الرئيسية فقط عند وجود عروض سارية -->
     <section id="offersSection" class="hidden mb-5">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
-          <i data-lucide="badge-percent" class="w-5 h-5 text-amber-400"></i>
+        <h2 class="section-title text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="badge-percent" class="w-5 h-5 text-amber-500"></i>
           عروض اليوم
         </h2>
-        <span class="text-xs font-bold text-slate-400">خصومات سارية من محلات الدليل</span>
+        <span class="text-xs font-bold text-slate-500">خصومات سارية من محلات الدليل</span>
       </div>
       <div id="offersRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
     </section>
@@ -293,16 +275,16 @@
     <!-- الخريطة: تظهر عند الضغط على "الخريطة" في شريط التنقل -->
     <section id="mapSection" class="hidden mb-5">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
-          <i data-lucide="map" class="w-5 h-5 text-amber-400"></i>
+        <h2 class="section-title text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="map" class="w-5 h-5 text-amber-500"></i>
           خريطة خدمات الإسماعيلية
         </h2>
-        <button id="btnCloseMap" class="flex items-center gap-1 text-xs font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-full transition hover:bg-amber-500 hover:text-slate-950 active:scale-95">
+        <button id="btnCloseMap" class="flex items-center gap-1 text-xs font-extrabold text-amber-700 bg-amber-400/20 border border-amber-400/40 px-3 py-1.5 rounded-full transition hover:bg-amber-400 hover:text-slate-950 active:scale-95">
           <i data-lucide="chevron-right" class="w-4 h-4"></i>
           رجوع للقائمة
         </button>
       </div>
-      <p id="mapNote" class="text-xs text-slate-400 font-semibold mb-3"></p>
+      <p id="mapNote" class="text-xs text-slate-500 font-semibold mb-3"></p>
       <div id="map" class="map-box"></div>
     </section>
 
@@ -310,8 +292,8 @@
          وكل قسم يفتح خدماته — لا تظهر كل الأنشطة مكدسة في صفحة واحدة -->
     <section id="groupsSection">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-base font-extrabold text-slate-100">تصفح حسب القسم</h2>
-        <span class="text-xs font-bold text-slate-400">اختر قسماً لعرض خدماته</span>
+        <h2 class="section-title text-base font-extrabold text-slate-900">تصفح حسب القسم</h2>
+        <button id="btnShowAllServices" class="section-head__link">عرض كل الخدمات ←</button>
       </div>
       <div id="groupsGrid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3"></div>
     </section>
@@ -349,14 +331,14 @@
     <!-- قسم الخدمات: يظهر عند اختيار قسم أو عند البحث أو تطبيق فلتر -->
     <section id="servicesSection" class="hidden">
       <div class="flex justify-between items-center mb-3">
-        <h2 id="sectionTitle" class="text-base font-extrabold text-slate-100">أبرز الخدمات في الإسماعيلية</h2>
-        <button id="btnBackToGroups" class="flex items-center gap-1 text-xs font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-full transition hover:bg-amber-500 hover:text-slate-950 active:scale-95">
+        <h2 id="sectionTitle" class="section-title text-base font-extrabold text-slate-900">أبرز الخدمات في الإسماعيلية</h2>
+        <button id="btnBackToGroups" class="flex items-center gap-1 text-xs font-extrabold text-amber-700 bg-amber-400/20 border border-amber-400/40 px-3 py-1.5 rounded-full transition hover:bg-amber-400 hover:text-slate-950 active:scale-95">
           <i data-lucide="chevron-right" class="w-4 h-4"></i>
           كل الأقسام
         </button>
       </div>
       <!-- خطوط ساخنة للصيدليات: تظهر بس عند تصفح قسم الصيدليات -->
-      <p id="pharmacyHotlines" class="hidden text-xs font-bold text-slate-300 bg-slate-900/60 border border-slate-800/80 rounded-xl px-3.5 py-2 mb-3">خطوط ساخنة للصيدليات: العزبي <a href="tel:19600" class="text-amber-400" dir="ltr">19600</a> · سيف <a href="tel:19199" class="text-amber-400" dir="ltr">19199</a> · الإسعاف <a href="tel:16682" class="text-amber-400" dir="ltr">16682</a></p>
+      <p id="pharmacyHotlines" class="hidden text-xs font-bold text-slate-700 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2 mb-3">خطوط ساخنة للصيدليات: العزبي <a href="tel:19600" class="text-amber-600" dir="ltr">19600</a> · سيف <a href="tel:19199" class="text-amber-600" dir="ltr">19199</a> · الإسعاف <a href="tel:16682" class="text-amber-600" dir="ltr">16682</a></p>
 
       <!-- شبكة البطاقات: عمود على الموبايل، عمودان على التابلت، 3 على الشاشات الواسعة -->
       <div id="servicesGrid" class="services-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
@@ -365,11 +347,11 @@
     <!-- الأعلى تقييماً: يظهر على الرئيسية فقط -->
     <section id="topRatedSection" class="hidden mt-5">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-base font-extrabold text-slate-100 flex items-center gap-1.5">
-          <i data-lucide="star" class="w-5 h-5 text-amber-400"></i>
+        <h2 class="section-title text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="star" class="w-5 h-5 text-amber-500"></i>
           الأعلى تقييماً
         </h2>
-        <span class="text-xs font-bold text-slate-400">اختيارات أهل الإسماعيلية</span>
+        <button id="btnShowTopRated" class="section-head__link">شوف الكل ←</button>
       </div>
       <div id="topRatedRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
     </section>
@@ -377,8 +359,8 @@
 
 
   <!-- تذييل احترافي: عن الدليل + أقسام سريعة + تواصل -->
-  <footer class="max-w-6xl mx-auto px-4 pt-10 pb-4">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-slate-800/80 pt-6 text-start">
+  <footer class="max-w-6xl mx-auto px-4 pt-8 pb-4 mt-8 bg-[#0A2463] rounded-t-3xl">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-white/10 pt-6 text-start">
       <div>
         <div class="flex items-center gap-2.5">
           <img src="icons/icon.svg?v=2" alt="شعار دليل خدمات الإسماعيلية" class="w-9 h-9 rounded-2xl shadow-lg shadow-blue-900/40">
@@ -387,7 +369,7 @@
             <p class="text-[11px] text-amber-400 font-semibold">الدليل الشامل لأهالي المحافظة</p>
           </div>
         </div>
-        <p class="text-xs text-slate-400 font-semibold leading-relaxed mt-3">أرقام وعناوين موثقة وصور حقيقية لأكثر من 330 خدمة في الإسماعيلية ومراكزها — مطاعم، عيادات، صيانة، دليفري وأكثر.</p>
+        <p class="text-xs text-slate-300 font-semibold leading-relaxed mt-3">أرقام وعناوين موثقة وصور حقيقية لأكثر من 330 خدمة في الإسماعيلية ومراكزها — مطاعم، عيادات، صيانة، دليفري وأكثر.</p>
         <div class="flex gap-2 mt-3">
           <a href="https://www.facebook.com/share/1HtWFUyNba/" target="_blank" rel="noopener" aria-label="فيسبوك" class="footer-social">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
@@ -417,8 +399,8 @@
         <button id="footerAddService" class="mt-1 bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-extrabold transition active:scale-95">أضف خدمتك مجاناً</button>
       </div>
     </div>
-    <div class="border-t border-slate-800/80 mt-6 pt-4 text-center">
-      <p class="text-[11px] text-slate-500 font-semibold leading-loose">صفحات الأقسام:
+    <div class="border-t border-white/10 mt-6 pt-4 text-center">
+      <p class="text-[11px] text-slate-400 font-semibold leading-loose">صفحات الأقسام:
         <a href="/categories/food.html" class="hover:text-amber-400">الأغذية والمشروبات</a> •
         <a href="/categories/delivery.html" class="hover:text-amber-400">دليفري</a> •
         <a href="/categories/fashion.html" class="hover:text-amber-400">الملابس والأزياء</a> •
@@ -434,14 +416,14 @@
         <a href="/categories/factories.html" class="hover:text-amber-400">مصانع وشركات</a> •
         <a href="/categories/government.html" class="hover:text-amber-400">خدمات حكومية</a>
       </p>
-      <p class="text-[11px] text-slate-500 font-semibold mt-2">© 2026 دليل خدمات الإسماعيلية — جميع الأرقام والعناوين موثقة من مصادرها</p>
+      <p class="text-[11px] text-slate-400 font-semibold mt-2">© 2026 دليل خدمات الإسماعيلية — جميع الأرقام والعناوين موثقة من مصادرها</p>
     </div>
   </footer>
 
   <!-- النافذة المنبثقة (Bottom Sheet Modal) -->
   <div id="appModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center">
     <div id="closeModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
-    <div id="modalContent" class="relative z-10 bg-slate-900 border border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 bottom-sheet-enter"></div>
+    <div id="modalContent" class="relative z-10 bg-white border border-slate-200 text-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 bottom-sheet-enter"></div>
   </div>
 
   <script type="module" src="js/app.js"></script>
