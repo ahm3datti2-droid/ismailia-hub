@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ismailia-hub-v40';
+const CACHE_NAME = 'ismailia-hub-v41';
 const ASSETS = [
   '/',
   '/index.html',
