@@ -348,10 +348,6 @@ function bindEvents() {
     if (state.currentUser) openProfileModal();
     else openAuthModal('login');
   });
-  // زر الإدارة يفتح لوحة التحكم — الدخول فيها عبر Firebase Auth فقط.
-  document.getElementById('btnAdminToggle').addEventListener('click', () => {
-    window.location.href = 'admin.html';
-  });
   document.getElementById('closeModalBackdrop').addEventListener('click', closeModal);
 }
 
