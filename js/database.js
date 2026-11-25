@@ -93,6 +93,7 @@ function normaliseService(id, data) {
     verified: Boolean(data.verified),
     rating: Number(data.rating ?? 5),
     reviewsCount: Number(data.reviewsCount ?? 1),
+    createdAt: data.createdAt || null,
     tags: data.tags || '',
     menu: Array.isArray(data.menu) ? data.menu : [],
     // ربط النشاط بحساب صاحبه: رقم موبايل الحساب (11 رقماً يبدأ بـ 01)

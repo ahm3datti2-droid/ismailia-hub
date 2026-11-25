@@ -39,6 +39,7 @@ const els = {
   resultsCount: document.getElementById('resultsCount'),
   sectionTitle: document.getElementById('sectionTitle'),
   heroCount: document.getElementById('heroCount'),
+  footerCount: document.getElementById('footerCount'),
   heroGroups: document.getElementById('heroGroups'),
   heroAreas: document.getElementById('heroAreas'),
   modal: document.getElementById('appModal'),
@@ -99,6 +100,10 @@ function selectGroupTile(groupId) {
   state.activeCategory = groupId;
   state.showAll = groupId === 'all';
   state.activeSubcategory = 'all';
+  // اختيار قسم يمسح البحث — وإلا يطلع "0 نتيجة" من غير تفسير
+  // لما تكون فيه كلمة بحث قديمة في الصندوق.
+  state.searchQuery = '';
+  if (els.searchInput) els.searchInput.value = '';
   state.onlyEmergency = false;
   state.onlyFavorites = false;
   state.onlyOpenNow = false;
@@ -438,11 +443,21 @@ function refreshUI() {
   if (state.onlyTopRated) {
     filtered.sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviewsCount || 0) - Number(a.reviewsCount || 0)));
   }
+  // ترتيب نتائج البحث حسب قوة المطابقة: الاسم أولاً، ثم الوسوم،
+  // ثم المنطقة/العنوان — عشان "صيدلية" ما تجيبش مطاعم أولاً
+  // لمجرد إن العنوان فيه "بجوار صيدلية…".
+  if (state.searchQuery && !state.onlyTopRated) {
+    const q = state.searchQuery;
+    const score = (srv) => srv.name.toLowerCase().includes(q) ? 0
+      : srv.tags.toLowerCase().includes(q) ? 1 : 2;
+    filtered.sort((a, b) => score(a) - score(b));
+  }
 
   // العدّادات تظهر "…" حتى أول تحميل ناجح — لا 0 وهمي أثناء التحميل.
   els.resultsCount.textContent = state.loaded ? `${filtered.length} خدمة` : '…';
   // إحصاءات الهيرو الحية: عدد الخدمات الكلي + عدد الأقسام والمناطق.
   if (els.heroCount) els.heroCount.textContent = state.loaded ? state.services.length : '—';
+  if (els.footerCount) els.footerCount.textContent = state.loaded ? state.services.length : '—';
   if (els.heroGroups) els.heroGroups.textContent = GROUPS.length;
   if (els.heroAreas) els.heroAreas.textContent = AREAS.length;
 
@@ -712,7 +727,8 @@ async function renderTrainsTable() {
         <td class="py-1.5 text-slate-300">${tr.fare} ج.م</td>
       </tr>`).join('')}</tbody>
   </table>`;
-  if (note) note.textContent = `${trainsData.note || ''} آخر مراجعة: ${trainsData.lastReviewLabel || ''}.`;
+  // تاريخ المراجعة في سطر لوحده عشان السنة ما تتقصّش أبداً في العرض.
+  if (note) note.innerHTML = `${escHtml(trainsData.note || '')}<br><span class="text-slate-400">آخر مراجعة: ${escHtml(trainsData.lastReviewLabel || '')}.</span>`;
 }
 
 function renderOffersSection(isHome) {
@@ -800,10 +816,12 @@ function openServiceDetails(id) {
       <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
         <span class="badge border ${status.color}">${status.text}</span>
         ${srv.verified ? '<span class="badge badge--verified"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> موثق</span>' : ''}
-        <span class="rating-pill" id="detailRatingPill">
+        ${(srv.reviewsCount > 1 || srv.rating !== 5)
+          ? `<span class="rating-pill" id="detailRatingPill">
           <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
           ${srv.rating} (${srv.reviewsCount} تقييم)
-        </span>
+        </span>`
+          : `<span class="text-[11px] font-bold text-slate-500" id="detailRatingPill">لا توجد تقييمات بعد</span>`}
       </div>
 
       <h3 class="text-xl font-black text-slate-900 leading-snug">${srv.name}</h3>
@@ -811,6 +829,7 @@ function openServiceDetails(id) {
         <i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>
         ${subName ? `${cat.name} • ${subName}` : cat.name}
       </p>
+      ${srv.createdAt ? `<p class="text-[11px] text-slate-400 font-semibold mt-1">أُضيفت إلى الدليل في ${reviewDateText(srv.createdAt)}</p>` : ''}
 
       <a href="${mapHref}" target="_blank" rel="noopener" class="detail-row">
         <span class="detail-row__icon"><i data-lucide="map-pin"></i></span>

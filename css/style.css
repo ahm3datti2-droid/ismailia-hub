@@ -213,8 +213,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
 
 /* تلاشٍ عند حافة صف التصنيفات القابل للتمرير (يُخفي القطع المفاجئ) */
 .chips-fade {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px);
-  mask-image: linear-gradient(to right, transparent 0, #000 48px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
 }
 
 /* شارات أوضح: موثق / طوارئ / مفتوح */
@@ -528,9 +528,9 @@ a.detail-row:hover { border-color: rgba(255, 196, 0, 0.35); }
   border-radius: 1.5rem;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #0b1120;
+  background: #cfe0ea;
 }
-.map-box .leaflet-container { font-family: inherit; }
+.map-box .leaflet-container { font-family: inherit; background: #cfe0ea; }
 
 .qr-box {
   background: #fff;
