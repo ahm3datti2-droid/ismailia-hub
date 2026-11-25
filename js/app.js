@@ -91,6 +91,14 @@ async function initApp() {
   renderGroupTiles(els.groupsGrid, GROUPS, null, null, selectGroupTile);
   // بطاقات هيكلية فوراً حتى لا تظهر الصفحة فارغة أثناء انتظار Firestore.
   renderSkeleton(els.servicesGrid);
+  // سعر الذهب يُجلب مبكراً ومستقلاً: مستند واحد صغير بيوصل في أقل من ثانية،
+  // فالشريط يعرض أسعار الأدمن من أول تحميل بدل ما يستنى تحديث الخدمات
+  // الكامل (340 مستند) اللي بياخد وقت أحياناً.
+  db.getGoldPrices().then((g) => {
+    if (!g) return;
+    state.gold = g;
+    renderGoldSection(isHomeView());
+  }).catch(() => {});
   await loadServices();
 }
 
@@ -382,6 +390,11 @@ function syncQuickChips() {
   document.getElementById('chip24h')?.classList.toggle('quick-chip--on', state.only24h);
 }
 
+function isHomeView() {
+  return state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
+    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites && !state.onlyOpenNow && !state.only24h && !state.onlyTopRated;
+}
+
 function refreshUI() {
   renderCategories(els.categories, state.activeCategory, (catId) => {
     state.activeCategory = catId;
@@ -408,8 +421,7 @@ function refreshUI() {
 
   // الصفحة الرئيسية: بلا أي فلتر أو بحث تعرض بلاطات الأقسام فقط،
   // وأي اختيار أو بحث أو فلتر يعرض قائمة الخدمات بدلها.
-  const isHome = state.activeCategory === 'all' && state.activeSubcategory === 'all' &&
-    state.selectedArea === 'all' && !state.searchQuery && !state.showAll && !state.onlyEmergency && !state.onlyFavorites && !state.onlyOpenNow && !state.only24h && !state.onlyTopRated;
+  const isHome = isHomeView();
   els.groupsSection.classList.toggle('hidden', !isHome);
   els.servicesSection.classList.toggle('hidden', isHome);
   renderOffersSection(isHome);
@@ -561,6 +573,18 @@ async function fetchSpotGold() {
   } catch (_) { return null; }
 }
 
+// الأسعار اليدوية من الأدمن (أسعار الصاغة) — حديثة لو اتحفظت من أقل من 24 ساعة.
+// تُقرأ من state.gold الحالي في كل مرة، لأن المستند ممكن يوصل متأخراً
+// عن أول رسم للشريط (الجلب المبكر أو تحديث الخدمات الخلفي).
+function freshManualGold() {
+  const g = state.gold;
+  if (!g || !(Number(g.price21) > 0 || Number(g.price24) > 0)) return null;
+  let ms = 0;
+  try { ms = g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0; } catch (_) {}
+  if (!ms || Date.now() - ms >= 24 * 60 * 60 * 1000) return null;
+  return { prices: g, note: 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) };
+}
+
 async function renderGoldSection(isHome) {
   const section = document.getElementById('goldSection');
   if (!section) return;
@@ -578,22 +602,23 @@ async function renderGoldSection(isHome) {
     if (label) label.textContent = note;
   };
   let manualNote = '';
-  let manualMs = 0;
   try {
-    manualMs = g && g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
-    manualNote = manualMs ? 'محدّث: ' + new Date(manualMs).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const ms = g && g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
+    manualNote = ms ? 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   } catch (_) { manualNote = ''; }
-  // الأسعار اليدوية (من الأدمن — أسعار الصاغة) تفوز لو حديثة (أقل من 24 ساعة):
-  // قبل كده كان الـ API بيغطي عليها دايماً، فاللي يتكتب في الأدمن ما كانش
-  // يظهر في الرئيسية خالص رغم رسالة "تظهر في الرئيسية فوراً". لو قديمة
-  // أو مش موجودة، الـ API التلقائي يشتغل كالعادة.
-  const manualFresh = hasManual && manualMs > 0 && (Date.now() - manualMs < 24 * 60 * 60 * 1000);
-  if (manualFresh) { paint(g, manualNote); return; }
+  // الأسعار اليدوية الحديثة (أقل من 24 ساعة) تفوز على التلقائي — قبل كده
+  // كان الـ API بيغطي عليها دايماً، فاللي يتكتب في الأدمن ما كانش يظهر
+  // في الرئيسية رغم رسالة "تظهر في الرئيسية فوراً".
+  const manual = freshManualGold();
+  if (manual) { paint(manual.prices, manual.note); return; }
   if (hasManual) paint(g, manualNote);
   else paint({ price24: 0, price21: 0, price18: 0, pound: 0 }, '');
   const spot = await fetchSpotGold();
   if (spot) {
-    paint(spot, 'سعر استرشادي — محدّث ' + new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' }) + ' · قد يختلف عن سعر الصاغة');
+    // أعيد فحص اليدوي: ممكن يكون وصل أثناء انتظار الـ API.
+    const manualNow = freshManualGold();
+    if (manualNow) paint(manualNow.prices, manualNow.note);
+    else paint(spot, 'سعر استرشادي — محدّث ' + new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' }) + ' · قد يختلف عن سعر الصاغة');
   }
 }
 
