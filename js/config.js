@@ -116,7 +116,8 @@ export const GROUPS = [
     { id: 'flowers', name: 'زهور وهدايا' },
     { id: 'pets', name: 'عيادات بيطرية ومستلزمات حيوانات' },
     { id: 'laundry', name: 'مغاسل ملابس (دراي كلين)' },
-    { id: 'hotels', name: 'فنادق ومنتجعات' }
+    { id: 'hotels', name: 'فنادق ومنتجعات' },
+    { id: 'cinemas', name: 'سينما ومسارح' }
   ]},
   { id: 'factories', name: 'مصانع وشركات', icon: 'factory', subs: [
     { id: 'food-industry', name: 'صناعات غذائية' },

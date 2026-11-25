@@ -751,6 +751,9 @@ function startApprovePending(id) {
   if (!p) return;
   state.approvingPendingId = id;
   state.editingId = null;
+  // النموذج داخل تبويب "الخدمات" — لازم نفتح التبويب أولاً،
+  // وإلا scrollIntoView على لوحة مخفية لا يفعل شيئاً والزر يبدو معطّلاً.
+  switchAdminTab('services', { scroll: false });
   fillForm({
     ...p,
     verified: true,
