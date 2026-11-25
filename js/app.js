@@ -94,16 +94,21 @@ async function initApp() {
   await loadServices();
 }
 
+// مسح البحث عند اختيار قسم/قسم فرعي — وإلا يطلع "0 نتيجة" من غير تفسير
+// لما تكون فيه كلمة بحث قديمة في الصندوق. تُستدعى من بلاطات الرئيسية
+// ومن شرائح التصنيفات ومن الأقسام الفرعية (كلها طرق لاختيار قسم).
+function clearSearchInput() {
+  state.searchQuery = '';
+  if (els.searchInput) els.searchInput.value = '';
+}
+
 // اختيار قسم من بلاطات الصفحة الرئيسية: يعرض خدماته فقط.
 // بلاطة "كل الخدمات" تعرض كل الأنشطة في قائمة واحدة.
 function selectGroupTile(groupId) {
   state.activeCategory = groupId;
   state.showAll = groupId === 'all';
   state.activeSubcategory = 'all';
-  // اختيار قسم يمسح البحث — وإلا يطلع "0 نتيجة" من غير تفسير
-  // لما تكون فيه كلمة بحث قديمة في الصندوق.
-  state.searchQuery = '';
-  if (els.searchInput) els.searchInput.value = '';
+  clearSearchInput();
   state.onlyEmergency = false;
   state.onlyFavorites = false;
   state.onlyOpenNow = false;
@@ -382,6 +387,7 @@ function refreshUI() {
     state.activeCategory = catId;
     state.showAll = catId === 'all';
     state.activeSubcategory = 'all';
+    clearSearchInput();
     state.onlyEmergency = false;
     state.onlyFavorites = false;
     state.onlyOpenNow = false;
@@ -394,6 +400,7 @@ function refreshUI() {
 
   renderSubcategories(els.subcategories, state.activeCategory, state.activeSubcategory, (subId) => {
     state.activeSubcategory = subId;
+    clearSearchInput();
     refreshUI();
   });
 
@@ -525,9 +532,9 @@ function renderTickerSection(isHome) {
   renderTicker(track, state.services, (id) => openServiceDetails(id));
 }
 
-// سعر الذهب اليوم: تلقائي من AlyawmGold (سعر عالمي محوّل للجنيه —
-// استرشادي، قد يختلف عن سعر الصاغة بـ 2–4%) مع fallback للأسعار
-// اليدوية من Firestore لو الـ API وقع. النتيجة بتتخزن ساعة على الجهاز.
+// سعر الذهب اليوم: الأسعار اليدوية من الأدمن (أسعار الصاغة) تظهر لو حديثة
+// (أقل من 24 ساعة)، وإلا تلقائي من AlyawmGold (سعر عالمي محوّل للجنيه —
+// استرشادي، قد يختلف عن سعر الصاغة). النتيجة التلقائية بتتخزن ساعة على الجهاز.
 const GOLD_API_URL = 'https://alyawmgold.com/api/v1/spot/latest?country=EG';
 const GOLD_CACHE_KEY = 'ism_gold_spot';
 const GOLD_CACHE_MS = 60 * 60 * 1000;
@@ -571,10 +578,17 @@ async function renderGoldSection(isHome) {
     if (label) label.textContent = note;
   };
   let manualNote = '';
+  let manualMs = 0;
   try {
-    const ms = g && g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
-    manualNote = ms ? 'محدّث: ' + new Date(ms).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    manualMs = g && g.updatedAt?.toMillis ? g.updatedAt.toMillis() : 0;
+    manualNote = manualMs ? 'محدّث: ' + new Date(manualMs).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   } catch (_) { manualNote = ''; }
+  // الأسعار اليدوية (من الأدمن — أسعار الصاغة) تفوز لو حديثة (أقل من 24 ساعة):
+  // قبل كده كان الـ API بيغطي عليها دايماً، فاللي يتكتب في الأدمن ما كانش
+  // يظهر في الرئيسية خالص رغم رسالة "تظهر في الرئيسية فوراً". لو قديمة
+  // أو مش موجودة، الـ API التلقائي يشتغل كالعادة.
+  const manualFresh = hasManual && manualMs > 0 && (Date.now() - manualMs < 24 * 60 * 60 * 1000);
+  if (manualFresh) { paint(g, manualNote); return; }
   if (hasManual) paint(g, manualNote);
   else paint({ price24: 0, price21: 0, price18: 0, pound: 0 }, '');
   const spot = await fetchSpotGold();

@@ -216,6 +216,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-gold) !im
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
 }
+/* على الشاشات الكبيرة الشرائح بتتلف سطرين بدل ما تتقص من الطرف —
+   التدرج لوحده كان خافت ومش باين كمؤشر تمرير. على الموبايل تفضل
+   صف قابل للتمرير بالتدرج من الطرفين. */
+@media (min-width: 1024px) {
+  #categoriesContainer, #subcategoriesContainer {
+    flex-wrap: wrap; overflow-x: visible;
+    -webkit-mask-image: none; mask-image: none;
+  }
+}
 
 /* شارات أوضح: موثق / طوارئ / مفتوح */
 .badge {
